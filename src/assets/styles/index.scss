@@ -58,3 +58,12 @@
   transform: translateX(-20px);
   filter: blur(5px);
 }
+
+body {
+  @include themify(
+    (
+      background: $bg-color,
+      color: $text-color,
+    )
+  );
+}

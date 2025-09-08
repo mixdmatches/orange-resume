@@ -27,6 +27,11 @@ import SiteHeader from './components/SiteHeader.vue'
     flex: 1;
     border-left: 1px solid $border-color;
     padding: 2rem;
+    @include themify(
+      (
+        border-color: $border-color-mode,
+      )
+    );
   }
 }
 </style>
