@@ -12,11 +12,25 @@ const theme = useThemeStore()
     <span class="title">{{ $route.meta.title }}</span>
     <div class="work">
       <line-md-github />
-      <line-md-moon-alt-to-sunny-outline-loop-transition
-        v-if="theme.isLight"
-        @click="theme.switchTheme('dark')"
-      />
-      <line-md-moon-alt-loop v-else @click="theme.switchTheme('light')" />
+      <a-dropdown>
+        <line-md-moon-alt-to-sunny-outline-loop-transition
+          v-if="theme.currentTheme === 'dark'"
+        />
+        <line-md-moon-alt-loop v-else />
+        <template #overlay>
+          <a-menu>
+            <a-menu-item @click="theme.switchTheme('light')">
+              <a href="javascript:;">Light Theme</a>
+            </a-menu-item>
+            <a-menu-item @click="theme.switchTheme('dark')">
+              <a href="javascript:;">Dark Theme</a>
+            </a-menu-item>
+            <a-menu-item @click="theme.switchTheme('system')">
+              <a href="javascript:;">System Theme</a>
+            </a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
     </div>
   </div>
 </template>
@@ -45,6 +59,9 @@ const theme = useThemeStore()
     font-size: 2rem;
     margin-right: 1rem;
     cursor: pointer;
+    svg {
+      outline: none;
+    }
   }
 }
 </style>
