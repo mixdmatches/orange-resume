@@ -1,10 +1,6 @@
 <script setup lang="ts">
-import LineMdMoonAltLoop from '~icons/line-md/moon-alt-loop'
-import LineMdMoonAltToSunnyOutlineLoopTransition from '~icons/line-md/moon-alt-to-sunny-outline-loop-transition'
 import LineMdGithub from '~icons/line-md/github'
-import { useThemeStore } from '@/stores/theme.ts'
-// ---------------------------------主题切换
-const theme = useThemeStore()
+import ThemeIcon from '@/components/ThemeIcon.vue'
 </script>
 
 <template>
@@ -12,25 +8,7 @@ const theme = useThemeStore()
     <span class="title">{{ $route.meta.title }}</span>
     <div class="work">
       <line-md-github />
-      <a-dropdown>
-        <line-md-moon-alt-to-sunny-outline-loop-transition
-          v-if="theme.currentTheme === 'dark'"
-        />
-        <line-md-moon-alt-loop v-else />
-        <template #overlay>
-          <a-menu>
-            <a-menu-item @click="theme.switchTheme('light')">
-              <a href="javascript:;">Light Theme</a>
-            </a-menu-item>
-            <a-menu-item @click="theme.switchTheme('dark')">
-              <a href="javascript:;">Dark Theme</a>
-            </a-menu-item>
-            <a-menu-item @click="theme.switchTheme('system')">
-              <a href="javascript:;">System Theme</a>
-            </a-menu-item>
-          </a-menu>
-        </template>
-      </a-dropdown>
+      <theme-icon></theme-icon>
     </div>
   </div>
 </template>
@@ -59,9 +37,6 @@ const theme = useThemeStore()
     font-size: 2rem;
     margin-right: 1rem;
     cursor: pointer;
-    svg {
-      outline: none;
-    }
   }
 }
 </style>

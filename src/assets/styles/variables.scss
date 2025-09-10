@@ -6,7 +6,12 @@ $border-color:#f0f0f0;
 
 $bg-color: (
   light: #fff,
-  dark: #141414,
+  dark: #000,
+);
+
+$layout-bg-color:(
+  light:#f5f5f5,
+  dark:#141414
 );
 
 $text-color: (

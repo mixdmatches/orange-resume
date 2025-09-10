@@ -58,6 +58,15 @@ const routes: RouteRecordRaw[] = [
     redirect: '/my-resume',
     children: header_routes,
   },
+  {
+    path: '/edit-resume/:id',
+    name: 'edit-resume',
+    meta: {
+      title: '编辑简历',
+    },
+    component: () => import('@/views/edit-resume/index.vue'),
+    props: true,
+  },
 ]
 
 const router = createRouter({

@@ -1,15 +1,24 @@
 <script setup lang="ts">
 import {
   PlusOutlined,
-  SettingOutlined,
   EditOutlined,
   EllipsisOutlined,
 } from '@ant-design/icons-vue'
+import { useRouter } from 'vue-router'
+const router = useRouter()
+const handleAddResume = () => {
+  // 创建简历
+  // 跳转编辑页面
+  router.push('/edit-resume/1')
+}
+const handleEditResume = (item: number) => {
+  router.push(`/edit-resume/${item}`)
+}
 </script>
 
 <template>
   <div class="my-resume">
-    <div class="add-resume">
+    <div class="add-resume" @click="handleAddResume">
       <PlusOutlined style="font-size: 2rem" />
       <span>新建简历</span>
     </div>
@@ -22,7 +31,7 @@ import {
           />
         </template>
         <template #actions>
-          <edit-outlined key="edit" />
+          <edit-outlined key="edit" @click="handleEditResume(item)" />
           <ellipsis-outlined key="ellipsis" />
         </template>
         <a-card-meta title="Card title" description="This is the description">
