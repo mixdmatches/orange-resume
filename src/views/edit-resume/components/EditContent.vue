@@ -1,20 +1,42 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref, watch, type Ref } from 'vue'
 
 const infoList = ref([
-  '基本信息',
-  '教育经历',
-  '实习经历',
-  '项目经历',
-  '个人技能',
+  {
+    label: '项目经历',
+    description: '突出项目背景、技术栈与个人贡献，配合链接展示。',
+  },
+  {
+    label: '个人技能',
+    description: '为 HR 呈现技术关键词，可自定义排序与标签颜色。',
+  },
 ])
 
-const activeKey = ref(['基本信息'])
-const handleCollapse = (item: string) => {
-  if (activeKey.value.includes(item)) {
-    activeKey.value = activeKey.value.filter(i => i !== item)
+const themeColors = ref([
+  '#111827',
+  '#1d4ed8',
+  '#f97316',
+  '#9333ea',
+  '#059669',
+  '#0f172a',
+])
+const selectedTheme = ref(themeColors.value[1])
+const layoutOptions = ref([
+  { label: '标准单列', value: 'single', desc: '信息清晰，适合校园招聘' },
+  { label: '双栏展示', value: 'double', desc: '信息密度高，适合社招' },
+  { label: '极简版', value: 'minimal', desc: '突出重点，版面干净' },
+])
+const selectedLayout = ref('single')
+const spacingOptions = ref(['紧凑', '常规', '宽松'])
+const spacingValue = ref('常规')
+const showHelperGrid = ref(true)
+
+const activeKey = ref(['基本信息', '教育经历'])
+const handleCollapse = (label: string) => {
+  if (activeKey.value.includes(label)) {
+    activeKey.value = activeKey.value.filter(item => item !== label)
   } else {
-    activeKey.value.push(item)
+    activeKey.value.push(label)
   }
 }
 </script>
@@ -24,26 +46,156 @@ const handleCollapse = (item: string) => {
     <div class="model">
       <div class="model-title">布局内容</div>
       <div class="model-content">
-        <div v-for="item in infoList" :key="item" class="collapse">
-          <div class="info" @click="handleCollapse(item)">
-            <div class="info-title">{{ item }}</div>
+        <slot name="basic"> </slot>
+        <slot name="education"></slot>
+        <slot name="internship"></slot>
+        <!-- <div v-for="item in infoList" :key="item.label" class="collapse">
+          <div class="info" @click="handleCollapse(item.label)">
+            <div>
+              <div class="info-title">{{ item.label }}</div>
+              <div class="info-desc">{{ item.description }}</div>
+            </div>
             <div class="info-work">
-              <span>可见</span>
-              <span>删除</span>
+              <span class="info-action">可见</span>
+              <span class="info-action danger">删除</span>
             </div>
           </div>
-          <div v-if="activeKey.includes(item)" class="collapse-content"></div>
+          <div v-if="activeKey.includes(item.label)" class="collapse-content">
+            <template v-if="item.label === '教育经历'">
+              <template v-for="value in localEducation" :key="value.id">
+                <div class="form-grid">
+                  <a-input
+                    v-model:value="value.school"
+                    placeholder="学校名称"
+                  />
+                  <a-input v-model:value="value.major" placeholder="就读专业" />
+                  <a-select ref="select" v-model:value="value.degree">
+                    <a-select-option
+                      v-for="option in degreeOptions"
+                      :key="option"
+                      :value="option"
+                      >{{ option }}</a-select-option
+                    >
+                  </a-select>
+                  <a-range-picker
+                    v-model:value="value.dateRange"
+                    :format="'YYYY/MM'"
+                  />
+                </div>
+                <a-textarea
+                  v-model:value="value.description"
+                  :rows="3"
+                  placeholder="自定义描述：课程/获奖/绩点等"
+                />
+                <a-button type="dashed" block danger>删除教育经历</a-button>
+              </template>
+              <div class="form-actions">
+                <a-button type="dashed" block @click="handleAddEducation"
+                  >+ 添加教育经历</a-button
+                >
+              </div>
+            </template>
+            <template v-else-if="item.label === '实习经历'">
+              <div class="form-grid">
+                <a-input placeholder="公司名称" />
+                <a-input placeholder="岗位名称" />
+                <a-input placeholder="所在部门" />
+                <a-input placeholder="实习时间" />
+              </div>
+              <a-textarea :rows="4" placeholder="输入实习成果、负责模块..." />
+              <div class="form-actions">
+                <a-button type="default">生成 STAR 模板</a-button>
+                <a-button type="primary">保存</a-button>
+              </div>
+            </template>
+            <template v-else-if="item.label === '项目经历'">
+              <div class="form-grid">
+                <a-input
+                  v-model:value="localBasic.name"
+                  placeholder="项目名称"
+                />
+                <a-input placeholder="个人角色" />
+                <a-input placeholder="技术栈（如 Vue3 + TS）" />
+                <a-input placeholder="项目链接（GitHub / 线上）" />
+              </div>
+              <a-textarea :rows="4" placeholder="项目背景、难点与亮点" />
+              <div class="form-actions">
+                <a-button type="dashed">+ 添加项目</a-button>
+              </div>
+            </template>
+            <template v-else>
+              <div class="skill-editor">
+                <div class="skill-tags">
+                  <span
+                    v-for="skill in skills"
+                    :key="skill"
+                    class="skill-tag"
+                    >{{ skill }}</span
+                  >
+                </div>
+                <div class="skill-input">
+                  <a-input placeholder="输入技能关键词，如 Vue、React、Node" />
+                  <a-button type="primary">添加</a-button>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div> -->
+      </div>
+      <a-button type="primary" block class="add-custom-btn">
+        + 添加自定义模块
+      </a-button>
+    </div>
+
+    <div class="model">
+      <div class="model-title">排版</div>
+      <div class="layout-options">
+        <div
+          v-for="option in layoutOptions"
+          :key="option.value"
+          :class="['layout-card', { active: selectedLayout === option.value }]"
+          @click="selectedLayout = option.value"
+        >
+          <div class="layout-name">{{ option.label }}</div>
+          <div class="layout-desc">{{ option.desc }}</div>
         </div>
       </div>
     </div>
     <div class="model">
-      <div class="model-title">排版</div>
-    </div>
-    <div class="model">
       <div class="model-title">主题色</div>
+      <div class="theme-palette">
+        <div
+          v-for="color in themeColors"
+          :key="color"
+          :class="['theme-dot', { active: selectedTheme === color }]"
+          :style="{ background: color }"
+          @click="selectedTheme = color"
+        ></div>
+        <a-button type="dashed" size="small">自定义</a-button>
+      </div>
     </div>
     <div class="model">
-      <div class="model-title">间距</div>
+      <div class="model-title">间距与辅助线</div>
+      <div class="spacing-controls">
+        <div class="spacing-row">
+          <span>模块间距</span>
+          <div class="spacing-options">
+            <button
+              v-for="option in spacingOptions"
+              :key="option"
+              type="button"
+              :class="['spacing-btn', { active: spacingValue === option }]"
+              @click="spacingValue = option"
+            >
+              {{ option }}
+            </button>
+          </div>
+        </div>
+        <div class="spacing-row">
+          <span>对齐辅助线</span>
+          <a-switch v-model:checked="showHelperGrid" />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -52,9 +204,12 @@ const handleCollapse = (item: string) => {
 .edit-content {
   width: 50%;
   height: 100%;
-  overflow-y: scroll;
+  overflow-y: auto;
   border-radius: 0.5rem;
-  padding: 1rem;
+  padding: 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
   @include themify(
     (
       color: $text-color,
@@ -62,19 +217,28 @@ const handleCollapse = (item: string) => {
     )
   );
 }
+
+.add-custom-btn {
+  margin-top: auto;
+}
+
 .model {
-  //border: 1px solid;
-  //@include themify(
-  //  (
-  //    border-color: $border-color-mode,
-  //  )
-  //);
+  padding: 1.2rem 1.4rem;
+  border-radius: 0.8rem;
+  border: 1px solid;
+  @include themify(
+    (
+      border-color: $border-color-mode,
+    )
+  );
+
   .model-title {
     color: $primary-color;
     font-size: 1.6rem;
-    font-weight: 500;
+    font-weight: 600;
     margin-bottom: 1rem;
   }
+
   &-content {
     display: flex;
     flex-direction: column;
@@ -84,86 +248,251 @@ const handleCollapse = (item: string) => {
       display: flex;
       flex-direction: column;
       gap: 1rem;
+
       .info {
         width: 100%;
-        height: 70px;
+        min-height: 78px;
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        border: 1px solid;
-        padding: 0 1rem;
+        gap: 1rem;
+        border: 1px dashed;
+        padding: 1rem 1.4rem;
         cursor: pointer;
+        transition:
+          border-color 0.2s,
+          background 0.2s;
+        border-radius: 0.6rem;
         @include themify(
           (
             border-color: $border-color-mode,
           )
         );
-        border-radius: 4px;
+
+        &:hover {
+          background: rgba(59, 130, 246, 0.08);
+        }
+
         &-title {
           font-size: 1.6rem;
-          font-weight: 500;
+          font-weight: 600;
         }
+
+        .info-desc {
+          font-size: 1.3rem;
+          color: #8c8c8c;
+          margin-top: 0.3rem;
+        }
+
         &-work {
+          display: flex;
+          flex-direction: column;
+          gap: 0.6rem;
+          align-items: flex-end;
+        }
+
+        .info-action {
+          color: $primary-color;
+          font-size: 1.3rem;
+
+          &.danger {
+            color: #f97316;
+          }
+        }
+      }
+
+      &-content {
+        width: 100%;
+        border: 1px solid;
+        padding: 1.4rem;
+        border-radius: 0.6rem;
+        background: rgba(255, 255, 255, 0.8);
+        @include themify(
+          (
+            border-color: $border-color-mode,
+          )
+        );
+
+        .form-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 1rem;
+          margin-bottom: 1rem;
+        }
+
+        .form-actions {
+          margin-top: 1rem;
           display: flex;
           gap: 1rem;
         }
-      }
-      &-content {
-        width: 100%;
-        // height: 300px;
-        border: 1px solid;
-        padding: 1rem;
-        @include themify(
-          (
-            border-color: $border-color-mode,
-          )
-        );
-        border-radius: 4px;
+
         .basic-field {
-          font-weight: 500;
-          .basic-field-title {
-            font-size: 1.6rem;
-            font-weight: 500;
-            margin-bottom: 1rem;
-          }
           .field-warper {
             display: flex;
             flex-direction: column;
             gap: 1rem;
-            margin-top: 1rem;
           }
+
           .field-item {
             display: flex;
-            justify-content: space-around;
             align-items: center;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            padding: 1rem;
-            .sort-icon {
-              cursor: move;
-              font-size: 1.6rem;
-            }
-            .field-input {
-              width: calc(100% - 200px);
-              display: flex;
-              align-items: center;
-
-              .field-prop {
-                display: flex;
-                align-items: center;
-                width: 90px;
-                font-size: 1.4rem;
-              }
-            }
-            .field-work {
-              width: 100px;
-              display: flex;
-              gap: 1rem;
-            }
+            gap: 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.6rem;
+            padding: 0.8rem 1rem;
           }
+
+          .sort-icon {
+            cursor: move;
+            font-size: 1.8rem;
+            color: #9ca3af;
+            display: flex;
+          }
+
+          .field-input {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+          }
+
+          .field-prop {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            width: 120px;
+            font-size: 1.3rem;
+            color: #4b5563;
+          }
+
+          .field-text {
+            flex: 1;
+          }
+
+          .field-work {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            font-size: 1.2rem;
+            color: #94a3b8;
+          }
+        }
+
+        .skill-editor {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .skill-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.8rem;
+        }
+
+        .skill-tag {
+          padding: 0.3rem 1rem;
+          border-radius: 999px;
+          background: rgba(15, 23, 42, 0.05);
+          font-size: 1.3rem;
+        }
+
+        .skill-input {
+          display: flex;
+          gap: 1rem;
+          align-items: center;
         }
       }
     }
+  }
+}
+
+.layout-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.layout-card {
+  border: 1px solid;
+  border-radius: 0.6rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  @include themify(
+    (
+      border-color: $border-color-mode,
+    )
+  );
+
+  &.active {
+    border-color: $primary-color;
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+  }
+
+  .layout-name {
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+  }
+  .layout-desc {
+    font-size: 1.3rem;
+    color: #8c8c8c;
+  }
+}
+
+.theme-palette {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.theme-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition:
+    transform 0.2s,
+    border-color 0.2s;
+
+  &.active {
+    transform: scale(1.05);
+    border-color: #3b82f6;
+  }
+}
+
+.spacing-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.spacing-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.spacing-options {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.spacing-btn {
+  border: 1px solid #d9d9d9;
+  background: transparent;
+  border-radius: 999px;
+  padding: 0.2rem 1rem;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &.active {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: #3b82f6;
+    color: #1d4ed8;
   }
 }
 </style>

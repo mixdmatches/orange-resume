@@ -20,7 +20,7 @@ export const DEFAULT_RESUME = {
     email: '1919600547@qq.com',
     photo: '',
   },
-  education: [
+  educations: [
     {
       id: '1',
       school: '清华大学',
