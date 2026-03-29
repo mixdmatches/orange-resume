@@ -16,6 +16,7 @@
       //路径映射，相对于baseUrl
       "@/*": ["src/*"]
     },
+    "lib": ["ES2015", "DOM", "DOM.Iterable"],
     "types": ["unplugin-icons/types/vue"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],

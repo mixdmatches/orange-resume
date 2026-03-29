@@ -7,6 +7,8 @@ import ResumePreview from '@/views/edit-resume/components/ResumePreview.vue'
 import BasicCard from './cards/BasicCard.vue'
 import EducationCard from './cards/EducationCard.vue'
 import InternshipCard from './cards/InternshipCard.vue'
+
+// 基础信息
 const basic = ref({
   name: '下饭',
   position: '前端开发工程师',
@@ -23,6 +25,7 @@ const handleBasic = (newBasic: Basic) => {
   setBasic(newBasic)
 }
 
+// 教育信息
 const educations = ref<Education[]>([
   {
     id: '1',
@@ -42,6 +45,7 @@ const handleEducation = (newEducation: Education[]) => {
   setEducation(newEducation)
 }
 
+// 实习经历
 const internships = ref([
   {
     id: '1',

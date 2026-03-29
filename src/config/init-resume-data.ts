@@ -1,13 +1,15 @@
+// 初始全局设置
 export const initialGlobalConfiguration = {
-  baseFontSize: 16,
-  basePagePadding: 10,
-  baseLineHeight: 1.5,
-  baseModuleSpacing: 10,
-  titleFontSize: 20,
-  subTitleFontSize: 18,
-  themeColor: '#000',
+  baseFontSize: 16, // 基础字体大小
+  basePagePadding: 10, // 基础页面内边距
+  baseLineHeight: 1.5, // 基础行高
+  baseModuleSpacing: 10, // 基础模块间距
+  titleFontSize: 20, // 标题字体大小
+  subTitleFontSize: 18, // 子标题字体大小
+  themeColor: '#000', // 主题颜色
 }
 
+// 初始默认简历内容
 export const DEFAULT_RESUME = {
   title: '未命名简历',
   createDate: new Date().toISOString(),
@@ -15,7 +17,7 @@ export const DEFAULT_RESUME = {
     name: '陈下饭',
     position: '前端开发工程师',
     age: 20,
-    phone: '1234567',
+    phone: '17343691959',
     address: '南京',
     email: '1919600547@qq.com',
     photo: '',

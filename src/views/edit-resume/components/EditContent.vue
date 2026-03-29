@@ -1,16 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch, type Ref } from 'vue'
-
-const infoList = ref([
-  {
-    label: '项目经历',
-    description: '突出项目背景、技术栈与个人贡献，配合链接展示。',
-  },
-  {
-    label: '个人技能',
-    description: '为 HR 呈现技术关键词，可自定义排序与标签颜色。',
-  },
-])
+import { ref } from 'vue'
 
 const themeColors = ref([
   '#111827',
@@ -21,24 +10,13 @@ const themeColors = ref([
   '#0f172a',
 ])
 const selectedTheme = ref(themeColors.value[1])
-const layoutOptions = ref([
-  { label: '标准单列', value: 'single', desc: '信息清晰，适合校园招聘' },
-  { label: '双栏展示', value: 'double', desc: '信息密度高，适合社招' },
-  { label: '极简版', value: 'minimal', desc: '突出重点，版面干净' },
-])
-const selectedLayout = ref('single')
-const spacingOptions = ref(['紧凑', '常规', '宽松'])
-const spacingValue = ref('常规')
-const showHelperGrid = ref(true)
+// 间距控制
+const spacingValue = ref(16) // 模块间距，默认16px
+const marginValue = ref(20) // 页边距，默认20px
+const paragraphValue = ref(12) // 段落间距，默认12px
 
-const activeKey = ref(['基本信息', '教育经历'])
-const handleCollapse = (label: string) => {
-  if (activeKey.value.includes(label)) {
-    activeKey.value = activeKey.value.filter(item => item !== label)
-  } else {
-    activeKey.value.push(label)
-  }
-}
+// 字号选择
+const fontOptions = ['12px', '14px', '16px', '18px', '20px', '22px', '24px']
 </script>
 
 <template>
@@ -142,23 +120,58 @@ const handleCollapse = (label: string) => {
           </div>
         </div> -->
       </div>
-      <a-button type="primary" block class="add-custom-btn">
+      <a-button
+        style="margin-top: 1rem"
+        type="primary"
+        block
+        class="add-custom-btn"
+      >
         + 添加自定义模块
       </a-button>
     </div>
 
     <div class="model">
       <div class="model-title">排版</div>
-      <div class="layout-options">
-        <div
-          v-for="option in layoutOptions"
-          :key="option.value"
-          :class="['layout-card', { active: selectedLayout === option.value }]"
-          @click="selectedLayout = option.value"
-        >
-          <div class="layout-name">{{ option.label }}</div>
-          <div class="layout-desc">{{ option.desc }}</div>
+      <div class="model-content">
+        <div class="set">
+          <span>行高</span>
+          <a-slider id="test" :min="1" :max="2" :step="0.1" />
         </div>
+        <a-row>
+          <a-col :span="6">
+            <span>基础字号</span>
+            <a-select style="width: 160px">
+              <a-select-option
+                v-for="font in fontOptions"
+                :key="font"
+                :value="font"
+                >{{ font }}</a-select-option
+              >
+            </a-select>
+          </a-col>
+          <a-col :span="6">
+            <span>模块标题字号</span>
+            <a-select style="width: 160px">
+              <a-select-option
+                v-for="font in fontOptions"
+                :key="font"
+                :value="font"
+                >{{ font }}</a-select-option
+              >
+            </a-select>
+          </a-col>
+          <a-col :span="6">
+            <span>模块一级标题字号</span>
+            <a-select style="width: 160px">
+              <a-select-option
+                v-for="font in fontOptions"
+                :key="font"
+                :value="font"
+                >{{ font }}</a-select-option
+              >
+            </a-select>
+          </a-col>
+        </a-row>
       </div>
     </div>
     <div class="model">
@@ -175,25 +188,30 @@ const handleCollapse = (label: string) => {
       </div>
     </div>
     <div class="model">
-      <div class="model-title">间距与辅助线</div>
+      <div class="model-title">间距</div>
       <div class="spacing-controls">
         <div class="spacing-row">
-          <span>模块间距</span>
-          <div class="spacing-options">
-            <button
-              v-for="option in spacingOptions"
-              :key="option"
-              type="button"
-              :class="['spacing-btn', { active: spacingValue === option }]"
-              @click="spacingValue = option"
-            >
-              {{ option }}
-            </button>
-          </div>
+          <span>页边距</span>
+          <a-slider
+            id="page"
+            v-model:value="marginValue"
+            :min="0"
+            :max="50"
+            :step="2"
+          />
         </div>
         <div class="spacing-row">
-          <span>对齐辅助线</span>
-          <a-switch v-model:checked="showHelperGrid" />
+          <span>模块间距</span>
+          <a-slider v-model:value="spacingValue" :min="1" :max="99" :step="2" />
+        </div>
+        <div class="spacing-row">
+          <span>段落间距</span>
+          <a-slider
+            v-model:value="paragraphValue"
+            :min="1"
+            :max="99"
+            :step="2"
+          />
         </div>
       </div>
     </div>
@@ -459,40 +477,6 @@ const handleCollapse = (label: string) => {
   &.active {
     transform: scale(1.05);
     border-color: #3b82f6;
-  }
-}
-
-.spacing-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 1.2rem;
-}
-
-.spacing-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.spacing-options {
-  display: flex;
-  gap: 0.6rem;
-}
-
-.spacing-btn {
-  border: 1px solid #d9d9d9;
-  background: transparent;
-  border-radius: 999px;
-  padding: 0.2rem 1rem;
-  font-size: 1.2rem;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &.active {
-    background: rgba(59, 130, 246, 0.15);
-    border-color: #3b82f6;
-    color: #1d4ed8;
   }
 }
 </style>

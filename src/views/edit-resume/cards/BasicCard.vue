@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Basic } from '@/types/userInfo'
+import { DownOutlined, UpOutlined } from '@ant-design/icons-vue'
 import { computed, ref, type Ref, watch } from 'vue'
 
 const props = defineProps<{
@@ -39,44 +40,34 @@ const handleExpand = () => {
 <template>
   <div class="collapse">
     <div class="info" @click="handleExpand">
-      <div>
-        <div class="info-title">基本信息</div>
-        <div class="info-desc">描述</div>
+      <div class="info-title">
+        基本信息 <DownOutlined v-if="!isExpand" /><UpOutlined v-else />
       </div>
-      <div class="info-work">
-        <span class="info-action">可见</span>
-        <span class="info-action danger">删除</span>
-      </div>
+      <div class="info-work"></div>
     </div>
-    <transition name="slide">
-      <div v-if="isExpand" class="collapse-content">
-        <div class="basic-field">
-          <div class="field-warper">
-            <div
-              v-for="field in basicFields"
-              :key="field.prop"
-              class="field-item"
-            >
-              <span class="sort-icon">::</span>
-              <div class="field-input">
-                <div class="field-prop">
-                  <span class="prop">{{ field.label }}</span>
-                </div>
-                <a-input
-                  v-model:value="localBasic[field.prop]"
-                  class="field-text"
-                  :placeholder="`请输入${field.label}`"
-                />
+
+    <div v-if="isExpand" class="collapse-content">
+      <div class="basic-field">
+        <div class="field-warper">
+          <div
+            v-for="field in basicFields"
+            :key="field.prop"
+            class="field-item"
+          >
+            <div class="field-input">
+              <div class="field-prop">
+                <span class="prop">{{ field.label }}</span>
               </div>
-              <div class="field-work">
-                <span>可见</span>
-                <span>删除</span>
-              </div>
+              <a-input
+                v-model:value="localBasic[field.prop]"
+                class="field-text"
+                :placeholder="`请输入${field.label}`"
+              />
             </div>
           </div>
         </div>
       </div>
-    </transition>
+    </div>
   </div>
 </template>
 
@@ -88,9 +79,10 @@ const handleExpand = () => {
 
   .info {
     width: 100%;
-    min-height: 78px;
+    min-height: 60px;
     display: flex;
     justify-content: space-between;
+    align-items: center;
     gap: 1rem;
     border: 1px dashed;
     padding: 1rem 1.4rem;

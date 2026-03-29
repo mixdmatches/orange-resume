@@ -11,7 +11,7 @@ const title = ref('未命名简历')
 <template>
   <div class="tool-head">
     <div class="tool-head-left">
-      <line-md-arrow-small-left />
+      <line-md-arrow-small-left @click="$router.back()" />
       <a-input v-model:value="title" class="title"></a-input>
     </div>
     <div class="tools">

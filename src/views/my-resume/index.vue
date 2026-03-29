@@ -2,7 +2,7 @@
 import {
   PlusOutlined,
   EditOutlined,
-  EllipsisOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons-vue'
 import { useRouter } from 'vue-router'
 const router = useRouter()
@@ -13,6 +13,10 @@ const handleAddResume = () => {
 }
 const handleEditResume = (item: number) => {
   router.push(`/edit-resume/${item}`)
+}
+const handleDeleteResume = (item: number) => {
+  // 删除简历
+  console.log(item)
 }
 </script>
 
@@ -32,10 +36,9 @@ const handleEditResume = (item: number) => {
         </template>
         <template #actions>
           <edit-outlined key="edit" @click="handleEditResume(item)" />
-          <ellipsis-outlined key="ellipsis" />
+          <DeleteOutlined key="delete" @click="handleDeleteResume(item)" />
         </template>
-        <a-card-meta title="Card title" description="This is the description">
-        </a-card-meta>
+        <a-card-meta title="未命名简历"> </a-card-meta>
       </a-card>
     </div>
   </div>

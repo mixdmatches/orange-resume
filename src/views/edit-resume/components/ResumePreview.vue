@@ -35,9 +35,8 @@ defineProps<{
           class="timeline-card"
         >
           <div class="timeline-main">
-            <div>
-              <div class="timeline-title">{{ item.school }}</div>
-              <div class="timeline-sub">{{ item.degree }}</div>
+            <div class="timeline-title">
+              {{ item.school }}-{{ item.degree }}
             </div>
             <div class="timeline-major">{{ item.major }}</div>
             <div class="timeline-period">
@@ -57,11 +56,11 @@ defineProps<{
         <h2 class="section-title">实习经历</h2>
         <div v-for="item in internships" :key="item.id" class="timeline-card">
           <div class="timeline-main">
-            <div>
-              <div class="timeline-title">{{ item.companyName }}</div>
-              <div class="timeline-sub">{{ item.department }}</div>
+            <div class="timeline-title">
+              {{ item.companyName }}-{{ item.department }}
             </div>
             <div class="timeline-period">{{ item.position }}</div>
+            <div class="timeline-time"></div>
           </div>
           <ul class="timeline-list">
             {{
