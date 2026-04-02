@@ -20,8 +20,6 @@ const localEducation: Ref<Education[]> = ref(props.educations)
 watch(
   localEducation,
   newValue => {
-    console.log(newValue)
-
     emit('handleEducation', newValue)
   },
   { deep: true },

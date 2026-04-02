@@ -3,7 +3,10 @@ import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
+  VerticalAlignTopOutlined,
 } from '@ant-design/icons-vue'
+import dayjs from 'dayjs'
+import { h } from 'vue'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 const handleAddResume = () => {
@@ -22,9 +25,19 @@ const handleDeleteResume = (item: number) => {
 
 <template>
   <div class="my-resume">
-    <div class="add-resume" @click="handleAddResume">
-      <PlusOutlined style="font-size: 2rem" />
-      <span>新建简历</span>
+    <div class="work">
+      <a-space>
+        <a-button
+          type="primary"
+          size="large"
+          :icon="h(PlusOutlined)"
+          @click="handleAddResume"
+          >新建简历</a-button
+        >
+        <a-button size="large" :icon="h(VerticalAlignTopOutlined)"
+          >导入配置</a-button
+        >
+      </a-space>
     </div>
     <div class="resumes">
       <a-card v-for="item in 8" :key="item" hoverable>
@@ -36,9 +49,17 @@ const handleDeleteResume = (item: number) => {
         </template>
         <template #actions>
           <edit-outlined key="edit" @click="handleEditResume(item)" />
-          <DeleteOutlined key="delete" @click="handleDeleteResume(item)" />
+          <DeleteOutlined
+            key="delete"
+            style="color: #ff4d4f"
+            @click="handleDeleteResume(item)"
+          />
         </template>
-        <a-card-meta title="未命名简历"> </a-card-meta>
+        <a-card-meta
+          title="未命名简历"
+          :description="dayjs(Date.now()).format('YYYY-MM-DD')"
+        >
+        </a-card-meta>
       </a-card>
     </div>
   </div>
@@ -69,5 +90,8 @@ const handleDeleteResume = (item: number) => {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   grid-gap: 2rem;
+}
+.work {
+  margin-bottom: 2rem;
 }
 </style>

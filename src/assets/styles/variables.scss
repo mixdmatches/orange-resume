@@ -1,17 +1,20 @@
 @use 'sass:map';
 
 $primary-color: #1677ff;
+$warning-color: #ff9900;
+$danger-color: #ff4d4f;
+
 $site-header-height: 60px;
-$border-color:#f0f0f0;
+$border-color: #f0f0f0;
 
 $bg-color: (
   light: #fff,
   dark: #000,
 );
 
-$layout-bg-color:(
-  light:#f5f5f5,
-  dark:#141414
+$layout-bg-color: (
+  light: #f5f5f5,
+  dark: #141414,
 );
 
 $text-color: (

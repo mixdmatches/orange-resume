@@ -41,8 +41,17 @@ defineProps<{
             </div>
             <div class="timeline-major">{{ item.major }}</div>
             <div class="timeline-period">
-              {{ dayjs(item.dateRange[0]).format('YYYY/MM') }} -
-              {{ dayjs(item.dateRange[1]).format('YYYY/MM') }}
+              {{
+                item.dateRange && item.dateRange.length === 2
+                  ? dayjs(item.dateRange[0]).format('YYYY/MM')
+                  : ''
+              }}
+              <em>-</em>
+              {{
+                item.dateRange && item.dateRange.length === 2
+                  ? dayjs(item.dateRange[1]).format('YYYY/MM')
+                  : ''
+              }}
             </div>
           </div>
           <ul class="timeline-list">
@@ -63,8 +72,17 @@ defineProps<{
             </div>
             <div class="timeline-period">{{ item.position }}</div>
             <div class="timeline-time">
-              {{ dayjs(item.dateRange[0]).format('YYYY/MM') }} -
-              {{ dayjs(item.dateRange[1]).format('YYYY/MM') }}
+              {{
+                item.dateRange && item.dateRange.length === 2
+                  ? dayjs(item.dateRange[0]).format('YYYY/MM')
+                  : ''
+              }}
+              <em>-</em>
+              {{
+                item.dateRange && item.dateRange.length === 2
+                  ? dayjs(item.dateRange[1]).format('YYYY/MM')
+                  : ''
+              }}
             </div>
           </div>
           <ul class="timeline-list">
@@ -78,13 +96,22 @@ defineProps<{
       <!-- 项目经历 -->
       <section class="preview-section">
         <h2 class="section-title">项目经历</h2>
-        <div v-for="item in projects" :key="item.name" class="project-card">
-          <div class="project-head">
-            <div class="project-name">{{ item.name }}</div>
-            <span class="project-stack">{{ item.role }}</span>
-            <span class="project-time">
-              {{ dayjs(item.dateRange[0]).format('YYYY/MM') }} -
-              {{ dayjs(item.dateRange[1]).format('YYYY/MM') }}
+        <div v-for="item in projects" :key="item.name" class="timeline-card">
+          <div class="timeline-main">
+            <div class="timeline-title">{{ item.name }}</div>
+            <span class="timeline-major">{{ item.role }}</span>
+            <span class="timeline-time">
+              {{
+                item.dateRange && item.dateRange.length === 2
+                  ? dayjs(item.dateRange[0]).format('YYYY/MM')
+                  : ''
+              }}
+              <em>-</em>
+              {{
+                item.dateRange && item.dateRange.length === 2
+                  ? dayjs(item.dateRange[1]).format('YYYY/MM')
+                  : ''
+              }}
             </span>
           </div>
           <a
@@ -102,7 +129,7 @@ defineProps<{
       <!-- 个人技能 -->
       <section class="preview-section">
         <h2 class="section-title">个人技能</h2>
-        <div class="skill-card">
+        <div class="timeline-card">
           {{ skills }}
         </div>
       </section>
@@ -174,8 +201,7 @@ defineProps<{
   padding-left: 0.8rem;
 }
 
-.timeline-card,
-.project-card {
+.timeline-card {
   border-radius: 0.6rem;
   border: 1px solid #eef0f5;
   padding: 1.4rem 1.6rem;

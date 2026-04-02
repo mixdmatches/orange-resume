@@ -36,8 +36,6 @@ export interface Project {
   role: string
   gitAddress: string
   dateRange: [Dayjs, Dayjs] | []
-  startDate?: string
-  endDate?: string
   visible: boolean
   description: string
 }
