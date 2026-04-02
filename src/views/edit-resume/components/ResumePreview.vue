@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import { useResumeData } from '@/stores/userInfo'
 import dayjs from 'dayjs'
-import type { Basic, Education, Internship } from '@/types/userInfo'
-const { resume } = useResumeData()
-const resumeData = resume
+import type { Basic, Education, Internship, Project } from '@/types/userInfo'
 
 defineProps<{
   basic: Basic
   educations: Education[]
   internships: Internship[]
+  projects: Project[]
+  skills: string
 }>()
 </script>
 
 <template>
   <div class="preview-wrapper">
     <div class="preview-card">
+      <!-- 基本信息 -->
       <section class="preview-header">
         <div class="profile">
           <h1>{{ basic.name }}</h1>
@@ -27,6 +27,7 @@ defineProps<{
         </div>
       </section>
 
+      <!-- 教育经历 -->
       <section class="preview-section">
         <h2 class="section-title">教育经历</h2>
         <div
@@ -40,8 +41,8 @@ defineProps<{
             </div>
             <div class="timeline-major">{{ item.major }}</div>
             <div class="timeline-period">
-              {{ dayjs(item.dateRange[0], 'YYYY/MM') }} -
-              {{ dayjs(item.dateRange[1], 'YYYY/MM') }}
+              {{ dayjs(item.dateRange[0]).format('YYYY/MM') }} -
+              {{ dayjs(item.dateRange[1]).format('YYYY/MM') }}
             </div>
           </div>
           <ul class="timeline-list">
@@ -52,6 +53,7 @@ defineProps<{
         </div>
       </section>
 
+      <!-- 实习经历 -->
       <section class="preview-section">
         <h2 class="section-title">实习经历</h2>
         <div v-for="item in internships" :key="item.id" class="timeline-card">
@@ -60,7 +62,10 @@ defineProps<{
               {{ item.companyName }}-{{ item.department }}
             </div>
             <div class="timeline-period">{{ item.position }}</div>
-            <div class="timeline-time"></div>
+            <div class="timeline-time">
+              {{ dayjs(item.dateRange[0]).format('YYYY/MM') }} -
+              {{ dayjs(item.dateRange[1]).format('YYYY/MM') }}
+            </div>
           </div>
           <ul class="timeline-list">
             {{
@@ -70,43 +75,35 @@ defineProps<{
         </div>
       </section>
 
+      <!-- 项目经历 -->
       <section class="preview-section">
         <h2 class="section-title">项目经历</h2>
-        <div
-          v-for="item in resumeData.projects"
-          :key="item.name"
-          class="project-card"
-        >
+        <div v-for="item in projects" :key="item.name" class="project-card">
           <div class="project-head">
-            <div>
-              <div class="project-name">{{ item.name }}</div>
-              <a
-                class="project-link"
-                :href="item.link"
-                target="_blank"
-                rel="noreferrer"
-              >
-                {{ item.link }}
-              </a>
-            </div>
-            <span class="project-stack">{{ item.stack }}</span>
+            <div class="project-name">{{ item.name }}</div>
+            <span class="project-stack">{{ item.role }}</span>
+            <span class="project-time">
+              {{ dayjs(item.dateRange[0]).format('YYYY/MM') }} -
+              {{ dayjs(item.dateRange[1]).format('YYYY/MM') }}
+            </span>
           </div>
-          <p class="project-summary">{{ item.summary }}</p>
-          <ul class="timeline-list">
-            <li v-for="bullet in item.bullets" :key="bullet">{{ bullet }}</li>
-          </ul>
+          <a
+            class="project-link"
+            :href="item.gitAddress"
+            target="_blank"
+            rel="noreferrer"
+          >
+            {{ item.gitAddress }}
+          </a>
+          <p class="project-summary">{{ item.description }}</p>
         </div>
       </section>
 
+      <!-- 个人技能 -->
       <section class="preview-section">
         <h2 class="section-title">个人技能</h2>
-        <div class="skill-list">
-          <span
-            v-for="skill in resumeData.skills"
-            :key="skill"
-            class="skill-badge"
-            >{{ skill }}</span
-          >
+        <div class="skill-card">
+          {{ skills }}
         </div>
       </section>
     </div>
@@ -118,6 +115,7 @@ defineProps<{
   width: 100%;
   height: 100%;
   overflow-y: auto;
+  border: 1px solid #e5e6eb;
 }
 
 .preview-card {
@@ -125,11 +123,11 @@ defineProps<{
   height: 100%;
   border-radius: 0.5rem;
   padding: 2.4rem;
-  background: #fdfdfd;
+  // background: #fdfdfd;
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  box-shadow: 0 14px 50px rgba(15, 23, 42, 0.08);
+  // box-shadow: 0 14px 50px rgba(15, 23, 42, 0.08);
 }
 
 .preview-header {
@@ -207,9 +205,10 @@ defineProps<{
 }
 
 .timeline-period,
+.timeline-major,
+.timeline-time,
 .project-stack {
   font-size: 1.3rem;
-  color: #818cf8;
   font-weight: 500;
 }
 
@@ -236,18 +235,8 @@ defineProps<{
   line-height: 1.6;
 }
 
-.skill-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.8rem;
-}
-
-.skill-badge {
-  padding: 0.4rem 1rem;
-  border-radius: 999px;
-  background: rgba(59, 130, 246, 0.12);
-  color: #1d4ed8;
-  font-size: 1.3rem;
-  border: 1px solid rgba(59, 130, 246, 0.3);
+.skill-card {
+  padding: 1.4rem 1.6rem;
+  background: #fff;
 }
 </style>

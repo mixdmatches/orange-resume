@@ -16,12 +16,12 @@ const props = defineProps<{
 const emit = defineEmits<{
   handleEducation: [value: Education[]]
 }>()
-const localEducation: Ref<Education[]> = ref(
-  JSON.parse(JSON.stringify(props.educations)),
-)
+const localEducation: Ref<Education[]> = ref(props.educations)
 watch(
   localEducation,
   newValue => {
+    console.log(newValue)
+
     emit('handleEducation', newValue)
   },
   { deep: true },

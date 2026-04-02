@@ -4,6 +4,7 @@ export const initialGlobalConfiguration = {
   basePagePadding: 10, // 基础页面内边距
   baseLineHeight: 1.5, // 基础行高
   baseModuleSpacing: 10, // 基础模块间距
+  paragraphSpacing: 10, // 段落间距
   titleFontSize: 20, // 标题字体大小
   subTitleFontSize: 18, // 子标题字体大小
   themeColor: '#000', // 主题颜色
@@ -13,6 +14,7 @@ export const initialGlobalConfiguration = {
 export const DEFAULT_RESUME = {
   title: '未命名简历',
   createDate: new Date().toISOString(),
+  updateDate: new Date().toISOString(),
   basic: {
     name: '陈下饭',
     position: '前端开发工程师',
@@ -42,6 +44,18 @@ export const DEFAULT_RESUME = {
       name: '中后台管理系统',
       role: '前端开发工程师',
       gitAddress: 'github.com',
+      startDate: '2025-03',
+      endDate: '2025-06',
+      visible: true,
+      description: '',
+    },
+  ],
+  internships: [
+    {
+      id: '1',
+      companyName: '字节跳动',
+      position: '前端开发工程师',
+      department: '研发部',
       startDate: '2025-03',
       endDate: '2025-06',
       visible: true,

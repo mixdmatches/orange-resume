@@ -25,6 +25,21 @@ export interface Internship {
   companyName: string
   position: string
   department: string
-  date: [Dayjs, Dayjs] | string
+  dateRange: [Dayjs, Dayjs] | []
+  description: string
+  visible: boolean
+}
+
+export interface Project {
+  id: string
+  name: string
+  role: string
+  gitAddress: string
+  dateRange: [Dayjs, Dayjs] | []
+  startDate?: string
+  endDate?: string
+  visible: boolean
   description: string
 }
+
+export type Skill = string

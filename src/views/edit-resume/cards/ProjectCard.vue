@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Internship } from '@/types/userInfo'
+import type { Project } from '@/types/userInfo'
 import { computed, ref, watch } from 'vue'
 import {
   EyeOutlined,
@@ -7,19 +7,21 @@ import {
   DownOutlined,
   UpOutlined,
 } from '@ant-design/icons-vue'
+import dayjs from 'dayjs'
+
 const props = defineProps<{
-  internships: Internship[]
+  projects: Project[]
 }>()
 
 const emit = defineEmits<{
-  handleInternship: [value: Internship[]]
+  handleProjects: [value: Project[]]
 }>()
 
-const localInternships = computed(() => props.internships)
+const localProjects = computed(() => props.projects)
 watch(
-  () => localInternships.value,
-  (newValue: Internship[]) => {
-    emit('handleInternship', newValue)
+  () => localProjects.value,
+  (newValue: Project[]) => {
+    emit('handleProjects', newValue)
   },
 )
 
@@ -27,15 +29,31 @@ const isExpand = ref(false)
 const handleExpand = () => {
   isExpand.value = !isExpand.value
 }
-const handleDeleteInternship = () => {}
-const handleAddInternship = () => {}
+
+const handleDeleteProject = (id: string) => {
+  const updatedProjects = localProjects.value.filter(p => p.id !== id)
+  emit('handleProjects', updatedProjects)
+}
+
+const handleAddProject = () => {
+  const newProject: Project = {
+    id: Date.now().toString(),
+    name: '',
+    role: '',
+    gitAddress: '',
+    dateRange: [dayjs(), dayjs()],
+    visible: true,
+    description: '',
+  }
+  emit('handleProjects', [...localProjects.value, newProject])
+}
 </script>
 
 <template>
   <div class="collapse">
     <div class="info" @click="handleExpand">
       <div class="info-title">
-        实习经历 <DownOutlined v-if="!isExpand" /><UpOutlined v-else />
+        项目经历 <DownOutlined v-if="!isExpand" /><UpOutlined v-else />
       </div>
       <div class="info-work">
         <EyeOutlined style="font-size: 16px" />
@@ -43,55 +61,61 @@ const handleAddInternship = () => {}
       </div>
     </div>
     <div v-if="isExpand" class="collapse-content">
-      <template v-for="internship in localInternships" :key="internship.id">
+      <template v-for="project in localProjects" :key="project.id">
         <a-form :label-col="{ style: { width: '120px' } }">
           <a-row>
-            <a-form-item label="公司名称">
+            <a-form-item label="项目名称">
               <a-input
-                v-model:value="internship.companyName"
+                v-model:value="project.name"
                 style="width: 200px"
-                placeholder="公司名称"
+                placeholder="项目名称"
               />
             </a-form-item>
-            <a-form-item label="岗位名称">
+            <a-form-item label="担任角色">
               <a-input
-                v-model:value="internship.position"
-                placeholder="岗位名称"
+                v-model:value="project.role"
+                placeholder="担任角色"
                 style="width: 200px"
               />
             </a-form-item>
           </a-row>
           <a-row>
-            <a-form-item label="所在部门">
+            <a-form-item label="项目地址">
               <a-input
-                v-model:value="internship.department"
-                placeholder="所在部门"
-                style="width: 200px"
+                v-model:value="project.gitAddress"
+                placeholder="GitHub/GitLab地址"
+                style="width: 424px"
               />
             </a-form-item>
-            <a-form-item label="实习时间">
+          </a-row>
+          <a-row>
+            <a-form-item label="项目时间">
               <a-range-picker
-                v-model:value="internship.dateRange"
+                v-model:value="project.dateRange"
                 :format="'YYYY/MM'"
                 style="width: 200px"
               />
             </a-form-item>
           </a-row>
-          <a-form-item label="实习成果">
+          <a-form-item label="项目描述">
             <a-textarea
-              v-model:value="internship.description"
+              v-model:value="project.description"
               :rows="4"
-              placeholder="输入实习成果、负责模块..."
+              placeholder="描述项目内容、技术栈、负责模块..."
             />
           </a-form-item>
         </a-form>
-        <a-button type="dashed" block danger @click="handleDeleteInternship"
-          >删除实习经历</a-button
+        <a-button
+          type="dashed"
+          block
+          danger
+          @click="handleDeleteProject(project.id)"
+          >删除项目经历</a-button
         >
       </template>
       <div class="form-actions">
-        <a-button type="dashed" block @click="handleAddInternship"
-          >+ 添加实习经历</a-button
+        <a-button type="dashed" block @click="handleAddProject"
+          >+ 添加项目经历</a-button
         >
       </div>
     </div>

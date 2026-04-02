@@ -27,6 +27,8 @@ const fontOptions = ['12px', '14px', '16px', '18px', '20px', '22px', '24px']
         <slot name="basic"> </slot>
         <slot name="education"></slot>
         <slot name="internship"></slot>
+        <slot name="project"></slot>
+        <slot name="skills"></slot>
         <!-- <div v-for="item in infoList" :key="item.label" class="collapse">
           <div class="info" @click="handleCollapse(item.label)">
             <div>
