@@ -1,27 +1,14 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { inject, ref } from 'vue'
 import {
   EyeOutlined,
   DeleteOutlined,
   DownOutlined,
   UpOutlined,
 } from '@ant-design/icons-vue'
+import type { Resume } from '@/types/userInfo'
 
-const props = defineProps<{
-  skills: string
-}>()
-
-const emit = defineEmits<{
-  handleSkills: [value: string]
-}>()
-
-const localSkills = computed(() => props.skills)
-watch(
-  () => localSkills.value,
-  (newValue: string) => {
-    emit('handleSkills', newValue)
-  },
-)
+const resume: Resume = inject('resume') as Resume
 
 const isExpand = ref(false)
 const handleExpand = () => {
@@ -41,7 +28,7 @@ const handleExpand = () => {
       </div>
     </div>
     <div v-if="isExpand" class="collapse-content">
-      <a-textarea v-model:value="localSkills" placeholder="请输入个人技能" />
+      <a-textarea v-model:value="resume.skills" placeholder="请输入个人技能" />
     </div>
   </div>
 </template>

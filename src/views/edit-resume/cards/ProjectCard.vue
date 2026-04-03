@@ -1,52 +1,23 @@
 <script setup lang="ts">
-import type { Project } from '@/types/userInfo'
-import { computed, ref, watch } from 'vue'
+import type { Resume } from '@/types/userInfo'
+import { inject, ref } from 'vue'
 import {
   EyeOutlined,
   DeleteOutlined,
   DownOutlined,
   UpOutlined,
 } from '@ant-design/icons-vue'
-import dayjs from 'dayjs'
 
-const props = defineProps<{
-  projects: Project[]
-}>()
-
-const emit = defineEmits<{
-  handleProjects: [value: Project[]]
-}>()
-
-const localProjects = computed(() => props.projects)
-watch(
-  () => localProjects.value,
-  (newValue: Project[]) => {
-    emit('handleProjects', newValue)
-  },
-)
+const resume: Resume = inject('resume') as Resume
 
 const isExpand = ref(false)
 const handleExpand = () => {
   isExpand.value = !isExpand.value
 }
 
-const handleDeleteProject = (id: string) => {
-  const updatedProjects = localProjects.value.filter(p => p.id !== id)
-  emit('handleProjects', updatedProjects)
-}
+const handleDeleteProject = (id: string) => {}
 
-const handleAddProject = () => {
-  const newProject: Project = {
-    id: Date.now().toString(),
-    name: '',
-    role: '',
-    gitAddress: '',
-    dateRange: [dayjs(), dayjs()],
-    visible: true,
-    description: '',
-  }
-  emit('handleProjects', [...localProjects.value, newProject])
-}
+const handleAddProject = () => {}
 </script>
 
 <template>
@@ -61,7 +32,7 @@ const handleAddProject = () => {
       </div>
     </div>
     <div v-if="isExpand" class="collapse-content">
-      <template v-for="project in localProjects" :key="project.id">
+      <template v-for="project in resume.projects" :key="project.id">
         <a-form :label-col="{ style: { width: '120px' } }">
           <a-row>
             <a-form-item label="项目名称">
@@ -90,9 +61,9 @@ const handleAddProject = () => {
           </a-row>
           <a-row>
             <a-form-item label="项目时间">
-              <a-range-picker
+              <a-input
                 v-model:value="project.dateRange"
-                :format="'YYYY/MM'"
+                placeholder="时间范围：YYYY/MM - YYYY/MM"
                 style="width: 200px"
               />
             </a-form-item>

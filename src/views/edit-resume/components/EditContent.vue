@@ -1,6 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-
+import { inject, ref } from 'vue'
+import BasicCard from '@/views/edit-resume/cards/BasicCard.vue'
+import EducationCard from '@/views/edit-resume/cards/EducationCard.vue'
+import InternshipCard from '@/views/edit-resume/cards/InternshipCard.vue'
+import ProjectCard from '@/views/edit-resume/cards/ProjectCard.vue'
+import SkillsCard from '@/views/edit-resume/cards/SkillsCard.vue'
+import type { Resume } from '@/types/userInfo'
 const themeColors = ref([
   '#111827',
   '#1d4ed8',
@@ -10,13 +15,11 @@ const themeColors = ref([
   '#0f172a',
 ])
 const selectedTheme = ref(themeColors.value[1])
-// 间距控制
-const spacingValue = ref(16) // 模块间距，默认16px
-const marginValue = ref(20) // 页边距，默认20px
-const paragraphValue = ref(12) // 段落间距，默认12px
 
 // 字号选择
 const fontOptions = ['12px', '14px', '16px', '18px', '20px', '22px', '24px']
+
+const resume: Resume = inject('resume') as Resume
 </script>
 
 <template>
@@ -24,11 +27,11 @@ const fontOptions = ['12px', '14px', '16px', '18px', '20px', '22px', '24px']
     <div class="model">
       <div class="model-title">布局内容</div>
       <div class="model-content">
-        <slot name="basic"> </slot>
-        <slot name="education"></slot>
-        <slot name="internship"></slot>
-        <slot name="project"></slot>
-        <slot name="skills"></slot>
+        <BasicCard />
+        <EducationCard />
+        <InternshipCard />
+        <ProjectCard />
+        <SkillsCard />
       </div>
       <a-button
         style="margin-top: 1rem"
@@ -40,17 +43,27 @@ const fontOptions = ['12px', '14px', '16px', '18px', '20px', '22px', '24px']
       </a-button>
     </div>
 
+    <!-- 排版 -->
     <div class="model">
       <div class="model-title">排版</div>
       <div class="model-content">
         <div class="set">
           <span>行高</span>
-          <a-slider id="test" :min="1" :max="2" :step="0.1" />
+          <a-slider
+            id="test"
+            v-model:value="resume.globalConfiguration.baseLineHeight"
+            :min="1"
+            :max="2"
+            :step="0.1"
+          />
         </div>
         <a-row>
           <a-col :span="6">
             <span>基础字号</span>
-            <a-select style="width: 160px">
+            <a-select
+              v-model:value="resume.globalConfiguration.baseFontSize"
+              style="width: 160px"
+            >
               <a-select-option
                 v-for="font in fontOptions"
                 :key="font"
@@ -61,7 +74,10 @@ const fontOptions = ['12px', '14px', '16px', '18px', '20px', '22px', '24px']
           </a-col>
           <a-col :span="6">
             <span>模块标题字号</span>
-            <a-select style="width: 160px">
+            <a-select
+              v-model:value="resume.globalConfiguration.titleFontSize"
+              style="width: 160px"
+            >
               <a-select-option
                 v-for="font in fontOptions"
                 :key="font"
@@ -72,7 +88,10 @@ const fontOptions = ['12px', '14px', '16px', '18px', '20px', '22px', '24px']
           </a-col>
           <a-col :span="6">
             <span>模块一级标题字号</span>
-            <a-select style="width: 160px">
+            <a-select
+              v-model:value="resume.globalConfiguration.subTitleFontSize"
+              style="width: 160px"
+            >
               <a-select-option
                 v-for="font in fontOptions"
                 :key="font"
@@ -84,6 +103,7 @@ const fontOptions = ['12px', '14px', '16px', '18px', '20px', '22px', '24px']
         </a-row>
       </div>
     </div>
+    <!-- 主题色 -->
     <div class="model">
       <div class="model-title">主题色</div>
       <div class="theme-palette">
@@ -92,11 +112,12 @@ const fontOptions = ['12px', '14px', '16px', '18px', '20px', '22px', '24px']
           :key="color"
           :class="['theme-dot', { active: selectedTheme === color }]"
           :style="{ background: color }"
-          @click="selectedTheme = color"
+          @click="resume.globalConfiguration.themeColor = color"
         ></div>
         <a-button type="dashed" size="small">自定义</a-button>
       </div>
     </div>
+    <!-- 间距 -->
     <div class="model">
       <div class="model-title">间距</div>
       <div class="spacing-controls">
@@ -104,7 +125,7 @@ const fontOptions = ['12px', '14px', '16px', '18px', '20px', '22px', '24px']
           <span>页边距</span>
           <a-slider
             id="page"
-            v-model:value="marginValue"
+            v-model:value="resume.globalConfiguration.basePagePadding"
             :min="0"
             :max="50"
             :step="2"
@@ -112,12 +133,17 @@ const fontOptions = ['12px', '14px', '16px', '18px', '20px', '22px', '24px']
         </div>
         <div class="spacing-row">
           <span>模块间距</span>
-          <a-slider v-model:value="spacingValue" :min="1" :max="99" :step="2" />
+          <a-slider
+            v-model:value="resume.globalConfiguration.baseModuleSpacing"
+            :min="1"
+            :max="99"
+            :step="2"
+          />
         </div>
         <div class="spacing-row">
           <span>段落间距</span>
           <a-slider
-            v-model:value="paragraphValue"
+            v-model:value="resume.globalConfiguration.paragraphSpacing"
             :min="1"
             :max="99"
             :step="2"

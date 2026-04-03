@@ -1,23 +1,24 @@
 <script setup lang="ts">
-import type { Basic } from '@/types/userInfo'
+import type { Basic, Resume } from '@/types/userInfo'
 import { DownOutlined, UpOutlined } from '@ant-design/icons-vue'
-import { computed, ref, type Ref, watch } from 'vue'
+import { inject, ref } from 'vue'
 
-const props = defineProps<{
-  basic: Basic
-}>()
-const emit = defineEmits<{
-  handleBasic: [value: Basic]
-}>()
+const resume: Resume = inject('resume') as Resume
+// const props = defineProps<{
+//   basic: Basic
+// }>()
+// const emit = defineEmits<{
+//   handleBasic: [value: Basic]
+// }>()
 
-const localBasic: Ref<Basic> = computed(() => props.basic)
-watch(
-  localBasic,
-  newValue => {
-    emit('handleBasic', newValue)
-  },
-  { deep: true },
-)
+// const localBasic: Ref<Basic> = computed(() => props.basic)
+// watch(
+//   localBasic,
+//   newValue => {
+//     emit('handleBasic', newValue)
+//   },
+//   { deep: true },
+// )
 
 interface BasicField {
   label: string
@@ -59,7 +60,7 @@ const handleExpand = () => {
                 <span class="prop">{{ field.label }}</span>
               </div>
               <a-input
-                v-model:value="localBasic[field.prop]"
+                v-model:value="resume.basic[field.prop]"
                 class="field-text"
                 :placeholder="`请输入${field.label}`"
               />

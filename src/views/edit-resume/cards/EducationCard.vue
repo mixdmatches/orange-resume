@@ -1,41 +1,18 @@
 <script setup lang="ts">
-import type { Education } from '@/types/userInfo'
+import type { Resume } from '@/types/userInfo'
 import {
   EyeOutlined,
   DeleteOutlined,
   DownOutlined,
   UpOutlined,
 } from '@ant-design/icons-vue'
-import { ref, watch, type Ref } from 'vue'
+import { inject, ref } from 'vue'
 
-const degreeOptions = ['小学', '初中', '高中', '大专', '本科', '研究生', '博士']
+const resume: Resume = inject('resume') as Resume
 
-const props = defineProps<{
-  educations: Education[]
-}>()
-const emit = defineEmits<{
-  handleEducation: [value: Education[]]
-}>()
-const localEducation: Ref<Education[]> = ref(props.educations)
-watch(
-  localEducation,
-  newValue => {
-    emit('handleEducation', newValue)
-  },
-  { deep: true },
-)
-const handleAddEducation = () => {
-  localEducation.value.push({
-    id: '',
-    school: '',
-    major: '',
-    degree: '',
-    dateRange: '',
-    visible: true,
-    gpa: '',
-    description: ``,
-  })
-}
+const degreeOptions = ['小学', '初中', '高中', '大专', '本科', '硕士', '博士']
+
+const handleAddEducation = () => {}
 const isExpand = ref(false)
 const handleExpand = () => {
   isExpand.value = !isExpand.value
@@ -54,7 +31,7 @@ const handleExpand = () => {
       </div>
     </div>
     <div v-if="isExpand" class="collapse-content">
-      <template v-for="value in localEducation" :key="value.id">
+      <template v-for="value in resume.educations" :key="value.id">
         <a-form :label-col="{ style: { width: '120px' } }">
           <a-row>
             <a-form-item label="学校名称" name="school">
@@ -88,10 +65,10 @@ const handleExpand = () => {
               </a-select>
             </a-form-item>
             <a-form-item label="时间范围" name="dateRange">
-              <a-range-picker
+              <a-input
                 v-model:value="value.dateRange"
                 style="width: 200px"
-                :format="'YYYY/MM'"
+                placeholder="时间范围：YYYY/MM - YYYY/MM"
               />
             </a-form-item>
           </a-row>

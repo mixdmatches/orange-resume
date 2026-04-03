@@ -1,27 +1,13 @@
 <script setup lang="ts">
-import type { Internship } from '@/types/userInfo'
-import { computed, ref, watch } from 'vue'
+import type { Resume } from '@/types/userInfo'
+import { inject, ref } from 'vue'
 import {
   EyeOutlined,
   DeleteOutlined,
   DownOutlined,
   UpOutlined,
 } from '@ant-design/icons-vue'
-const props = defineProps<{
-  internships: Internship[]
-}>()
-
-const emit = defineEmits<{
-  handleInternship: [value: Internship[]]
-}>()
-
-const localInternships = computed(() => props.internships)
-watch(
-  () => localInternships.value,
-  (newValue: Internship[]) => {
-    emit('handleInternship', newValue)
-  },
-)
+const resume: Resume = inject('resume') as Resume
 
 const isExpand = ref(false)
 const handleExpand = () => {
@@ -43,7 +29,7 @@ const handleAddInternship = () => {}
       </div>
     </div>
     <div v-if="isExpand" class="collapse-content">
-      <template v-for="internship in localInternships" :key="internship.id">
+      <template v-for="internship in resume.internships" :key="internship.id">
         <a-form :label-col="{ style: { width: '120px' } }">
           <a-row>
             <a-form-item label="公司名称">
@@ -70,9 +56,9 @@ const handleAddInternship = () => {}
               />
             </a-form-item>
             <a-form-item label="实习时间">
-              <a-range-picker
+              <a-input
                 v-model:value="internship.dateRange"
-                :format="'YYYY/MM'"
+                placeholder="时间范围：YYYY/MM - YYYY/MM"
                 style="width: 200px"
               />
             </a-form-item>

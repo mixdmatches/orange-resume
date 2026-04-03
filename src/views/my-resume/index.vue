@@ -1,4 +1,11 @@
 <script setup lang="ts">
+import { DEFAULT_RESUME } from '@/config/init-resume-data'
+import {
+  addResumeIDB,
+  deleteResumeIDB,
+  getAllResumesIDB,
+} from '@/service/indexDB'
+import type { Resume } from '@/types/userInfo'
 import {
   PlusOutlined,
   EditOutlined,
@@ -6,20 +13,37 @@ import {
   VerticalAlignTopOutlined,
 } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
-import { h } from 'vue'
+import { h, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 const router = useRouter()
-const handleAddResume = () => {
-  // 创建简历
-  // 跳转编辑页面
-  router.push('/edit-resume/1')
+
+const resumes = ref<Resume[]>([])
+
+const getAllResume = async () => {
+  const res = await getAllResumesIDB()
+  console.log(res, 'res')
+  resumes.value = res
 }
-const handleEditResume = (item: number) => {
-  router.push(`/edit-resume/${item}`)
+onMounted(() => {
+  getAllResume()
+})
+
+/**
+ * 创建简历
+ */
+const handleAddResume = async () => {
+  const newResume: Omit<Resume, 'id'> = Object.assign({}, DEFAULT_RESUME)
+  await addResumeIDB(newResume)
+  await getAllResume()
 }
-const handleDeleteResume = (item: number) => {
-  // 删除简历
-  console.log(item)
+
+const handleEditResume = (id: string) => {
+  router.push(`/edit-resume/${id}`)
+}
+
+const handleDeleteResume = async (id: string) => {
+  await deleteResumeIDB(id)
+  await getAllResume()
 }
 </script>
 
@@ -39,8 +63,8 @@ const handleDeleteResume = (item: number) => {
         >
       </a-space>
     </div>
-    <div class="resumes">
-      <a-card v-for="item in 8" :key="item" hoverable>
+    <div v-if="resumes.length > 0" class="resumes">
+      <a-card v-for="item in resumes" :key="item.id" hoverable>
         <template #cover>
           <img
             alt="example"
@@ -48,11 +72,11 @@ const handleDeleteResume = (item: number) => {
           />
         </template>
         <template #actions>
-          <edit-outlined key="edit" @click="handleEditResume(item)" />
+          <edit-outlined key="edit" @click="handleEditResume(item.id)" />
           <DeleteOutlined
             key="delete"
             style="color: #ff4d4f"
-            @click="handleDeleteResume(item)"
+            @click="handleDeleteResume(item.id)"
           />
         </template>
         <a-card-meta
@@ -62,6 +86,7 @@ const handleDeleteResume = (item: number) => {
         </a-card-meta>
       </a-card>
     </div>
+    <a-empty v-else :image-style="{ height: '200px' }" description="暂无简历" />
   </div>
 </template>
 

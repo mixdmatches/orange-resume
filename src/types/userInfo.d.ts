@@ -1,4 +1,26 @@
-import type { Dayjs } from 'dayjs'
+export interface Resume {
+  id: string
+  title: string
+  createdAt: number
+  updatedAt: number
+  basic: Basic
+  educations: Education[]
+  internships: Internship[]
+  projects: Project[]
+  skills: string
+  globalConfiguration: GlobalConfiguration
+}
+export interface GlobalConfiguration {
+  baseFontSize: number // 基础字体大小
+  basePagePadding: number // 基础页面内边距
+  baseLineHeight: number // 基础行高
+  baseModuleSpacing: number // 基础模块间距
+  paragraphSpacing: number // 段落间距
+  titleFontSize: number // 标题字体大小
+  subTitleFontSize: number // 子标题字体大小
+  themeColor: string // 主题颜色
+}
+
 export interface Basic {
   name: string
   position: string
@@ -14,7 +36,7 @@ export interface Education {
   school: string
   major: string
   degree: string
-  dateRange: [Dayjs, Dayjs] | string
+  dateRange: string
   visible: boolean
   gpa: string
   description: string
@@ -25,7 +47,7 @@ export interface Internship {
   companyName: string
   position: string
   department: string
-  dateRange: [Dayjs, Dayjs] | []
+  dateRange: string
   description: string
   visible: boolean
 }
@@ -35,7 +57,7 @@ export interface Project {
   name: string
   role: string
   gitAddress: string
-  dateRange: [Dayjs, Dayjs] | []
+  dateRange: string
   visible: boolean
   description: string
 }

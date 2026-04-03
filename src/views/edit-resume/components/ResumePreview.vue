@@ -1,14 +1,7 @@
 <script setup lang="ts">
-import dayjs from 'dayjs'
-import type { Basic, Education, Internship, Project } from '@/types/userInfo'
-
-defineProps<{
-  basic: Basic
-  educations: Education[]
-  internships: Internship[]
-  projects: Project[]
-  skills: string
-}>()
+import type { Resume } from '@/types/userInfo'
+import { inject } from 'vue'
+const resume: Resume = inject('resume') as Resume
 </script>
 
 <template>
@@ -17,13 +10,13 @@ defineProps<{
       <!-- 基本信息 -->
       <section class="preview-header">
         <div class="profile">
-          <h1>{{ basic.name }}</h1>
-          <p>{{ basic.position }}</p>
+          <h1>{{ resume.basic.name }}</h1>
+          <p>{{ resume.basic.position }}</p>
         </div>
         <div class="contact">
-          <span>电话：{{ basic.phone }}</span>
-          <span>邮箱：{{ basic.email }}</span>
-          <span>地址：{{ basic.address }}</span>
+          <span>电话：{{ resume.basic.phone }}</span>
+          <span>邮箱：{{ resume.basic.email }}</span>
+          <span>地址：{{ resume.basic.address }}</span>
         </div>
       </section>
 
@@ -31,7 +24,7 @@ defineProps<{
       <section class="preview-section">
         <h2 class="section-title">教育经历</h2>
         <div
-          v-for="item in educations"
+          v-for="item in resume.educations"
           :key="item.school"
           class="timeline-card"
         >
@@ -41,17 +34,7 @@ defineProps<{
             </div>
             <div class="timeline-major">{{ item.major }}</div>
             <div class="timeline-period">
-              {{
-                item.dateRange && item.dateRange.length === 2
-                  ? dayjs(item.dateRange[0]).format('YYYY/MM')
-                  : ''
-              }}
-              <em>-</em>
-              {{
-                item.dateRange && item.dateRange.length === 2
-                  ? dayjs(item.dateRange[1]).format('YYYY/MM')
-                  : ''
-              }}
+              {{ item.dateRange }}
             </div>
           </div>
           <ul class="timeline-list">
@@ -65,24 +48,18 @@ defineProps<{
       <!-- 实习经历 -->
       <section class="preview-section">
         <h2 class="section-title">实习经历</h2>
-        <div v-for="item in internships" :key="item.id" class="timeline-card">
+        <div
+          v-for="item in resume.internships"
+          :key="item.id"
+          class="timeline-card"
+        >
           <div class="timeline-main">
             <div class="timeline-title">
               {{ item.companyName }}-{{ item.department }}
             </div>
             <div class="timeline-period">{{ item.position }}</div>
             <div class="timeline-time">
-              {{
-                item.dateRange && item.dateRange.length === 2
-                  ? dayjs(item.dateRange[0]).format('YYYY/MM')
-                  : ''
-              }}
-              <em>-</em>
-              {{
-                item.dateRange && item.dateRange.length === 2
-                  ? dayjs(item.dateRange[1]).format('YYYY/MM')
-                  : ''
-              }}
+              {{ item.dateRange }}
             </div>
           </div>
           <ul class="timeline-list">
@@ -96,22 +73,16 @@ defineProps<{
       <!-- 项目经历 -->
       <section class="preview-section">
         <h2 class="section-title">项目经历</h2>
-        <div v-for="item in projects" :key="item.name" class="timeline-card">
+        <div
+          v-for="item in resume.projects"
+          :key="item.name"
+          class="timeline-card"
+        >
           <div class="timeline-main">
             <div class="timeline-title">{{ item.name }}</div>
             <span class="timeline-major">{{ item.role }}</span>
             <span class="timeline-time">
-              {{
-                item.dateRange && item.dateRange.length === 2
-                  ? dayjs(item.dateRange[0]).format('YYYY/MM')
-                  : ''
-              }}
-              <em>-</em>
-              {{
-                item.dateRange && item.dateRange.length === 2
-                  ? dayjs(item.dateRange[1]).format('YYYY/MM')
-                  : ''
-              }}
+              {{ item.dateRange }}
             </span>
           </div>
           <a
@@ -130,7 +101,7 @@ defineProps<{
       <section class="preview-section">
         <h2 class="section-title">个人技能</h2>
         <div class="timeline-card">
-          {{ skills }}
+          {{ resume.skills }}
         </div>
       </section>
     </div>
