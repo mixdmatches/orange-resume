@@ -4,15 +4,16 @@ import LineMdArrowCloseDown from '~icons/line-md/arrow-close-down'
 import LineMdArrowsHorizontal from '~icons/line-md/arrows-horizontal'
 import { DownOutlined } from '@ant-design/icons-vue'
 import ThemeIcon from '@/components/ThemeIcon.vue'
-import { ref } from 'vue'
-const title = ref('未命名简历')
+import { inject } from 'vue'
+import type { Resume } from '@/types/userInfo'
+const resume: Resume = inject('resume') as Resume
 </script>
 
 <template>
   <div class="tool-head">
     <div class="tool-head-left">
       <line-md-arrow-small-left @click="$router.back()" />
-      <a-input v-model:value="title" class="title"></a-input>
+      <a-input v-model:value="resume.title" class="title"></a-input>
     </div>
     <div class="tools">
       <a-tooltip title="切换模板">

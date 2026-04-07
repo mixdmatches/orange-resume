@@ -17,10 +17,13 @@ import { h, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 
+const activeResumeId = ref<string>('')
+
 const resumes = ref<Resume[]>([])
 
 const getAllResume = async () => {
   const res = await getAllResumesIDB()
+  res.sort((a, b) => b.createdAt - a.createdAt)
   resumes.value = res
 }
 onMounted(() => {
@@ -41,13 +44,32 @@ const handleEditResume = (id: string) => {
 }
 
 const handleDeleteResume = async (id: string) => {
-  await deleteResumeIDB(id)
+  activeResumeId.value = id
+  open.value = true
+}
+
+const open = ref(false)
+const confirmLoading = ref(false)
+
+const handleOk = async () => {
+  confirmLoading.value = true
+  await deleteResumeIDB(activeResumeId.value)
+  confirmLoading.value = false
+  open.value = false
   await getAllResume()
 }
 </script>
 
 <template>
   <div class="my-resume">
+    <a-modal
+      v-model:open="open"
+      title="删除简历"
+      :confirm-loading="confirmLoading"
+      @ok="handleOk"
+    >
+      <p>确定删除该简历吗？删除后不可恢复</p>
+    </a-modal>
     <div class="work">
       <a-space>
         <a-button
@@ -64,12 +86,6 @@ const handleDeleteResume = async (id: string) => {
     </div>
     <div v-if="resumes.length > 0" class="resumes">
       <a-card v-for="item in resumes" :key="item.id" hoverable>
-        <template #cover>
-          <img
-            alt="example"
-            src="https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"
-          />
-        </template>
         <template #actions>
           <edit-outlined key="edit" @click="handleEditResume(item.id)" />
           <DeleteOutlined
@@ -79,8 +95,8 @@ const handleDeleteResume = async (id: string) => {
           />
         </template>
         <a-card-meta
-          title="未命名简历"
-          :description="dayjs(Date.now()).format('YYYY-MM-DD')"
+          :title="item.title"
+          :description="dayjs(item.createdAt).format('YYYY-MM-DD')"
         >
         </a-card-meta>
       </a-card>

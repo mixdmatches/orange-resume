@@ -28,18 +28,20 @@ const resume: Resume = inject('resume') as Resume
           :key="item.school"
           class="timeline-card"
         >
-          <div class="timeline-main">
-            <div class="timeline-title">
-              {{ item.school }}
-              <em v-show="item.school !== '' && item.degree !== ''">-</em>
-              {{ item.degree }}
+          <template v-if="item.visible">
+            <div class="timeline-main">
+              <div class="timeline-title">
+                {{ item.school }}
+                <em v-show="item.school !== '' && item.degree !== ''">-</em>
+                {{ item.degree }}
+              </div>
+              <div class="timeline-major">{{ item.major }}</div>
+              <div class="timeline-period">
+                {{ item.dateRange }}
+              </div>
             </div>
-            <div class="timeline-major">{{ item.major }}</div>
-            <div class="timeline-period">
-              {{ item.dateRange }}
-            </div>
-          </div>
-          <div class="timeline-desc" v-html="item.description"></div>
+            <div class="timeline-desc" v-html="item.description"></div>
+          </template>
         </div>
       </section>
 
@@ -117,11 +119,10 @@ const resume: Resume = inject('resume') as Resume
   height: 100%;
   border-radius: 0.5rem;
   padding: 2.4rem;
-  // background: #fdfdfd;
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  // box-shadow: 0 14px 50px rgba(15, 23, 42, 0.08);
+  cursor: pointer;
 }
 
 .preview-header {
@@ -170,8 +171,6 @@ const resume: Resume = inject('resume') as Resume
 
 .timeline-card {
   border-radius: 0.6rem;
-  border: 1px solid #eef0f5;
-  padding: 1.4rem 1.6rem;
   background: #fff;
 }
 

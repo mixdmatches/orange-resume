@@ -1,20 +1,17 @@
 <script setup lang="ts">
+import type { FieldConfig } from '@/types/form'
 import type { Resume } from '@/types/userInfo'
-import { h, inject, ref } from 'vue'
-import {
-  EyeOutlined,
-  DeleteOutlined,
-  DownOutlined,
-  UpOutlined,
-  PlusOutlined,
-} from '@ant-design/icons-vue'
-const resume: Resume = inject('resume') as Resume
-import AiEditor from '@/components/AiEditor.vue'
+import { inject } from 'vue'
 
-const isExpand = ref(false)
-const handleExpand = () => {
-  isExpand.value = !isExpand.value
-}
+const resume: Resume = inject('resume') as Resume
+
+const internshipFields: FieldConfig[] = [
+  { prop: 'companyName', label: '公司名称', type: 'input' },
+  { prop: 'position', label: '岗位名称', type: 'input' },
+  { prop: 'department', label: '所在部门', type: 'input' },
+  { prop: 'dateRange', label: '时间范围', type: 'input' },
+  { prop: 'description', label: '实习描述', type: 'editor' },
+]
 
 /**
  * 删除实习经历
@@ -41,158 +38,11 @@ const handleAddInternship = () => {
 </script>
 
 <template>
-  <div class="collapse">
-    <div class="info" @click="handleExpand">
-      <div class="info-title">
-        实习经历 <DownOutlined v-if="!isExpand" /><UpOutlined v-else />
-      </div>
-      <div class="info-work">
-        <DeleteOutlined style="font-size: 16px; color: red" />
-      </div>
-    </div>
-    <div v-if="isExpand" class="collapse-content">
-      <template v-for="internship in resume.internships" :key="internship.id">
-        <a-form :label-col="{ style: { width: '120px' } }">
-          <a-row>
-            <a-form-item label="公司名称">
-              <a-input
-                v-model:value="internship.companyName"
-                style="width: 200px"
-                placeholder="公司名称"
-              />
-            </a-form-item>
-            <a-form-item label="岗位名称">
-              <a-input
-                v-model:value="internship.position"
-                placeholder="岗位名称"
-                style="width: 200px"
-              />
-            </a-form-item>
-          </a-row>
-          <a-row>
-            <a-form-item label="所在部门">
-              <a-input
-                v-model:value="internship.department"
-                placeholder="所在部门"
-                style="width: 200px"
-              />
-            </a-form-item>
-            <a-form-item label="实习时间">
-              <a-input
-                v-model:value="internship.dateRange"
-                placeholder="时间范围：YYYY/MM - YYYY/MM"
-                style="width: 200px"
-              />
-            </a-form-item>
-          </a-row>
-          <a-form-item label="实习成果">
-            <AiEditor v-model="internship.description" />
-          </a-form-item>
-          <a-space-compact style="margin-bottom: 1rem">
-            <a-button
-              type="dashed"
-              danger
-              :icon="h(DeleteOutlined)"
-              @click="handleDeleteInternship(internship.id)"
-              >删除该经历</a-button
-            >
-            <a-button type="dashed" :icon="h(EyeOutlined)">隐藏该经历</a-button>
-          </a-space-compact>
-        </a-form>
-      </template>
-      <div class="form-actions">
-        <a-button
-          type="primary"
-          block
-          :icon="h(PlusOutlined)"
-          @click="handleAddInternship"
-          >添加实习经历</a-button
-        >
-      </div>
-    </div>
-  </div>
+  <DataCard
+    title="实习经历"
+    :items="resume.internships"
+    :fields="internshipFields"
+    @add="handleAddInternship"
+    @delete="handleDeleteInternship"
+  />
 </template>
-
-<style scoped lang="scss">
-.collapse {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-
-  .info {
-    width: 100%;
-    min-height: 60px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-    border: 1px dashed;
-    padding: 1rem 1.4rem;
-    cursor: pointer;
-    transition:
-      border-color 0.2s,
-      background 0.2s;
-    border-radius: 0.6rem;
-    @include themify(
-      (
-        border-color: $border-color-mode,
-      )
-    );
-
-    &:hover {
-      background: rgba(59, 130, 246, 0.08);
-    }
-
-    &-title {
-      font-size: 1.6rem;
-      font-weight: 600;
-    }
-
-    .info-desc {
-      font-size: 1.3rem;
-      color: #8c8c8c;
-      margin-top: 0.3rem;
-    }
-
-    &-work {
-      display: flex;
-      gap: 0.6rem;
-      align-items: flex-end;
-    }
-
-    .info-action {
-      color: $primary-color;
-      font-size: 1.3rem;
-
-      &.danger {
-        color: #f97316;
-      }
-    }
-  }
-
-  &-content {
-    width: 100%;
-    border: 1px solid;
-    padding: 1.4rem;
-    border-radius: 0.6rem;
-    background: rgba(255, 255, 255, 0.8);
-    @include themify(
-      (
-        border-color: $border-color-mode,
-      )
-    );
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    .form-actions {
-      display: flex;
-      gap: 1rem;
-    }
-  }
-}
-</style>
