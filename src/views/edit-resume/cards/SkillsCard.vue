@@ -1,11 +1,6 @@
 <script setup lang="ts">
 import { inject, ref } from 'vue'
-import {
-  EyeOutlined,
-  DeleteOutlined,
-  DownOutlined,
-  UpOutlined,
-} from '@ant-design/icons-vue'
+import { DeleteOutlined, DownOutlined, UpOutlined } from '@ant-design/icons-vue'
 import type { Resume } from '@/types/userInfo'
 import AiEditor from '@/components/AiEditor.vue'
 
@@ -24,7 +19,6 @@ const handleExpand = () => {
         个人技能 <DownOutlined v-if="!isExpand" /><UpOutlined v-else />
       </div>
       <div class="info-work">
-        <EyeOutlined style="font-size: 16px" />
         <DeleteOutlined style="font-size: 16px; color: red" />
       </div>
     </div>

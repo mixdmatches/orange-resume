@@ -4,21 +4,6 @@ import { DownOutlined, UpOutlined } from '@ant-design/icons-vue'
 import { inject, ref } from 'vue'
 
 const resume: Resume = inject('resume') as Resume
-// const props = defineProps<{
-//   basic: Basic
-// }>()
-// const emit = defineEmits<{
-//   handleBasic: [value: Basic]
-// }>()
-
-// const localBasic: Ref<Basic> = computed(() => props.basic)
-// watch(
-//   localBasic,
-//   newValue => {
-//     emit('handleBasic', newValue)
-//   },
-//   { deep: true },
-// )
 
 interface BasicField {
   label: string

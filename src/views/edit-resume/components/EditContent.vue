@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { inject, ref } from 'vue'
+import { h, inject, ref } from 'vue'
 import BasicCard from '@/views/edit-resume/cards/BasicCard.vue'
 import EducationCard from '@/views/edit-resume/cards/EducationCard.vue'
 import InternshipCard from '@/views/edit-resume/cards/InternshipCard.vue'
 import ProjectCard from '@/views/edit-resume/cards/ProjectCard.vue'
 import SkillsCard from '@/views/edit-resume/cards/SkillsCard.vue'
 import type { Resume } from '@/types/userInfo'
+import { PlusOutlined } from '@ant-design/icons-vue'
+
 const themeColors = ref([
   '#111827',
   '#1d4ed8',
@@ -38,8 +40,9 @@ const resume: Resume = inject('resume') as Resume
         type="primary"
         block
         class="add-custom-btn"
+        :icon="h(PlusOutlined)"
       >
-        + 添加自定义模块
+        添加自定义模块
       </a-button>
     </div>
 

@@ -5,9 +5,10 @@ import {
   DeleteOutlined,
   DownOutlined,
   UpOutlined,
+  PlusOutlined,
 } from '@ant-design/icons-vue'
 import AiEditor from '@/components/AiEditor.vue'
-import { inject, ref } from 'vue'
+import { h, inject, ref } from 'vue'
 
 const resume: Resume = inject('resume') as Resume
 
@@ -45,12 +46,11 @@ const handleExpand = () => {
 
 <template>
   <div class="collapse">
-    <div class="info" @click="handleExpand">
+    <div class="info" @click.stop="handleExpand">
       <div class="info-title">
         教育经历 <DownOutlined v-if="!isExpand" /><UpOutlined v-else />
       </div>
       <div class="info-work">
-        <EyeOutlined style="font-size: 16px" />
         <DeleteOutlined style="font-size: 16px; color: red" />
       </div>
     </div>
@@ -100,19 +100,25 @@ const handleExpand = () => {
           <a-form-item label="自定义描述" name="description">
             <AiEditor v-model="value.description" />
           </a-form-item>
+          <a-space-compact style="margin-bottom: 1rem">
+            <a-button
+              type="dashed"
+              danger
+              :icon="h(DeleteOutlined)"
+              @click="handleDeleteEducation(value.id)"
+              >删除该经历</a-button
+            >
+            <a-button type="dashed" :icon="h(EyeOutlined)">隐藏该经历</a-button>
+          </a-space-compact>
         </a-form>
-        <a-button
-          type="dashed"
-          block
-          danger
-          style="margin-bottom: 1rem"
-          @click="handleDeleteEducation(value.id)"
-          >删除教育经历</a-button
-        >
       </template>
       <div class="form-actions">
-        <a-button type="dashed" block @click="handleAddEducation"
-          >+ 添加教育经历</a-button
+        <a-button
+          type="primary"
+          block
+          :icon="h(PlusOutlined)"
+          @click="handleAddEducation"
+          >添加教育经历</a-button
         >
       </div>
     </div>
