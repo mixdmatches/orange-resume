@@ -6,13 +6,37 @@ import {
   DownOutlined,
   UpOutlined,
 } from '@ant-design/icons-vue'
+import AiEditor from '@/components/AiEditor.vue'
 import { inject, ref } from 'vue'
 
 const resume: Resume = inject('resume') as Resume
 
 const degreeOptions = ['小学', '初中', '高中', '大专', '本科', '硕士', '博士']
 
-const handleAddEducation = () => {}
+/**
+ * 添加教育经历
+ */
+const handleAddEducation = () => {
+  resume.educations.push({
+    id: crypto.randomUUID(),
+    school: '学校',
+    major: '专业',
+    degree: '学历层次',
+    dateRange: '时间范围',
+    visible: true,
+    gpa: '',
+    description: '',
+  })
+}
+
+/**
+ * 删除教育经历
+ * @param id 教育经历的id
+ */
+const handleDeleteEducation = (id: string) => {
+  resume.educations = resume.educations.filter(item => item.id !== id)
+}
+
 const isExpand = ref(false)
 const handleExpand = () => {
   isExpand.value = !isExpand.value
@@ -74,14 +98,17 @@ const handleExpand = () => {
           </a-row>
 
           <a-form-item label="自定义描述" name="description">
-            <a-textarea
-              v-model:value="value.description"
-              :rows="3"
-              placeholder="自定义描述：课程/获奖/绩点等"
-            />
+            <AiEditor v-model="value.description" />
           </a-form-item>
         </a-form>
-        <a-button type="dashed" block danger>删除教育经历</a-button>
+        <a-button
+          type="dashed"
+          block
+          danger
+          style="margin-bottom: 1rem"
+          @click="handleDeleteEducation(value.id)"
+          >删除教育经历</a-button
+        >
       </template>
       <div class="form-actions">
         <a-button type="dashed" block @click="handleAddEducation"
@@ -169,7 +196,6 @@ const handleExpand = () => {
     }
 
     .form-actions {
-      margin-top: 1rem;
       display: flex;
       gap: 1rem;
     }

@@ -21,7 +21,6 @@ const resumes = ref<Resume[]>([])
 
 const getAllResume = async () => {
   const res = await getAllResumesIDB()
-  console.log(res, 'res')
   resumes.value = res
 }
 onMounted(() => {

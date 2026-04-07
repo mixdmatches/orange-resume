@@ -7,6 +7,7 @@ import {
   UpOutlined,
 } from '@ant-design/icons-vue'
 import type { Resume } from '@/types/userInfo'
+import AiEditor from '@/components/AiEditor.vue'
 
 const resume: Resume = inject('resume') as Resume
 
@@ -28,7 +29,7 @@ const handleExpand = () => {
       </div>
     </div>
     <div v-if="isExpand" class="collapse-content">
-      <a-textarea v-model:value="resume.skills" placeholder="请输入个人技能" />
+      <AiEditor v-model="resume.skills" />
     </div>
   </div>
 </template>

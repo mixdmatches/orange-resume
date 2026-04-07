@@ -7,6 +7,7 @@ import {
   DownOutlined,
   UpOutlined,
 } from '@ant-design/icons-vue'
+import AiEditor from '@/components/AiEditor.vue'
 
 const resume: Resume = inject('resume') as Resume
 
@@ -15,9 +16,28 @@ const handleExpand = () => {
   isExpand.value = !isExpand.value
 }
 
-const handleDeleteProject = (id: string) => {}
+/**
+ * 删除项目经历
+ * @param id 项目经历的id
+ */
+const handleDeleteProject = (id: string) => {
+  resume.projects = resume.projects.filter(item => item.id !== id)
+}
 
-const handleAddProject = () => {}
+/**
+ * 添加项目经历
+ */
+const handleAddProject = () => {
+  resume.projects.push({
+    id: crypto.randomUUID(),
+    name: '项目名称',
+    role: '担任角色',
+    gitAddress: 'GitHub/GitLab地址',
+    dateRange: '时间范围',
+    visible: true,
+    description: '',
+  })
+}
 </script>
 
 <template>
@@ -69,17 +89,14 @@ const handleAddProject = () => {}
             </a-form-item>
           </a-row>
           <a-form-item label="项目描述">
-            <a-textarea
-              v-model:value="project.description"
-              :rows="4"
-              placeholder="描述项目内容、技术栈、负责模块..."
-            />
+            <AiEditor v-model="project.description" />
           </a-form-item>
         </a-form>
         <a-button
           type="dashed"
           block
           danger
+          style="margin-bottom: 1rem"
           @click="handleDeleteProject(project.id)"
           >删除项目经历</a-button
         >
@@ -170,7 +187,6 @@ const handleAddProject = () => {}
     }
 
     .form-actions {
-      margin-top: 1rem;
       display: flex;
       gap: 1rem;
     }

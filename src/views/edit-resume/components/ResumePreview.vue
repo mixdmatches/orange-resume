@@ -30,18 +30,16 @@ const resume: Resume = inject('resume') as Resume
         >
           <div class="timeline-main">
             <div class="timeline-title">
-              {{ item.school }}-{{ item.degree }}
+              {{ item.school }}
+              <em v-show="item.school !== '' && item.degree !== ''">-</em>
+              {{ item.degree }}
             </div>
             <div class="timeline-major">{{ item.major }}</div>
             <div class="timeline-period">
               {{ item.dateRange }}
             </div>
           </div>
-          <ul class="timeline-list">
-            {{
-              item.description
-            }}
-          </ul>
+          <div class="timeline-desc" v-html="item.description"></div>
         </div>
       </section>
 
@@ -55,18 +53,18 @@ const resume: Resume = inject('resume') as Resume
         >
           <div class="timeline-main">
             <div class="timeline-title">
-              {{ item.companyName }}-{{ item.department }}
+              {{ item.companyName }}
+              <em v-show="item.companyName !== '' && item.department !== ''"
+                >-</em
+              >
+              {{ item.department }}
             </div>
             <div class="timeline-period">{{ item.position }}</div>
             <div class="timeline-time">
               {{ item.dateRange }}
             </div>
           </div>
-          <ul class="timeline-list">
-            {{
-              item.description
-            }}
-          </ul>
+          <div class="timeline-desc" v-html="item.description"></div>
         </div>
       </section>
 
@@ -93,16 +91,14 @@ const resume: Resume = inject('resume') as Resume
           >
             {{ item.gitAddress }}
           </a>
-          <p class="project-summary">{{ item.description }}</p>
+          <p class="project-summary" v-html="item.description"></p>
         </div>
       </section>
 
       <!-- 个人技能 -->
       <section class="preview-section">
         <h2 class="section-title">个人技能</h2>
-        <div class="timeline-card">
-          {{ resume.skills }}
-        </div>
+        <div class="timeline-card" v-html="resume.skills"></div>
       </section>
     </div>
   </div>

@@ -8,13 +8,35 @@ import {
   UpOutlined,
 } from '@ant-design/icons-vue'
 const resume: Resume = inject('resume') as Resume
+import AiEditor from '@/components/AiEditor.vue'
 
 const isExpand = ref(false)
 const handleExpand = () => {
   isExpand.value = !isExpand.value
 }
-const handleDeleteInternship = () => {}
-const handleAddInternship = () => {}
+
+/**
+ * 删除实习经历
+ * @param id 实习经历的id
+ */
+const handleDeleteInternship = (id: string) => {
+  resume.internships = resume.internships.filter(item => item.id !== id)
+}
+
+/**
+ * 添加实习经历
+ */
+const handleAddInternship = () => {
+  resume.internships.push({
+    id: crypto.randomUUID(),
+    companyName: '公司名称',
+    position: '岗位名称',
+    department: '所在部门',
+    dateRange: '时间范围',
+    visible: true,
+    description: '',
+  })
+}
 </script>
 
 <template>
@@ -64,14 +86,15 @@ const handleAddInternship = () => {}
             </a-form-item>
           </a-row>
           <a-form-item label="实习成果">
-            <a-textarea
-              v-model:value="internship.description"
-              :rows="4"
-              placeholder="输入实习成果、负责模块..."
-            />
+            <AiEditor v-model="internship.description" />
           </a-form-item>
         </a-form>
-        <a-button type="dashed" block danger @click="handleDeleteInternship"
+        <a-button
+          type="dashed"
+          block
+          danger
+          style="margin-bottom: 1rem"
+          @click="handleDeleteInternship(internship.id)"
           >删除实习经历</a-button
         >
       </template>
@@ -161,7 +184,6 @@ const handleAddInternship = () => {}
     }
 
     .form-actions {
-      margin-top: 1rem;
       display: flex;
       gap: 1rem;
     }

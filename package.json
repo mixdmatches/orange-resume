@@ -14,10 +14,12 @@
   "dependencies": {
     "@ant-design/icons-vue": "^7.0.1",
     "@faker-js/faker": "^10.1.0",
+    "aieditor": "^1.4.2",
     "ant-design-vue": "~4.2.6",
     "dayjs": "^1.11.19",
     "element-plus": "^2.11.8",
     "lodash-es": "^4.17.21",
+    "markdown-it": "^14.1.1",
     "pinia-plugin-persistedstate": "^4.5.0",
     "vue": "^3.5.18",
     "vue-router": "^4.5.1"
@@ -25,6 +27,7 @@
   "devDependencies": {
     "@eslint/js": "^9.34.0",
     "@iconify/json": "^2.2.382",
+    "@types/markdown-it": "^14.1.2",
     "@types/node": "^24.3.0",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/tsconfig": "^0.7.0",
