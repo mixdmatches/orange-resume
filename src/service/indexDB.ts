@@ -134,7 +134,6 @@ export const updateResumeIDB = async (
 
     getRequest.onsuccess = () => {
       const existingResume = getRequest.result
-      console.log(existingResume, 'existingResume', resumeData, 'resumeData')
 
       if (!existingResume) {
         resolve(false)
@@ -147,7 +146,7 @@ export const updateResumeIDB = async (
         updatedAt: Date.now(),
       }
 
-      const putRequest = store.put(updatedResume, id)
+      const putRequest = store.put(updatedResume)
 
       putRequest.onsuccess = () => {
         resolve(true)

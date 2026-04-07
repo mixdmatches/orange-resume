@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, provide, reactive, watch } from 'vue'
+import { onMounted, provide, reactive, toRaw, watch } from 'vue'
 import type { Resume } from '@/types/userInfo'
 import ToolHead from './components/ToolHead.vue'
 import EditContent from '@/views/edit-resume/components/EditContent.vue'
@@ -54,8 +54,9 @@ onMounted(() => {
 watch(
   () => resume,
   async (newValue: Resume) => {
-    console.log('11')
-    await updateResumeIDB(newValue.id, newValue)
+    // const plainResume = JSON.parse(JSON.stringify(newValue))
+    const plainResume = toRaw(newValue)
+    await updateResumeIDB(newValue.id, plainResume)
   },
   { deep: true },
 )
