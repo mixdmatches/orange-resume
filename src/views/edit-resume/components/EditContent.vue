@@ -5,7 +5,8 @@ import EducationCard from '@/views/edit-resume/cards/EducationCard.vue'
 import InternshipCard from '@/views/edit-resume/cards/InternshipCard.vue'
 import ProjectCard from '@/views/edit-resume/cards/ProjectCard.vue'
 import SkillsCard from '@/views/edit-resume/cards/SkillsCard.vue'
-import type { Resume } from '@/types/userInfo'
+import CustomCard from '@/views/edit-resume/cards/CustomCard.vue'
+import type { Resume } from '@/types/resume'
 import { PlusOutlined } from '@ant-design/icons-vue'
 
 const themeColors = ref([
@@ -22,6 +23,39 @@ const selectedTheme = ref(themeColors.value[1])
 const fontOptions = ['12px', '14px', '16px', '18px', '20px', '22px', '24px']
 
 const resume: Resume = inject('resume') as Resume
+
+// 卡片组件映射
+const cardComponents = {
+  basic: BasicCard,
+  education: EducationCard,
+  internship: InternshipCard,
+  project: ProjectCard,
+  skills: SkillsCard,
+}
+
+// 根据 id 获取对应的卡片组件
+const getCardComponent = (id: string) => {
+  if (id.startsWith('custom-')) {
+    return { component: CustomCard, props: { customName: id } }
+  }
+
+  return {
+    component: cardComponents[id as keyof typeof cardComponents],
+    props: {},
+  }
+}
+
+let customCount = Object.keys(resume.customData).length
+const handleAddCustom = () => {
+  const newCustomId = `custom-${customCount}`
+  resume.customData[newCustomId] = []
+  resume.menuSections.push({
+    id: newCustomId,
+    title: '自定义模块',
+    order: String(resume.menuSections.length),
+  })
+  customCount++
+}
 </script>
 
 <template>
@@ -29,11 +63,12 @@ const resume: Resume = inject('resume') as Resume
     <div class="model">
       <div class="model-title">布局内容</div>
       <div class="model-content">
-        <BasicCard />
-        <EducationCard />
-        <InternshipCard />
-        <ProjectCard />
-        <SkillsCard />
+        <component
+          :is="getCardComponent(section.id).component"
+          v-for="section in resume.menuSections"
+          :key="section.id"
+          v-bind="getCardComponent(section.id).props"
+        />
       </div>
       <a-button
         style="margin-top: 1rem"
@@ -41,6 +76,7 @@ const resume: Resume = inject('resume') as Resume
         block
         class="add-custom-btn"
         :icon="h(PlusOutlined)"
+        @click.stop="handleAddCustom"
       >
         添加自定义模块
       </a-button>

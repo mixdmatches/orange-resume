@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Resume } from '@/types/userInfo'
+import type { Resume } from '@/types/resume'
 import DataCard from '@/components/DataCard.vue'
 import { inject } from 'vue'
 import type { FieldConfig } from '@/types/form'
@@ -17,6 +17,7 @@ const skillsFields: FieldConfig[] = [
     title="个人技能"
     :items="[{ skills: resume.skills }]"
     :fields="skillsFields"
+    :show-actions="false"
     :show-add="false"
   />
 </template>

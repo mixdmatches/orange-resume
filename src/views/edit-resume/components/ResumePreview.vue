@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Resume } from '@/types/userInfo'
+import type { Resume } from '@/types/resume'
 import { inject } from 'vue'
 const resume: Resume = inject('resume') as Resume
 </script>
@@ -53,20 +53,22 @@ const resume: Resume = inject('resume') as Resume
           :key="item.id"
           class="timeline-card"
         >
-          <div class="timeline-main">
-            <div class="timeline-title">
-              {{ item.companyName }}
-              <em v-show="item.companyName !== '' && item.department !== ''"
-                >-</em
-              >
-              {{ item.department }}
+          <template v-if="item.visible">
+            <div class="timeline-main">
+              <div class="timeline-title">
+                {{ item.companyName }}
+                <em v-show="item.companyName !== '' && item.department !== ''"
+                  >-</em
+                >
+                {{ item.department }}
+              </div>
+              <div class="timeline-period">{{ item.position }}</div>
+              <div class="timeline-time">
+                {{ item.dateRange }}
+              </div>
             </div>
-            <div class="timeline-period">{{ item.position }}</div>
-            <div class="timeline-time">
-              {{ item.dateRange }}
-            </div>
-          </div>
-          <div class="timeline-desc" v-html="item.description"></div>
+            <div class="timeline-desc" v-html="item.description"></div>
+          </template>
         </div>
       </section>
 
@@ -78,22 +80,24 @@ const resume: Resume = inject('resume') as Resume
           :key="item.name"
           class="timeline-card"
         >
-          <div class="timeline-main">
-            <div class="timeline-title">{{ item.name }}</div>
-            <span class="timeline-major">{{ item.role }}</span>
-            <span class="timeline-time">
-              {{ item.dateRange }}
-            </span>
-          </div>
-          <a
-            class="project-link"
-            :href="item.gitAddress"
-            target="_blank"
-            rel="noreferrer"
-          >
-            {{ item.gitAddress }}
-          </a>
-          <p class="project-summary" v-html="item.description"></p>
+          <template v-if="item.visible">
+            <div class="timeline-main">
+              <div class="timeline-title">{{ item.name }}</div>
+              <span class="timeline-major">{{ item.role }}</span>
+              <span class="timeline-time">
+                {{ item.dateRange }}
+              </span>
+            </div>
+            <a
+              class="project-link"
+              :href="item.gitAddress"
+              target="_blank"
+              rel="noreferrer"
+            >
+              {{ item.gitAddress }}
+            </a>
+            <p class="project-summary" v-html="item.description"></p>
+          </template>
         </div>
       </section>
 
@@ -101,6 +105,27 @@ const resume: Resume = inject('resume') as Resume
       <section class="preview-section">
         <h2 class="section-title">个人技能</h2>
         <div class="timeline-card" v-html="resume.skills"></div>
+      </section>
+
+      <!-- 自定义模块 -->
+      <section
+        v-for="(customData, index) in Object.values(resume.customData)"
+        :key="index"
+        class="preview-section"
+      >
+        <h2 class="section-title">自定义模块</h2>
+        <div v-for="item in customData" :key="item.id" class="timeline-card">
+          <template v-if="item.visible">
+            <div class="timeline-main">
+              <div class="timeline-title">{{ item.title }}</div>
+              <span class="timeline-major">{{ item.subTitle }}</span>
+              <span class="timeline-time">
+                {{ item.dateRange }}
+              </span>
+            </div>
+            <div class="timeline-desc" v-html="item.description"></div>
+          </template>
+        </div>
       </section>
     </div>
   </div>

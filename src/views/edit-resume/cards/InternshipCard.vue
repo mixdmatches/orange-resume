@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { FieldConfig } from '@/types/form'
-import type { Resume } from '@/types/userInfo'
+import type { Resume } from '@/types/resume'
 import { inject } from 'vue'
 
 const resume: Resume = inject('resume') as Resume
@@ -35,6 +35,13 @@ const handleAddInternship = () => {
     description: '',
   })
 }
+const handleHideInternship = (id: string) => {
+  resume.internships.forEach(item => {
+    if (item.id === id) {
+      item.visible = !item.visible
+    }
+  })
+}
 </script>
 
 <template>
@@ -44,5 +51,6 @@ const handleAddInternship = () => {
     :fields="internshipFields"
     @add="handleAddInternship"
     @delete="handleDeleteInternship"
+    @hide="handleHideInternship"
   />
 </template>

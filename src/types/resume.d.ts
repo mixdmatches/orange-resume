@@ -8,8 +8,11 @@ export interface Resume {
   internships: Internship[]
   projects: Project[]
   skills: string
+  customData: Record<string, CustomData[]>
   globalConfiguration: GlobalConfiguration
+  menuSections: MenuSection[]
 }
+
 export interface GlobalConfiguration {
   baseFontSize: number // 基础字体大小
   basePagePadding: number // 基础页面内边距
@@ -60,6 +63,21 @@ export interface Project {
   dateRange: string
   visible: boolean
   description: string
+}
+
+export interface CustomData {
+  id: string
+  title: string
+  dateRange: string
+  subTitle: string
+  visible: boolean
+  description: string
+}
+
+export interface MenuSection {
+  id: string
+  title: string
+  order: string
 }
 
 export type Skill = string

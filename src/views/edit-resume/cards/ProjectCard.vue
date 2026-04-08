@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { FieldConfig } from '@/types/form'
-import type { Resume } from '@/types/userInfo'
+import type { Resume } from '@/types/resume'
 import { inject } from 'vue'
 
 const resume: Resume = inject('resume') as Resume
@@ -35,6 +35,18 @@ const handleAddProject = () => {
     description: '',
   })
 }
+
+/**
+ * 隐藏项目经历
+ * @param id 项目经历的id
+ */
+const handleHideProject = (id: string) => {
+  resume.projects.forEach(item => {
+    if (item.id === id) {
+      item.visible = !item.visible
+    }
+  })
+}
 </script>
 
 <template>
@@ -42,6 +54,7 @@ const handleAddProject = () => {
     title="项目经历"
     :items="resume.projects"
     :fields="projectFields"
+    @hide="handleHideProject"
     @delete="handleDeleteProject"
     @add="handleAddProject"
   />

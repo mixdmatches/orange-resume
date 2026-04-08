@@ -5,7 +5,7 @@ import LineMdArrowsHorizontal from '~icons/line-md/arrows-horizontal'
 import { DownOutlined } from '@ant-design/icons-vue'
 import ThemeIcon from '@/components/ThemeIcon.vue'
 import { inject } from 'vue'
-import type { Resume } from '@/types/userInfo'
+import type { Resume } from '@/types/resume'
 const resume: Resume = inject('resume') as Resume
 </script>
 

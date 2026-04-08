@@ -5,7 +5,7 @@ import {
   deleteResumeIDB,
   getAllResumesIDB,
 } from '@/service/indexDB'
-import type { Resume } from '@/types/userInfo'
+import type { Resume } from '@/types/resume'
 import {
   PlusOutlined,
   EditOutlined,

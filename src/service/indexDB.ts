@@ -9,7 +9,7 @@ const DB_VERSION = 1
 const STORE_NAME = 'resumes'
 
 // 简历数据类型定义
-import type { Resume } from '@/types/userInfo'
+import type { Resume } from '@/types/resume'
 
 /**
  * 打开数据库连接

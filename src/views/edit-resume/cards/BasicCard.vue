@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Resume } from '@/types/userInfo'
+import type { Resume } from '@/types/resume'
 import { computed, inject } from 'vue'
 import DataCard from '@/components/DataCard.vue'
 import type { FieldConfig } from '@/types/form'

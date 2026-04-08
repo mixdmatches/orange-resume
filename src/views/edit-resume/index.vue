@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, provide, reactive, watch } from 'vue'
-import type { Resume } from '@/types/userInfo'
+import type { Resume } from '@/types/resume'
 import ToolHead from './components/ToolHead.vue'
 import EditContent from '@/views/edit-resume/components/EditContent.vue'
 import ResumePreview from '@/views/edit-resume/components/ResumePreview.vue'
@@ -28,6 +28,8 @@ const resume = reactive<Resume>({
   internships: [],
   projects: [],
   skills: '',
+  customData: {},
+  menuSections: [],
   globalConfiguration: {
     baseFontSize: 16,
     basePagePadding: 20,

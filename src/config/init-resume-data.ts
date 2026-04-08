@@ -1,4 +1,4 @@
-import type { Resume } from '@/types/userInfo'
+import type { Resume } from '@/types/resume'
 import dayjs from 'dayjs'
 
 // 初始全局设置
@@ -148,6 +148,34 @@ UI/样式：熟悉 TailwindCSS、Sass/Less、CSS Module、Styled-components
 
 
 指导初级工程师，组织技术分享会，提升团队整体技术水平`,
+    },
+  ],
+  customData: {},
+  menuSections: [
+    {
+      id: 'basic',
+      title: '基本信息',
+      order: '1',
+    },
+    {
+      id: 'education',
+      title: '教育经历',
+      order: '2',
+    },
+    {
+      id: 'internship',
+      title: '工作经历',
+      order: '3',
+    },
+    {
+      id: 'project',
+      title: '项目经历',
+      order: '4',
+    },
+    {
+      id: 'skills',
+      title: '技能经历',
+      order: '5',
     },
   ],
   globalConfiguration: initialGlobalConfiguration,
