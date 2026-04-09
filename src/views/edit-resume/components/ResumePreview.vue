@@ -6,6 +6,13 @@ const resume: Resume = inject('resume') as Resume
 const isExist = (id: string) => {
   return resume.menuSections.some(item => item.id === id)
 }
+
+// 根据 menuSections 的 order 排序
+const sortedMenuSections = () => {
+  return resume.menuSections
+    .filter(section => section.id !== 'basic') // 过滤掉 basic，因为基本信息单独渲染
+    .sort((a, b) => parseInt(a.order) - parseInt(b.order))
+}
 </script>
 
 <template>
@@ -24,108 +31,119 @@ const isExist = (id: string) => {
         </div>
       </section>
 
-      <!-- 教育经历 -->
-      <section v-if="isExist('education')" class="preview-section">
-        <h2 class="section-title">教育经历</h2>
-        <div
-          v-for="item in resume.educations"
-          :key="item.school"
-          class="timeline-card"
+      <!-- 根据 menuSections 的 order 排序渲染模块 -->
+      <template v-for="section in sortedMenuSections()" :key="section.id">
+        <!-- 教育经历 -->
+        <section
+          v-if="section.id === 'education' && isExist('education')"
+          class="preview-section"
         >
-          <template v-if="item.visible">
-            <div class="timeline-main">
-              <div class="timeline-title">
-                {{ item.school }}
-                <em v-show="item.school !== '' && item.degree !== ''">-</em>
-                {{ item.degree }}
+          <h2 class="section-title">{{ section.title }}</h2>
+          <div
+            v-for="item in resume.educations"
+            :key="item.school"
+            class="timeline-card"
+          >
+            <template v-if="item.visible">
+              <div class="timeline-main">
+                <div class="timeline-title">
+                  {{ item.school }}
+                  <em v-show="item.school !== '' && item.degree !== ''">-</em>
+                  {{ item.degree }}
+                </div>
+                <div class="timeline-major">{{ item.major }}</div>
+                <div class="timeline-period">
+                  {{ item.dateRange }}
+                </div>
               </div>
-              <div class="timeline-major">{{ item.major }}</div>
-              <div class="timeline-period">
-                {{ item.dateRange }}
-              </div>
-            </div>
-            <div class="timeline-desc" v-html="item.description"></div>
-          </template>
-        </div>
-      </section>
+              <div class="timeline-desc" v-html="item.description"></div>
+            </template>
+          </div>
+        </section>
 
-      <!-- 实习经历 -->
-      <section v-if="isExist('internship')" class="preview-section">
-        <h2 class="section-title">实习经历</h2>
-        <div
-          v-for="item in resume.internships"
-          :key="item.id"
-          class="timeline-card"
+        <!-- 实习经历 -->
+        <section
+          v-if="section.id === 'internship' && isExist('internship')"
+          class="preview-section"
         >
-          <template v-if="item.visible">
-            <div class="timeline-main">
-              <div class="timeline-title">
-                {{ item.companyName }}
-                <em v-show="item.companyName !== '' && item.department !== ''"
-                  >-</em
-                >
-                {{ item.department }}
+          <h2 class="section-title">{{ section.title }}</h2>
+          <div
+            v-for="item in resume.internships"
+            :key="item.id"
+            class="timeline-card"
+          >
+            <template v-if="item.visible">
+              <div class="timeline-main">
+                <div class="timeline-title">
+                  {{ item.companyName }}
+                  <em v-show="item.companyName !== '' && item.department !== ''"
+                    >-</em
+                  >
+                  {{ item.department }}
+                </div>
+                <div class="timeline-major">{{ item.position }}</div>
+                <div class="timeline-period">{{ item.dateRange }}</div>
               </div>
-              <div class="timeline-period">{{ item.position }}</div>
-              <div class="timeline-time">
-                {{ item.dateRange }}
-              </div>
-            </div>
-            <div class="timeline-desc" v-html="item.description"></div>
-          </template>
-        </div>
-      </section>
+              <div class="timeline-desc" v-html="item.description"></div>
+            </template>
+          </div>
+        </section>
 
-      <!-- 项目经历 -->
-      <section v-if="isExist('project')" class="preview-section">
-        <h2 class="section-title">项目经历</h2>
-        <div
-          v-for="item in resume.projects"
-          :key="item.name"
-          class="timeline-card"
+        <!-- 项目经历 -->
+        <section
+          v-if="section.id === 'project' && isExist('project')"
+          class="preview-section"
         >
-          <template v-if="item.visible">
-            <div class="timeline-main">
-              <div class="timeline-title">{{ item.name }}</div>
-              <span class="timeline-major">{{ item.role }}</span>
-              <span class="timeline-time">
-                {{ item.dateRange }}
-              </span>
-            </div>
-            <a
-              class="project-link"
-              :href="item.gitAddress"
-              target="_blank"
-              rel="noreferrer"
-            >
-              {{ item.gitAddress }}
-            </a>
-            <p class="project-summary" v-html="item.description"></p>
-          </template>
-        </div>
-      </section>
+          <h2 class="section-title">{{ section.title }}</h2>
+          <div
+            v-for="item in resume.projects"
+            :key="item.id"
+            class="timeline-card"
+          >
+            <template v-if="item.visible">
+              <div class="timeline-main">
+                <div class="timeline-title">{{ item.name }}</div>
+                <span class="timeline-major">{{ item.role }}</span>
+                <span class="timeline-time">{{ item.dateRange }}</span>
+              </div>
+              <a
+                class="project-link"
+                :href="item.gitAddress"
+                target="_blank"
+                rel="noreferrer"
+              >
+                {{ item.gitAddress }}
+              </a>
+              <p class="timeline-desc" v-html="item.description"></p>
+            </template>
+          </div>
+        </section>
 
-      <!-- 个人技能 -->
-      <section v-if="isExist('skills')" class="preview-section">
-        <h2 class="section-title">个人技能</h2>
-        <div class="timeline-card" v-html="resume.skills"></div>
-      </section>
+        <!-- 个人技能 -->
+        <section
+          v-if="section.id === 'skills' && isExist('skills')"
+          class="preview-section"
+        >
+          <h2 class="section-title">{{ section.title }}</h2>
+          <div class="timeline-card" v-html="resume.skills"></div>
+        </section>
 
-      <!-- 自定义模块 -->
-      <template
-        v-for="(customData, index) in Object.values(resume.customData)"
-        :key="index"
-      >
-        <section v-if="isExist(`custom-${index}`)" class="preview-section">
-          <h2 class="section-title">自定义模块</h2>
-          <div v-for="item in customData" :key="item.id" class="timeline-card">
+        <!-- 自定义模块 -->
+        <section
+          v-if="section.id.startsWith('custom-') && isExist(section.id)"
+          class="preview-section"
+        >
+          <h2 class="section-title">{{ section.title }}</h2>
+          <div
+            v-for="item in resume.customData[section.id] || []"
+            :key="item.id"
+            class="timeline-card"
+          >
             <template v-if="item.visible">
               <div class="timeline-main">
                 <div class="timeline-title">{{ item.title }}</div>
                 <span class="timeline-major">{{ item.subTitle }}</span>
-                <span class="timeline-time">
-                  {{ item.dateRange }}
-                </span>
+                <span class="timeline-time">{{ item.dateRange }}</span>
               </div>
               <div class="timeline-desc" v-html="item.description"></div>
             </template>
@@ -151,7 +169,7 @@ const isExist = (id: string) => {
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 8px;
   cursor: pointer;
 }
 
@@ -187,7 +205,7 @@ const isExist = (id: string) => {
 .preview-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 4px;
 }
 
 .section-title {
@@ -204,8 +222,7 @@ const isExist = (id: string) => {
   background: #fff;
 }
 
-.timeline-main,
-.project-head {
+.timeline-main {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -213,8 +230,7 @@ const isExist = (id: string) => {
   margin-bottom: 8px;
 }
 
-.timeline-title,
-.project-name {
+.timeline-title {
   font-size: 16px;
   font-weight: 600;
   color: #1f2937;
@@ -228,20 +244,9 @@ const isExist = (id: string) => {
 
 .timeline-period,
 .timeline-major,
-.timeline-time,
-.project-stack {
+.timeline-time {
   font-size: 13px;
   font-weight: 500;
-}
-
-.timeline-list {
-  padding-left: 14px;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  color: #4b5563;
-  font-size: 14px;
 }
 
 .project-link {
@@ -249,16 +254,5 @@ const isExist = (id: string) => {
   font-size: 13px;
   color: #3b82f6;
   margin-top: 2px;
-}
-
-.project-summary {
-  margin: 0 0 8px;
-  color: #4b5563;
-  line-height: 1.6;
-}
-
-.skill-card {
-  padding: 14px 16px;
-  background: #fff;
 }
 </style>
