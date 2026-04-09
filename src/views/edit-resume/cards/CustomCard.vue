@@ -57,6 +57,15 @@ const handleHide = (id: string) => {
     item.visible = !item.visible
   }
 }
+
+// 删除模块回调函数
+const handleDeleteModel = () => {
+  delete resume.customData[props.customName]
+  const newMenu = resume.menuSections.filter(
+    item => item.id !== props.customName,
+  )
+  resume.menuSections = newMenu
+}
 </script>
 
 <template>
@@ -65,6 +74,7 @@ const handleHide = (id: string) => {
     :items="resume.customData[customName]"
     :fields="customFields"
     @add="handleAdd"
+    @delete-model="handleDeleteModel"
     @delete="handleDelete"
     @hide="handleHide"
   />

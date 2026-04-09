@@ -10,6 +10,10 @@ const resume: Resume = inject('resume') as Resume
 const skillsFields: FieldConfig[] = [
   { prop: 'skills', label: '个人技能', type: 'editor' },
 ]
+
+const handleDeleteModel = () => {
+  resume.menuSections = resume.menuSections.filter(item => item.id !== 'skills')
+}
 </script>
 
 <template>
@@ -19,5 +23,6 @@ const skillsFields: FieldConfig[] = [
     :fields="skillsFields"
     :show-actions="false"
     :show-add="false"
+    @delete-model="handleDeleteModel"
   />
 </template>

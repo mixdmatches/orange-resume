@@ -51,6 +51,13 @@ const handleHideEducation = (id: string) => {
     education.visible = !education.visible
   }
 }
+
+// 删除模块回调函数
+const handleDeleteModel = () => {
+  resume.menuSections = resume.menuSections.filter(
+    item => item.id !== 'education',
+  )
+}
 </script>
 
 <template>
@@ -61,5 +68,6 @@ const handleHideEducation = (id: string) => {
     @add="handleAddEducation"
     @delete="handleDeleteEducation"
     @hide="handleHideEducation"
+    @delete-model="handleDeleteModel"
   />
 </template>

@@ -42,6 +42,13 @@ const handleHideInternship = (id: string) => {
     }
   })
 }
+
+// 删除模块回调函数
+const handleDeleteModel = () => {
+  resume.menuSections = resume.menuSections.filter(
+    item => item.id !== 'internship',
+  )
+}
 </script>
 
 <template>
@@ -52,5 +59,6 @@ const handleHideInternship = (id: string) => {
     @add="handleAddInternship"
     @delete="handleDeleteInternship"
     @hide="handleHideInternship"
+    @delete-model="handleDeleteModel"
   />
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, inject, ref } from 'vue'
+import { computed, h, inject, ref } from 'vue'
 import BasicCard from '@/views/edit-resume/cards/BasicCard.vue'
 import EducationCard from '@/views/edit-resume/cards/EducationCard.vue'
 import InternshipCard from '@/views/edit-resume/cards/InternshipCard.vue'
@@ -7,7 +7,7 @@ import ProjectCard from '@/views/edit-resume/cards/ProjectCard.vue'
 import SkillsCard from '@/views/edit-resume/cards/SkillsCard.vue'
 import CustomCard from '@/views/edit-resume/cards/CustomCard.vue'
 import type { Resume } from '@/types/resume'
-import { PlusOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, DownOutlined } from '@ant-design/icons-vue'
 
 const themeColors = ref([
   '#111827',
@@ -21,6 +21,33 @@ const selectedTheme = ref(themeColors.value[1])
 
 // 字号选择
 const fontOptions = ['12px', '14px', '16px', '18px', '20px', '22px', '24px']
+
+const moduleList = [
+  {
+    id: 'basic',
+    title: '基本信息',
+  },
+  {
+    id: 'education',
+    title: '教育经历',
+  },
+  {
+    id: 'internship',
+    title: '实习经历',
+  },
+  {
+    id: 'project',
+    title: '项目经历',
+  },
+  {
+    id: 'skills',
+    title: '个人技能',
+  },
+  {
+    id: 'custom',
+    title: '自定义模块',
+  },
+]
 
 const resume: Resume = inject('resume') as Resume
 
@@ -45,16 +72,23 @@ const getCardComponent = (id: string) => {
   }
 }
 
-let customCount = Object.keys(resume.customData).length
+let customCount = computed(() => Object.keys(resume.customData).length)
 const handleAddCustom = () => {
-  const newCustomId = `custom-${customCount}`
+  const newCustomId = `custom-${customCount.value}`
   resume.customData[newCustomId] = []
   resume.menuSections.push({
     id: newCustomId,
     title: '自定义模块',
     order: String(resume.menuSections.length),
   })
-  customCount++
+}
+
+const handleMenuItemClick = (id: string) => {
+  resume.menuSections.push({
+    id,
+    title: moduleList.find(item => item.id === id)?.title || '',
+    order: String(resume.menuSections.length),
+  })
 }
 </script>
 
@@ -70,16 +104,34 @@ const handleAddCustom = () => {
           v-bind="getCardComponent(section.id).props"
         />
       </div>
-      <a-button
-        style="margin-top: 1rem"
-        type="primary"
-        block
-        class="add-custom-btn"
-        :icon="h(PlusOutlined)"
-        @click.stop="handleAddCustom"
-      >
-        添加自定义模块
-      </a-button>
+      <a-dropdown :trigger="['click']">
+        <template #overlay>
+          <a-menu>
+            <template v-for="item in moduleList" :key="item.id">
+              <a-menu-item
+                v-if="
+                  !resume.menuSections.some(section => section.id === item.id)
+                "
+                @click="handleMenuItemClick(item.id)"
+              >
+                {{ item.title }}
+              </a-menu-item>
+            </template>
+            <a-menu-divider />
+            <a-menu-item @click="handleAddCustom">自定义模块</a-menu-item>
+          </a-menu>
+        </template>
+        <a-button
+          type="primary"
+          block
+          class="add-custom-btn"
+          :icon="h(PlusOutlined)"
+          style="margin-top: 1rem"
+        >
+          添加模块
+          <DownOutlined />
+        </a-button>
+      </a-dropdown>
     </div>
 
     <!-- 排版 -->

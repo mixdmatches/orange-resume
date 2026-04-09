@@ -2,6 +2,10 @@
 import type { Resume } from '@/types/resume'
 import { inject } from 'vue'
 const resume: Resume = inject('resume') as Resume
+
+const isExist = (id: string) => {
+  return resume.menuSections.some(item => item.id === id)
+}
 </script>
 
 <template>
@@ -21,7 +25,7 @@ const resume: Resume = inject('resume') as Resume
       </section>
 
       <!-- 教育经历 -->
-      <section class="preview-section">
+      <section v-if="isExist('education')" class="preview-section">
         <h2 class="section-title">教育经历</h2>
         <div
           v-for="item in resume.educations"
@@ -46,7 +50,7 @@ const resume: Resume = inject('resume') as Resume
       </section>
 
       <!-- 实习经历 -->
-      <section class="preview-section">
+      <section v-if="isExist('internship')" class="preview-section">
         <h2 class="section-title">实习经历</h2>
         <div
           v-for="item in resume.internships"
@@ -73,7 +77,7 @@ const resume: Resume = inject('resume') as Resume
       </section>
 
       <!-- 项目经历 -->
-      <section class="preview-section">
+      <section v-if="isExist('project')" class="preview-section">
         <h2 class="section-title">项目经历</h2>
         <div
           v-for="item in resume.projects"
@@ -102,31 +106,32 @@ const resume: Resume = inject('resume') as Resume
       </section>
 
       <!-- 个人技能 -->
-      <section class="preview-section">
+      <section v-if="isExist('skills')" class="preview-section">
         <h2 class="section-title">个人技能</h2>
         <div class="timeline-card" v-html="resume.skills"></div>
       </section>
 
       <!-- 自定义模块 -->
-      <section
+      <template
         v-for="(customData, index) in Object.values(resume.customData)"
         :key="index"
-        class="preview-section"
       >
-        <h2 class="section-title">自定义模块</h2>
-        <div v-for="item in customData" :key="item.id" class="timeline-card">
-          <template v-if="item.visible">
-            <div class="timeline-main">
-              <div class="timeline-title">{{ item.title }}</div>
-              <span class="timeline-major">{{ item.subTitle }}</span>
-              <span class="timeline-time">
-                {{ item.dateRange }}
-              </span>
-            </div>
-            <div class="timeline-desc" v-html="item.description"></div>
-          </template>
-        </div>
-      </section>
+        <section v-if="isExist(`custom-${index}`)" class="preview-section">
+          <h2 class="section-title">自定义模块</h2>
+          <div v-for="item in customData" :key="item.id" class="timeline-card">
+            <template v-if="item.visible">
+              <div class="timeline-main">
+                <div class="timeline-title">{{ item.title }}</div>
+                <span class="timeline-major">{{ item.subTitle }}</span>
+                <span class="timeline-time">
+                  {{ item.dateRange }}
+                </span>
+              </div>
+              <div class="timeline-desc" v-html="item.description"></div>
+            </template>
+          </div>
+        </section>
+      </template>
     </div>
   </div>
 </template>

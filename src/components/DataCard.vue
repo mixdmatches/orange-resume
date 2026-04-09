@@ -19,8 +19,6 @@ withDefaults(defineProps<ResumeFormProps>(), {
   showAdd: true,
   showActions: true,
   labelWidth: '120px',
-  deleteTitle: '删除',
-  deleteConfirmText: '确定删除该条目吗？删除后不可恢复',
 })
 
 const emit = defineEmits<ResumeFormEmits>()
@@ -28,6 +26,9 @@ const emit = defineEmits<ResumeFormEmits>()
 const isExpand = ref(false)
 const open = ref(false)
 const activeId = ref('')
+const deleteTitle = ref('删除')
+const deleteConfirmText = ref('确定删除吗？删除后不可恢复')
+const isDeleteModel = ref(false) // 是否删除的是模块还是条目
 
 const handleExpand = () => {
   isExpand.value = !isExpand.value
@@ -39,11 +40,17 @@ const handleAdd = () => {
 
 const handleDelete = (id: string) => {
   activeId.value = id
+  isDeleteModel.value = false
+  deleteConfirmText.value = '确定删除该条目吗？此操作不可撤销'
   open.value = true
 }
 
 const handleOk = () => {
-  emit('delete', activeId.value)
+  if (!isDeleteModel.value) {
+    emit('delete', activeId.value)
+  } else {
+    emit('deleteModel')
+  }
   open.value = false
   activeId.value = ''
 }
@@ -52,10 +59,12 @@ const handleHide = (id: string) => {
   emit('hide', id)
 }
 
-// 判断是否是单个对象（没有 id）
-// const isSingleObject = () => {
-//   return !props.items || props.items.length === 0 || !props.items[0]?.id
-// }
+// 删除模块回调函数
+const handleDeleteModel = () => {
+  isDeleteModel.value = true
+  deleteConfirmText.value = '确定删除该模块吗？此操作不可撤销'
+  open.value = true
+}
 </script>
 
 <template>
@@ -70,7 +79,11 @@ const handleHide = (id: string) => {
         <UpOutlined v-else />
       </div>
       <div class="info-work">
-        <DeleteOutlined v-if="showDelete" style="font-size: 16px; color: red" />
+        <DeleteOutlined
+          v-if="showDelete"
+          style="font-size: 16px; color: red"
+          @click.stop="handleDeleteModel"
+        />
         <EyeOutlined v-if="showTitleEye" style="font-size: 16px" />
       </div>
     </div>
@@ -120,7 +133,7 @@ const handleHide = (id: string) => {
                 :icon="h(DeleteOutlined)"
                 @click="handleDelete(item.id)"
               >
-                {{ deleteText || '删除' }}
+                {{ deleteTitle || '删除' }}
               </a-button>
               <a-button
                 v-if="showEye"
@@ -160,7 +173,7 @@ const handleHide = (id: string) => {
 
   .info {
     width: 100%;
-    min-height: 60px;
+    min-height: 30px;
     display: flex;
     justify-content: space-between;
     align-items: center;

@@ -22,14 +22,12 @@ export interface ResumeFormProps {
   showActions?: boolean // 是否显示操作按钮
   labelWidth?: string // 标签宽度
   addText?: string // 添加按钮文本
-  deleteText?: string // 删除按钮文本
-  deleteTitle?: string // 删除对话框标题
-  deleteConfirmText?: string // 删除确认文本
 }
 
 export interface ResumeFormEmits {
   (e: 'add'): void // 添加事件
   (e: 'delete', id: string): void // 删除事件
+  (e: 'deleteModel'): void // 删除模块事件
   (e: 'hide', id: string): void // 隐藏事件
   (e: 'update', payload: { index: number; field: string; value: any }): void // 更新事件
 }

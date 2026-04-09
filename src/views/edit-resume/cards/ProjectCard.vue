@@ -47,6 +47,13 @@ const handleHideProject = (id: string) => {
     }
   })
 }
+
+// 删除模块回调函数
+const handleDeleteModel = () => {
+  resume.menuSections = resume.menuSections.filter(
+    item => item.id !== 'project',
+  )
+}
 </script>
 
 <template>
@@ -57,5 +64,6 @@ const handleHideProject = (id: string) => {
     @hide="handleHideProject"
     @delete="handleDeleteProject"
     @add="handleAddProject"
+    @delete-model="handleDeleteModel"
   />
 </template>
