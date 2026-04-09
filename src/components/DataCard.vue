@@ -8,6 +8,7 @@ import {
   EyeOutlined,
   EyeInvisibleOutlined,
   PlusOutlined,
+  HolderOutlined,
 } from '@ant-design/icons-vue'
 import AiEditor from '@/components/AiEditor.vue'
 
@@ -74,6 +75,7 @@ const handleDeleteModel = () => {
   <div class="collapse">
     <div v-if="showExpand" class="info" @click.stop="handleExpand">
       <div class="info-title">
+        <span class="sort"><HolderOutlined /></span>
         {{ title }}
         <DownOutlined v-if="!isExpand" />
         <UpOutlined v-else />
@@ -180,6 +182,7 @@ const handleDeleteModel = () => {
     gap: 1rem;
     border: 1px dashed;
     padding: 1rem 1.4rem;
+    padding-left: 0.5rem;
     cursor: pointer;
     transition:
       border-color 0.2s,
@@ -209,6 +212,22 @@ const handleDeleteModel = () => {
     .info-action {
       color: $primary-color;
       font-size: 1.3rem;
+    }
+  }
+
+  .sort {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    font-size: 1.6rem;
+    color: $primary-color;
+    border-radius: 50%;
+    cursor: move;
+    transition: all 0.2s;
+    &:hover {
+      background-color: rgba(59, 130, 246, 0.08);
     }
   }
 

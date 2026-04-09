@@ -164,7 +164,7 @@ UI/样式：熟悉 TailwindCSS、Sass/Less、CSS Module、Styled-components
     },
     {
       id: 'internship',
-      title: '工作经历',
+      title: '实习经历',
       order: '3',
     },
     {
@@ -174,7 +174,7 @@ UI/样式：熟悉 TailwindCSS、Sass/Less、CSS Module、Styled-components
     },
     {
       id: 'skills',
-      title: '技能经历',
+      title: '个人技能',
       order: '5',
     },
   ],

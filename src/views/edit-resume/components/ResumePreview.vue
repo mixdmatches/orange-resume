@@ -206,6 +206,12 @@ const sortedMenuSections = () => {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  cursor: pointer;
+  transition: background 0.3s ease-in-out;
+
+  &:hover {
+    background: #f5f7fa;
+  }
 }
 
 .section-title {
@@ -219,7 +225,6 @@ const sortedMenuSections = () => {
 
 .timeline-card {
   border-radius: 6px;
-  background: #fff;
 }
 
 .timeline-main {

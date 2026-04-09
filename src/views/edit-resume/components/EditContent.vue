@@ -8,6 +8,7 @@ import SkillsCard from '@/views/edit-resume/cards/SkillsCard.vue'
 import CustomCard from '@/views/edit-resume/cards/CustomCard.vue'
 import type { Resume } from '@/types/resume'
 import { PlusOutlined, DownOutlined } from '@ant-design/icons-vue'
+import { type UseDraggableReturn, VueDraggable } from 'vue-draggable-plus'
 
 const themeColors = ref([
   '#111827',
@@ -90,6 +91,14 @@ const handleMenuItemClick = (id: string) => {
     order: String(resume.menuSections.length),
   })
 }
+const el = ref<UseDraggableReturn>()
+
+const onEnd = () => {
+  resume.menuSections = resume.menuSections.map((section, index) => ({
+    ...section,
+    order: String(index + 1),
+  }))
+}
 </script>
 
 <template>
@@ -97,12 +106,21 @@ const handleMenuItemClick = (id: string) => {
     <div class="model">
       <div class="model-title">布局内容</div>
       <div class="model-content">
-        <component
-          :is="getCardComponent(section.id).component"
-          v-for="section in resume.menuSections"
-          :key="section.id"
-          v-bind="getCardComponent(section.id).props"
-        />
+        <VueDraggable
+          ref="el"
+          v-model="resume.menuSections"
+          :animation="150"
+          ghost-class="ghost"
+          class="model-list"
+          @end="onEnd"
+        >
+          <component
+            :is="getCardComponent(section.id).component"
+            v-for="section in resume.menuSections"
+            :key="section.id"
+            v-bind="getCardComponent(section.id).props"
+          />
+        </VueDraggable>
       </div>
       <a-dropdown :trigger="['click']">
         <template #overlay>
@@ -285,9 +303,11 @@ const handleMenuItemClick = (id: string) => {
   }
 
   &-content {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    .model-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
 
     .collapse {
       display: flex;
