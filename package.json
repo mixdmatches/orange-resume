@@ -18,6 +18,8 @@
     "ant-design-vue": "~4.2.6",
     "dayjs": "^1.11.19",
     "element-plus": "^2.11.8",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
     "lodash-es": "^4.17.21",
     "markdown-it": "^14.1.1",
     "pinia-plugin-persistedstate": "^4.5.0",

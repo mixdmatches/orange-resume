@@ -147,11 +147,11 @@ const isExist = (id: string) => {
 .preview-card {
   width: 100%;
   height: 100%;
-  border-radius: 0.5rem;
-  padding: 2.4rem;
+  border-radius: 8px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 32px;
   cursor: pointer;
 }
 
@@ -159,17 +159,17 @@ const isExist = (id: string) => {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding-bottom: 1.2rem;
+  padding-bottom: 12px;
   border-bottom: 1px solid #e5e6eb;
 
   .profile {
     h1 {
-      font-size: 3.2rem;
+      font-size: 32px;
       margin: 0;
       color: #111827;
     }
     p {
-      margin-top: 0.4rem;
+      margin-top: 4px;
       color: #4b5563;
     }
   }
@@ -177,8 +177,8 @@ const isExist = (id: string) => {
   .contact {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
-    font-size: 1.4rem;
+    gap: 4px;
+    font-size: 14px;
     color: #4b5563;
     text-align: right;
   }
@@ -187,20 +187,20 @@ const isExist = (id: string) => {
 .preview-section {
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  gap: 12px;
 }
 
 .section-title {
-  font-size: 1.8rem;
+  font-size: 18px;
   font-weight: 600;
   color: #111827;
   margin: 0;
   border-left: 4px solid #3b82f6;
-  padding-left: 0.8rem;
+  padding-left: 8px;
 }
 
 .timeline-card {
-  border-radius: 0.6rem;
+  border-radius: 6px;
   background: #fff;
 }
 
@@ -209,56 +209,56 @@ const isExist = (id: string) => {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 0.8rem;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .timeline-title,
 .project-name {
-  font-size: 1.6rem;
+  font-size: 16px;
   font-weight: 600;
   color: #1f2937;
 }
 
 .timeline-sub {
-  font-size: 1.4rem;
+  font-size: 14px;
   color: #6b7280;
-  margin-top: 0.2rem;
+  margin-top: 2px;
 }
 
 .timeline-period,
 .timeline-major,
 .timeline-time,
 .project-stack {
-  font-size: 1.3rem;
+  font-size: 13px;
   font-weight: 500;
 }
 
 .timeline-list {
-  padding-left: 1.4rem;
+  padding-left: 14px;
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 4px;
   color: #4b5563;
-  font-size: 1.4rem;
+  font-size: 14px;
 }
 
 .project-link {
   display: inline-block;
-  font-size: 1.3rem;
+  font-size: 13px;
   color: #3b82f6;
-  margin-top: 0.2rem;
+  margin-top: 2px;
 }
 
 .project-summary {
-  margin: 0 0 0.8rem;
+  margin: 0 0 8px;
   color: #4b5563;
   line-height: 1.6;
 }
 
 .skill-card {
-  padding: 1.4rem 1.6rem;
+  padding: 14px 16px;
   background: #fff;
 }
 </style>
