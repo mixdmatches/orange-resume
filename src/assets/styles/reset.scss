@@ -20,12 +20,6 @@ body {
   line-height: 1.5;
 }
 
-/* 重置列表样式 */
-ul,
-ol {
-  list-style: none;
-}
-
 /* 重置 a 标签样式 */
 a {
   text-decoration: none;
@@ -74,4 +68,8 @@ h5,
 h6 {
   font-size: inherit;
   font-weight: inherit;
+}
+
+p {
+  margin-bottom: 0px;
 }

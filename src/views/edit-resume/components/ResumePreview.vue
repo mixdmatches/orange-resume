@@ -13,6 +13,7 @@ const descStyle = computed(() => ({
 
 const titleStyle = computed(() => ({
   fontSize: `${styles.value.titleFontSize}px`,
+  borderLeft: `4px solid ${styles.value.themeColor}`,
 }))
 
 const subTitleStyle = computed(() => ({
@@ -142,6 +143,7 @@ const sortedMenuSections = () => {
                 </div>
                 <a
                   class="project-link"
+                  :style="{ color: styles.themeColor }"
                   :href="item.gitAddress"
                   target="_blank"
                   rel="noreferrer"
@@ -211,6 +213,7 @@ const sortedMenuSections = () => {
 .preview-card {
   width: 210mm;
   height: 270mm;
+  color: #111827;
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -264,7 +267,6 @@ const sortedMenuSections = () => {
   font-weight: 600;
   color: #111827;
   margin: 0;
-  border-left: 4px solid #3b82f6;
   padding-left: 8px;
 }
 
@@ -282,7 +284,6 @@ const sortedMenuSections = () => {
   justify-content: space-between;
   align-items: flex-start;
   gap: 10px;
-  margin-bottom: 8px;
 }
 
 .timeline-title {
@@ -299,7 +300,5 @@ const sortedMenuSections = () => {
 .project-link {
   display: inline-block;
   font-size: 13px;
-  color: #3b82f6;
-  margin-top: 2px;
 }
 </style>

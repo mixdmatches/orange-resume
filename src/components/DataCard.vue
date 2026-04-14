@@ -245,7 +245,6 @@ const handleDeleteModel = () => {
     border: 1px solid;
     padding: 1.4rem;
     border-radius: 0.6rem;
-    background: rgba(255, 255, 255, 0.8);
     @include themify(
       (
         border-color: $border-color-mode,

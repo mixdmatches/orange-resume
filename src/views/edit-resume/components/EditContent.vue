@@ -18,7 +18,6 @@ const themeColors = ref([
   '#059669',
   '#0f172a',
 ])
-const selectedTheme = ref(themeColors.value[1])
 
 // 字号选择
 const fontOptions = [12, 14, 16, 18, 20, 22, 24]
@@ -91,6 +90,11 @@ const handleMenuItemClick = (id: string) => {
     order: String(resume.menuSections.length),
   })
 }
+
+const handleChangeColor = (color: string) => {
+  resume.globalConfiguration.themeColor = color
+}
+
 const el = ref<UseDraggableReturn>()
 
 const onEnd = () => {
@@ -219,9 +223,12 @@ const onEnd = () => {
         <div
           v-for="color in themeColors"
           :key="color"
-          :class="['theme-dot', { active: selectedTheme === color }]"
-          :style="{ background: color }"
-          @click="resume.globalConfiguration.themeColor = color"
+          :class="[
+            'theme-dot',
+            { active: resume.globalConfiguration.themeColor === color },
+          ]"
+          :style="{ backgroundColor: color }"
+          @click="handleChangeColor(color)"
         ></div>
         <a-button type="dashed" size="small">自定义</a-button>
       </div>
