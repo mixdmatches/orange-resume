@@ -230,7 +230,12 @@ const onEnd = () => {
           :style="{ backgroundColor: color }"
           @click="handleChangeColor(color)"
         ></div>
-        <a-button type="dashed" size="small">自定义</a-button>
+        <input
+          type="color"
+          :value="resume.globalConfiguration.themeColor"
+          class="theme-dot"
+          @input="handleChangeColor(($event.target as HTMLInputElement).value)"
+        />
       </div>
     </div>
     <!-- 间距 -->

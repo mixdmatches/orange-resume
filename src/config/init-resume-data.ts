@@ -10,7 +10,7 @@ export const initialGlobalConfiguration = {
   paragraphSpacing: 10, // 段落间距
   titleFontSize: 20, // 标题字体大小
   subTitleFontSize: 18, // 子标题字体大小
-  themeColor: '#000', // 主题颜色
+  themeColor: '#111827', // 主题颜色
 }
 
 // 初始默认简历内容

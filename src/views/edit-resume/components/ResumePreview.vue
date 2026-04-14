@@ -1,34 +1,73 @@
 <script setup lang="ts">
 import type { Resume } from '@/types/resume'
 import { computed, inject } from 'vue'
+import SectionPreview from '@/components/ResumeSection.vue'
 
 const resume: Resume = inject('resume') as Resume
 
 const styles = computed(() => resume.globalConfiguration)
-
-const descStyle = computed(() => ({
-  fontSize: `${styles.value.baseFontSize}px`,
-  lineHeight: styles.value.baseLineHeight,
-}))
-
-const titleStyle = computed(() => ({
-  fontSize: `${styles.value.titleFontSize}px`,
-  borderLeft: `4px solid ${styles.value.themeColor}`,
-}))
-
-const subTitleStyle = computed(() => ({
-  fontSize: `${styles.value.subTitleFontSize}px`,
-}))
-
-const isExist = (id: string) => {
-  return resume.menuSections.some(item => item.id === id)
-}
 
 // 根据 menuSections 的 order 排序
 const sortedMenuSections = () => {
   return resume.menuSections
     .filter(section => section.id !== 'basic') // 过滤掉 basic，因为基本信息单独渲染
     .sort((a, b) => parseInt(a.order) - parseInt(b.order))
+}
+
+// 整合适合 SectionPreview 组件的数据
+const getSectionItems = (sectionId: string) => {
+  switch (sectionId) {
+    case 'education':
+      return resume.educations.map(item => ({
+        id: item.id,
+        visible: item.visible,
+        subMain: [item.school, item.degree, item.major, item.dateRange],
+        address: '',
+        description: item.description,
+      }))
+    case 'internship':
+      return resume.internships.map(item => ({
+        id: item.id,
+        visible: item.visible,
+        subMain: [
+          item.companyName,
+          item.department,
+          item.position,
+          item.dateRange,
+        ],
+        address: '',
+        description: item.description,
+      }))
+    case 'project':
+      return resume.projects.map(item => ({
+        id: item.id,
+        visible: item.visible,
+        subMain: [item.name, item.role, '', item.dateRange],
+        address: item.gitAddress,
+        description: item.description,
+      }))
+    case 'skills':
+      return [
+        {
+          id: 'skills',
+          visible: true,
+          subMain: [],
+          address: '',
+          description: resume.skills,
+        },
+      ]
+    default:
+      if (sectionId.startsWith('custom-')) {
+        return (resume.customData[sectionId] || []).map(item => ({
+          id: item.id,
+          visible: item.visible,
+          subMain: [item.title, item.subTitle, '', item.dateRange],
+          address: '',
+          description: item.description,
+        }))
+      }
+      return []
+  }
 }
 </script>
 
@@ -56,148 +95,11 @@ const sortedMenuSections = () => {
 
       <!-- 根据 menuSections 的 order 排序渲染模块 -->
       <template v-for="section in sortedMenuSections()" :key="section.id">
-        <!-- 教育经历 -->
-        <section
-          v-if="section.id === 'education' && isExist('education')"
-          class="preview-section"
-        >
-          <div class="section-title" :style="titleStyle">
-            {{ section.title }}
-          </div>
-          <div class="cards" :style="{ gap: `${styles.paragraphSpacing}px` }">
-            <div
-              v-for="item in resume.educations"
-              :key="item.school"
-              class="timeline-card"
-            >
-              <template v-if="item.visible">
-                <div class="timeline-main" :style="subTitleStyle">
-                  <div class="timeline-title">
-                    {{ item.school }}
-                    <em v-show="item.school !== '' && item.degree !== ''">-</em>
-                    {{ item.degree }}
-                  </div>
-                  <div class="timeline-major">{{ item.major }}</div>
-                  <div class="timeline-period">
-                    {{ item.dateRange }}
-                  </div>
-                </div>
-                <div :style="descStyle" v-html="item.description"></div>
-              </template>
-            </div>
-          </div>
-        </section>
-
-        <!-- 实习经历 -->
-        <section
-          v-if="section.id === 'internship' && isExist('internship')"
-          class="preview-section"
-        >
-          <div :style="titleStyle" class="section-title">
-            {{ section.title }}
-          </div>
-          <div class="cards" :style="{ gap: `${styles.paragraphSpacing}px` }">
-            <div
-              v-for="item in resume.internships"
-              :key="item.id"
-              class="timeline-card"
-            >
-              <template v-if="item.visible">
-                <div class="timeline-main" :style="subTitleStyle">
-                  <div class="timeline-title">
-                    {{ item.companyName }}
-                    <em
-                      v-show="item.companyName !== '' && item.department !== ''"
-                      >-</em
-                    >
-                    {{ item.department }}
-                  </div>
-                  <div class="timeline-major">{{ item.position }}</div>
-                  <div class="timeline-period">{{ item.dateRange }}</div>
-                </div>
-                <div :style="descStyle" v-html="item.description"></div>
-              </template>
-            </div>
-          </div>
-        </section>
-
-        <!-- 项目经历 -->
-        <section
-          v-if="section.id === 'project' && isExist('project')"
-          class="preview-section"
-        >
-          <div :style="titleStyle" class="section-title">
-            {{ section.title }}
-          </div>
-          <div class="cards" :style="{ gap: `${styles.paragraphSpacing}px` }">
-            <div
-              v-for="item in resume.projects"
-              :key="item.id"
-              class="timeline-card"
-            >
-              <template v-if="item.visible">
-                <div class="timeline-main" :style="subTitleStyle">
-                  <div class="timeline-title">{{ item.name }}</div>
-                  <span class="timeline-major">{{ item.role }}</span>
-                  <span class="timeline-time">{{ item.dateRange }}</span>
-                </div>
-                <a
-                  class="project-link"
-                  :style="{ color: styles.themeColor }"
-                  :href="item.gitAddress"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {{ item.gitAddress }}
-                </a>
-                <div :style="descStyle" v-html="item.description"></div>
-              </template>
-            </div>
-          </div>
-        </section>
-
-        <!-- 个人技能 -->
-        <section
-          v-if="section.id === 'skills' && isExist('skills')"
-          class="preview-section"
-        >
-          <div :style="titleStyle" class="section-title">
-            {{ section.title }}
-          </div>
-          <div class="cards" :style="{ gap: `${styles.paragraphSpacing}px` }">
-            <div
-              class="timeline-card"
-              :style="descStyle"
-              v-html="resume.skills"
-            ></div>
-          </div>
-        </section>
-
-        <!-- 自定义模块 -->
-        <section
-          v-if="section.id.startsWith('custom-') && isExist(section.id)"
-          class="preview-section"
-        >
-          <div :style="titleStyle" class="section-title">
-            {{ section.title }}
-          </div>
-          <div class="cards" :style="{ gap: `${styles.paragraphSpacing}px` }">
-            <div
-              v-for="item in resume.customData[section.id] || []"
-              :key="item.id"
-              class="timeline-card"
-            >
-              <template v-if="item.visible">
-                <div class="timeline-main" :style="subTitleStyle">
-                  <div class="timeline-title">{{ item.title }}</div>
-                  <span class="timeline-major">{{ item.subTitle }}</span>
-                  <span class="timeline-time">{{ item.dateRange }}</span>
-                </div>
-                <div :style="descStyle" v-html="item.description"></div>
-              </template>
-            </div>
-          </div>
-        </section>
+        <SectionPreview
+          :id="section.id"
+          :title="section.title"
+          :items="getSectionItems(section.id)"
+        />
       </template>
     </div>
   </div>
@@ -249,56 +151,5 @@ const sortedMenuSections = () => {
     color: #4b5563;
     text-align: right;
   }
-}
-
-.preview-section {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  cursor: pointer;
-  transition: background 0.3s ease-in-out;
-
-  &:hover {
-    background: #f5f7fa;
-  }
-}
-
-.section-title {
-  font-weight: 600;
-  color: #111827;
-  margin: 0;
-  padding-left: 8px;
-}
-
-.cards {
-  display: flex;
-  flex-direction: column;
-}
-
-.timeline-card {
-  border-radius: 6px;
-}
-
-.timeline-main {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.timeline-title {
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.timeline-period,
-.timeline-major,
-.timeline-time {
-  font-weight: 500;
-}
-
-.project-link {
-  display: inline-block;
-  font-size: 13px;
 }
 </style>
