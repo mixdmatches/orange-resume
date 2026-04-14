@@ -21,7 +21,7 @@ const themeColors = ref([
 const selectedTheme = ref(themeColors.value[1])
 
 // 字号选择
-const fontOptions = ['12px', '14px', '16px', '18px', '20px', '22px', '24px']
+const fontOptions = [12, 14, 16, 18, 20, 22, 24]
 
 const moduleList = [
   {
@@ -177,7 +177,7 @@ const onEnd = () => {
                 v-for="font in fontOptions"
                 :key="font"
                 :value="font"
-                >{{ font }}</a-select-option
+                >{{ font }}px</a-select-option
               >
             </a-select>
           </a-col>
@@ -191,7 +191,7 @@ const onEnd = () => {
                 v-for="font in fontOptions"
                 :key="font"
                 :value="font"
-                >{{ font }}</a-select-option
+                >{{ font }}px</a-select-option
               >
             </a-select>
           </a-col>
@@ -205,7 +205,7 @@ const onEnd = () => {
                 v-for="font in fontOptions"
                 :key="font"
                 :value="font"
-                >{{ font }}</a-select-option
+                >{{ font }}px</a-select-option
               >
             </a-select>
           </a-col>
@@ -276,7 +276,7 @@ const onEnd = () => {
   @include themify(
     (
       color: $text-color,
-      background-color: $bg-color,
+      background-color: $layout-bg-color,
     )
   );
 }
@@ -292,6 +292,7 @@ const onEnd = () => {
   @include themify(
     (
       border-color: $border-color-mode,
+      background-color: $bg-color,
     )
   );
 

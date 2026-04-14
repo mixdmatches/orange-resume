@@ -19,6 +19,7 @@ withDefaults(defineProps<ResumeFormProps>(), {
   showTitleEye: false,
   showAdd: true,
   showActions: true,
+  showSort: true,
   labelWidth: '120px',
 })
 
@@ -75,7 +76,7 @@ const handleDeleteModel = () => {
   <div class="collapse">
     <div v-if="showExpand" class="info" @click.stop="handleExpand">
       <div class="info-title">
-        <span class="sort"><HolderOutlined /></span>
+        <span class="sort"><HolderOutlined v-show="showSort" /></span>
         {{ title }}
         <DownOutlined v-if="!isExpand" />
         <UpOutlined v-else />
@@ -199,6 +200,8 @@ const handleDeleteModel = () => {
     }
 
     &-title {
+      display: flex;
+      align-items: center;
       font-size: 1.6rem;
       font-weight: 600;
     }
@@ -229,6 +232,12 @@ const handleDeleteModel = () => {
     &:hover {
       background-color: rgba(59, 130, 246, 0.08);
     }
+  }
+
+  .sort-slot {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
   }
 
   &-content {

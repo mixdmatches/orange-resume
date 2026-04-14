@@ -1,7 +1,23 @@
 <script setup lang="ts">
 import type { Resume } from '@/types/resume'
-import { inject } from 'vue'
+import { computed, inject } from 'vue'
+
 const resume: Resume = inject('resume') as Resume
+
+const styles = computed(() => resume.globalConfiguration)
+
+const descStyle = computed(() => ({
+  fontSize: `${styles.value.baseFontSize}px`,
+  lineHeight: styles.value.baseLineHeight,
+}))
+
+const titleStyle = computed(() => ({
+  fontSize: `${styles.value.titleFontSize}px`,
+}))
+
+const subTitleStyle = computed(() => ({
+  fontSize: `${styles.value.subTitleFontSize}px`,
+}))
 
 const isExist = (id: string) => {
   return resume.menuSections.some(item => item.id === id)
@@ -17,7 +33,13 @@ const sortedMenuSections = () => {
 
 <template>
   <div class="preview-wrapper">
-    <div class="preview-card">
+    <div
+      class="preview-card"
+      :style="{
+        gap: `${styles.baseModuleSpacing}px`,
+        padding: `${styles.basePagePadding}px`,
+      }"
+    >
       <!-- 基本信息 -->
       <section class="preview-header">
         <div class="profile">
@@ -38,26 +60,30 @@ const sortedMenuSections = () => {
           v-if="section.id === 'education' && isExist('education')"
           class="preview-section"
         >
-          <h2 class="section-title">{{ section.title }}</h2>
-          <div
-            v-for="item in resume.educations"
-            :key="item.school"
-            class="timeline-card"
-          >
-            <template v-if="item.visible">
-              <div class="timeline-main">
-                <div class="timeline-title">
-                  {{ item.school }}
-                  <em v-show="item.school !== '' && item.degree !== ''">-</em>
-                  {{ item.degree }}
+          <div class="section-title" :style="titleStyle">
+            {{ section.title }}
+          </div>
+          <div class="cards" :style="{ gap: `${styles.paragraphSpacing}px` }">
+            <div
+              v-for="item in resume.educations"
+              :key="item.school"
+              class="timeline-card"
+            >
+              <template v-if="item.visible">
+                <div class="timeline-main" :style="subTitleStyle">
+                  <div class="timeline-title">
+                    {{ item.school }}
+                    <em v-show="item.school !== '' && item.degree !== ''">-</em>
+                    {{ item.degree }}
+                  </div>
+                  <div class="timeline-major">{{ item.major }}</div>
+                  <div class="timeline-period">
+                    {{ item.dateRange }}
+                  </div>
                 </div>
-                <div class="timeline-major">{{ item.major }}</div>
-                <div class="timeline-period">
-                  {{ item.dateRange }}
-                </div>
-              </div>
-              <div class="timeline-desc" v-html="item.description"></div>
-            </template>
+                <div :style="descStyle" v-html="item.description"></div>
+              </template>
+            </div>
           </div>
         </section>
 
@@ -66,26 +92,31 @@ const sortedMenuSections = () => {
           v-if="section.id === 'internship' && isExist('internship')"
           class="preview-section"
         >
-          <h2 class="section-title">{{ section.title }}</h2>
-          <div
-            v-for="item in resume.internships"
-            :key="item.id"
-            class="timeline-card"
-          >
-            <template v-if="item.visible">
-              <div class="timeline-main">
-                <div class="timeline-title">
-                  {{ item.companyName }}
-                  <em v-show="item.companyName !== '' && item.department !== ''"
-                    >-</em
-                  >
-                  {{ item.department }}
+          <div :style="titleStyle" class="section-title">
+            {{ section.title }}
+          </div>
+          <div class="cards" :style="{ gap: `${styles.paragraphSpacing}px` }">
+            <div
+              v-for="item in resume.internships"
+              :key="item.id"
+              class="timeline-card"
+            >
+              <template v-if="item.visible">
+                <div class="timeline-main" :style="subTitleStyle">
+                  <div class="timeline-title">
+                    {{ item.companyName }}
+                    <em
+                      v-show="item.companyName !== '' && item.department !== ''"
+                      >-</em
+                    >
+                    {{ item.department }}
+                  </div>
+                  <div class="timeline-major">{{ item.position }}</div>
+                  <div class="timeline-period">{{ item.dateRange }}</div>
                 </div>
-                <div class="timeline-major">{{ item.position }}</div>
-                <div class="timeline-period">{{ item.dateRange }}</div>
-              </div>
-              <div class="timeline-desc" v-html="item.description"></div>
-            </template>
+                <div :style="descStyle" v-html="item.description"></div>
+              </template>
+            </div>
           </div>
         </section>
 
@@ -94,28 +125,32 @@ const sortedMenuSections = () => {
           v-if="section.id === 'project' && isExist('project')"
           class="preview-section"
         >
-          <h2 class="section-title">{{ section.title }}</h2>
-          <div
-            v-for="item in resume.projects"
-            :key="item.id"
-            class="timeline-card"
-          >
-            <template v-if="item.visible">
-              <div class="timeline-main">
-                <div class="timeline-title">{{ item.name }}</div>
-                <span class="timeline-major">{{ item.role }}</span>
-                <span class="timeline-time">{{ item.dateRange }}</span>
-              </div>
-              <a
-                class="project-link"
-                :href="item.gitAddress"
-                target="_blank"
-                rel="noreferrer"
-              >
-                {{ item.gitAddress }}
-              </a>
-              <p class="timeline-desc" v-html="item.description"></p>
-            </template>
+          <div :style="titleStyle" class="section-title">
+            {{ section.title }}
+          </div>
+          <div class="cards" :style="{ gap: `${styles.paragraphSpacing}px` }">
+            <div
+              v-for="item in resume.projects"
+              :key="item.id"
+              class="timeline-card"
+            >
+              <template v-if="item.visible">
+                <div class="timeline-main" :style="subTitleStyle">
+                  <div class="timeline-title">{{ item.name }}</div>
+                  <span class="timeline-major">{{ item.role }}</span>
+                  <span class="timeline-time">{{ item.dateRange }}</span>
+                </div>
+                <a
+                  class="project-link"
+                  :href="item.gitAddress"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {{ item.gitAddress }}
+                </a>
+                <div :style="descStyle" v-html="item.description"></div>
+              </template>
+            </div>
           </div>
         </section>
 
@@ -124,8 +159,16 @@ const sortedMenuSections = () => {
           v-if="section.id === 'skills' && isExist('skills')"
           class="preview-section"
         >
-          <h2 class="section-title">{{ section.title }}</h2>
-          <div class="timeline-card" v-html="resume.skills"></div>
+          <div :style="titleStyle" class="section-title">
+            {{ section.title }}
+          </div>
+          <div class="cards" :style="{ gap: `${styles.paragraphSpacing}px` }">
+            <div
+              class="timeline-card"
+              :style="descStyle"
+              v-html="resume.skills"
+            ></div>
+          </div>
         </section>
 
         <!-- 自定义模块 -->
@@ -133,20 +176,24 @@ const sortedMenuSections = () => {
           v-if="section.id.startsWith('custom-') && isExist(section.id)"
           class="preview-section"
         >
-          <h2 class="section-title">{{ section.title }}</h2>
-          <div
-            v-for="item in resume.customData[section.id] || []"
-            :key="item.id"
-            class="timeline-card"
-          >
-            <template v-if="item.visible">
-              <div class="timeline-main">
-                <div class="timeline-title">{{ item.title }}</div>
-                <span class="timeline-major">{{ item.subTitle }}</span>
-                <span class="timeline-time">{{ item.dateRange }}</span>
-              </div>
-              <div class="timeline-desc" v-html="item.description"></div>
-            </template>
+          <div :style="titleStyle" class="section-title">
+            {{ section.title }}
+          </div>
+          <div class="cards" :style="{ gap: `${styles.paragraphSpacing}px` }">
+            <div
+              v-for="item in resume.customData[section.id] || []"
+              :key="item.id"
+              class="timeline-card"
+            >
+              <template v-if="item.visible">
+                <div class="timeline-main" :style="subTitleStyle">
+                  <div class="timeline-title">{{ item.title }}</div>
+                  <span class="timeline-major">{{ item.subTitle }}</span>
+                  <span class="timeline-time">{{ item.dateRange }}</span>
+                </div>
+                <div :style="descStyle" v-html="item.description"></div>
+              </template>
+            </div>
           </div>
         </section>
       </template>
@@ -159,17 +206,16 @@ const sortedMenuSections = () => {
   width: 100%;
   height: 100%;
   overflow-y: auto;
-  border: 1px solid #e5e6eb;
 }
 
 .preview-card {
-  width: 100%;
-  height: 100%;
-  border-radius: 8px;
+  width: 210mm;
+  height: 270mm;
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  border: 1px solid #e5e6eb;
+  background-color: #fff;
   cursor: pointer;
 }
 
@@ -215,12 +261,16 @@ const sortedMenuSections = () => {
 }
 
 .section-title {
-  font-size: 18px;
   font-weight: 600;
   color: #111827;
   margin: 0;
   border-left: 4px solid #3b82f6;
   padding-left: 8px;
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
 }
 
 .timeline-card {
@@ -236,21 +286,13 @@ const sortedMenuSections = () => {
 }
 
 .timeline-title {
-  font-size: 16px;
   font-weight: 600;
   color: #1f2937;
-}
-
-.timeline-sub {
-  font-size: 14px;
-  color: #6b7280;
-  margin-top: 2px;
 }
 
 .timeline-period,
 .timeline-major,
 .timeline-time {
-  font-size: 13px;
   font-weight: 500;
 }
 

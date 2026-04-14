@@ -20,6 +20,7 @@ export interface ResumeFormProps {
   showTitleEye?: boolean // 是否显示标题隐藏按钮
   showAdd?: boolean // 是否显示添加按钮
   showActions?: boolean // 是否显示操作按钮
+  showSort?: boolean
   labelWidth?: string // 标签宽度
   addText?: string // 添加按钮文本
 }

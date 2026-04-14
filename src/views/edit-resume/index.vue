@@ -105,14 +105,12 @@ provide('resume', resume)
     );
   }
   .view-content {
-    width: 50%;
     height: 100%;
     border-radius: 0.5rem;
     padding: 1rem;
     @include themify(
       (
         color: $text-color,
-        background-color: $bg-color,
       )
     );
   }

@@ -28,7 +28,7 @@ async function toCanvas(element: HTMLElement) {
 
   // canvas元素
   const canvas = await html2canvas(element, {
-    scale: window.devicePixelRatio * 2, // 增加清晰度
+    scale: 2, // 增加清晰度
     useCORS: true, // 允许跨域
   })
 

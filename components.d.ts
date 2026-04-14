@@ -12,6 +12,7 @@ declare module 'vue' {
     DataCard: typeof import('./src/components/DataCard.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    ShowCard: typeof import('./src/components/ShowCard.vue')['default']
     ThemeIcon: typeof import('./src/components/ThemeIcon.vue')['default']
   }
 }

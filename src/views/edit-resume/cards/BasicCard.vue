@@ -25,6 +25,7 @@ const basicItems = computed(() => [resume.basic])
     :show-delete="false"
     :show-add="false"
     :show-actions="false"
+    :show-sort="false"
   >
   </DataCard>
 </template>

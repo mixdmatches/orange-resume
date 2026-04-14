@@ -23,3 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 note.md
+
+.agents/*
+.claude/*
+.trae/*
+skills-lock.json
