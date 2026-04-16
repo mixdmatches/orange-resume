@@ -15,6 +15,7 @@ import {
 import dayjs from 'dayjs'
 import { h, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
 const router = useRouter()
 
 const activeResumeId = ref<string>('')
@@ -58,6 +59,46 @@ const handleOk = async () => {
   open.value = false
   await getAllResume()
 }
+
+/**
+ * 导入配置
+ */
+const handleImportConfig = async () => {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.json'
+  input.style.display = 'none'
+  document.body.appendChild(input)
+
+  const handleChange = async (e: Event) => {
+    const file = (e.target as HTMLInputElement)?.files?.[0]
+    if (!file) return
+
+    try {
+      const text = await file.text()
+      const resume = JSON.parse(text)
+
+      // 验证数据结构
+      if (!resume.title || !resume.globalConfiguration) {
+        throw new Error('无效的简历配置文件')
+      }
+
+      await addResumeIDB(resume)
+      await getAllResume()
+      message.success('导入配置成功')
+    } catch (error) {
+      console.error('导入配置失败', error)
+      message.error(error instanceof Error ? error.message : '导入配置失败')
+    } finally {
+      // 清理 input 元素
+      input.removeEventListener('change', handleChange)
+      document.body.removeChild(input)
+    }
+  }
+
+  input.addEventListener('change', handleChange)
+  input.click()
+}
 </script>
 
 <template>
@@ -79,7 +120,10 @@ const handleOk = async () => {
           @click="handleAddResume"
           >新建简历</a-button
         >
-        <a-button size="large" :icon="h(VerticalAlignTopOutlined)"
+        <a-button
+          size="large"
+          :icon="h(VerticalAlignTopOutlined)"
+          @click="handleImportConfig"
           >导入配置</a-button
         >
       </a-space>
