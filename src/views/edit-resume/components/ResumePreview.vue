@@ -42,7 +42,7 @@ const getSectionItems = (sectionId: string) => {
       return resume.projects.map(item => ({
         id: item.id,
         visible: item.visible,
-        subMain: [item.name, item.role, '', item.dateRange],
+        subMain: [item.name, '', item.role, item.dateRange],
         address: item.gitAddress,
         description: item.description,
       }))

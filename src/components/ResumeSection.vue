@@ -18,37 +18,27 @@ defineProps<SectionProps>()
 
 const resume: Resume = inject('resume') as Resume
 
-const styles = computed(() => resume.globalConfiguration)
-
-const descStyle = computed(() => ({
-  fontSize: `${styles.value.baseFontSize}px`,
-  lineHeight: styles.value.baseLineHeight,
-}))
-
-const titleStyle = computed(() => ({
-  color: styles.value.themeColor,
-  fontSize: `${styles.value.titleFontSize}px`,
-  borderLeft: `4px solid ${styles.value.themeColor}`,
-  backgroundColor: `${styles.value.themeColor}33`, // 20% 透明度
-}))
-
-const subTitleStyle = computed(() => ({
-  fontSize: `${styles.value.subTitleFontSize}px`,
+const styles = computed(() => ({
+  ...resume.globalConfiguration,
+  titleFontSize: `${resume.globalConfiguration.titleFontSize}px`,
+  subTitleFontSize: `${resume.globalConfiguration.subTitleFontSize}px`,
+  paragraphSpacing: `${resume.globalConfiguration.paragraphSpacing}px`,
+  baseFontSize: `${resume.globalConfiguration.baseFontSize}px`,
 }))
 </script>
 
 <template>
   <section class="preview-section">
-    <div class="section-title" :style="titleStyle">
+    <div class="section-title">
       {{ title }}
     </div>
-    <div class="cards" :style="{ gap: `${styles.paragraphSpacing}px` }">
+    <div class="cards">
       <div v-for="item in items" :key="item.id" class="timeline-card">
         <template v-if="item.visible">
-          <div class="timeline-main" :style="subTitleStyle">
+          <div v-if="item.subMain?.length" class="timeline-main">
             <div class="timeline-title">
               {{ item.subMain?.[0] || '' }}
-              <em v-show="item.subMain?.[0] !== '' && item.address !== ''"
+              <em v-show="item.subMain?.[0] !== '' && item.subMain?.[1] !== ''"
                 >-</em
               >
               {{ item.subMain?.[1] || '' }}
@@ -58,7 +48,10 @@ const subTitleStyle = computed(() => ({
               {{ item.subMain?.[3] || '' }}
             </div>
           </div>
-          <div :style="descStyle" v-html="item.description"></div>
+          <p v-show="item.address !== ''" class="project-link">
+            {{ item.address }}
+          </p>
+          <div class="description" v-html="item.description"></div>
         </template>
       </div>
     </div>
@@ -83,11 +76,16 @@ const subTitleStyle = computed(() => ({
   color: #111827;
   margin: 0;
   padding-left: 8px;
+  color: v-bind('styles.themeColor');
+  font-size: v-bind('styles.titleFontSize');
+  border-left: 4px solid v-bind('styles.themeColor');
+  background-color: v-bind('styles.themeColor') + '33';
 }
 
 .cards {
   display: flex;
   flex-direction: column;
+  gap: v-bind('styles.paragraphSpacing');
 }
 
 .timeline-card {
@@ -99,6 +97,7 @@ const subTitleStyle = computed(() => ({
   justify-content: space-between;
   align-items: flex-start;
   gap: 10px;
+  font-size: v-bind('styles.subTitleFontSize');
 }
 
 .timeline-title {
@@ -115,5 +114,11 @@ const subTitleStyle = computed(() => ({
 .project-link {
   display: inline-block;
   font-size: 13px;
+  color: v-bind('styles.themeColor');
+}
+
+.description {
+  font-size: v-bind('styles.baseFontSize');
+  line-height: v-bind('styles.baseLineHeight');
 }
 </style>
