@@ -97,11 +97,42 @@ const handleChangeColor = (color: string) => {
 
 const el = ref<UseDraggableReturn>()
 
+// 可拖拽的菜单部分（不包含 basic）
+const draggableMenuSections = computed({
+  get: () => resume.menuSections.filter(section => section.id !== 'basic'),
+  set: value => {
+    // 找到 basic 的位置
+    const basicIndex = resume.menuSections.findIndex(
+      section => section.id === 'basic',
+    )
+    if (basicIndex !== -1) {
+      // 保留 basic 在原来的位置
+      const basicSection = resume.menuSections[basicIndex]
+      resume.menuSections = [...value]
+      resume.menuSections.splice(basicIndex, 0, basicSection)
+    } else {
+      resume.menuSections = value
+    }
+  },
+})
+
 const onEnd = () => {
-  resume.menuSections = resume.menuSections.map((section, index) => ({
-    ...section,
-    order: String(index + 1),
-  }))
+  // 重新排序，确保 basic 在第一位
+  const basicSection = resume.menuSections.find(
+    section => section.id === 'basic',
+  )
+  const otherSections = resume.menuSections.filter(
+    section => section.id !== 'basic',
+  )
+
+  resume.menuSections = basicSection
+    ? [basicSection, ...otherSections]
+    : otherSections
+
+  // 重新设置 order
+  resume.menuSections.forEach((section, index) => {
+    section.order = String(index + 1)
+  })
 }
 </script>
 
@@ -110,17 +141,22 @@ const onEnd = () => {
     <div class="model">
       <div class="model-title">布局内容</div>
       <div class="model-content">
+        <component
+          :is="getCardComponent('basic').component"
+          v-if="resume.menuSections.some(section => section.id === 'basic')"
+          v-bind="getCardComponent('basic').props"
+        />
+
         <VueDraggable
           ref="el"
-          v-model="resume.menuSections"
+          v-model="draggableMenuSections"
           :animation="150"
           ghost-class="ghost"
-          class="model-list"
           @end="onEnd"
         >
           <component
             :is="getCardComponent(section.id).component"
-            v-for="section in resume.menuSections"
+            v-for="section in draggableMenuSections"
             :key="section.id"
             v-bind="getCardComponent(section.id).props"
           />
@@ -319,167 +355,6 @@ const onEnd = () => {
     .model-list {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
-    }
-
-    .collapse {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-
-      .info {
-        width: 100%;
-        min-height: 78px;
-        display: flex;
-        justify-content: space-between;
-        gap: 1rem;
-        border: 1px dashed;
-        padding: 1rem 1.4rem;
-        cursor: pointer;
-        transition:
-          border-color 0.2s,
-          background 0.2s;
-        border-radius: 0.6rem;
-        @include themify(
-          (
-            border-color: $border-color-mode,
-          )
-        );
-
-        &:hover {
-          background: rgba(59, 130, 246, 0.08);
-        }
-
-        &-title {
-          font-size: 1.6rem;
-          font-weight: 600;
-        }
-
-        .info-desc {
-          font-size: 1.3rem;
-          color: #8c8c8c;
-          margin-top: 0.3rem;
-        }
-
-        &-work {
-          display: flex;
-          flex-direction: column;
-          gap: 0.6rem;
-          align-items: flex-end;
-        }
-
-        .info-action {
-          color: $primary-color;
-          font-size: 1.3rem;
-
-          &.danger {
-            color: #f97316;
-          }
-        }
-      }
-
-      &-content {
-        width: 100%;
-        border: 1px solid;
-        padding: 1.4rem;
-        border-radius: 0.6rem;
-        background: rgba(255, 255, 255, 0.8);
-        @include themify(
-          (
-            border-color: $border-color-mode,
-          )
-        );
-
-        .form-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 1rem;
-          margin-bottom: 1rem;
-        }
-
-        .form-actions {
-          margin-top: 1rem;
-          display: flex;
-          gap: 1rem;
-        }
-
-        .basic-field {
-          .field-warper {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-          }
-
-          .field-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.6rem;
-            padding: 0.8rem 1rem;
-          }
-
-          .sort-icon {
-            cursor: move;
-            font-size: 1.8rem;
-            color: #9ca3af;
-            display: flex;
-          }
-
-          .field-input {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-          }
-
-          .field-prop {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            width: 120px;
-            font-size: 1.3rem;
-            color: #4b5563;
-          }
-
-          .field-text {
-            flex: 1;
-          }
-
-          .field-work {
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
-            font-size: 1.2rem;
-            color: #94a3b8;
-          }
-        }
-
-        .skill-editor {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-
-        .skill-tags {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.8rem;
-        }
-
-        .skill-tag {
-          padding: 0.3rem 1rem;
-          border-radius: 999px;
-          background: rgba(15, 23, 42, 0.05);
-          font-size: 1.3rem;
-        }
-
-        .skill-input {
-          display: flex;
-          gap: 1rem;
-          align-items: center;
-        }
-      }
     }
   }
 }

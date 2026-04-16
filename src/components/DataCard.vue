@@ -76,7 +76,8 @@ const handleDeleteModel = () => {
   <div class="collapse">
     <div v-if="showExpand" class="info" @click.stop="handleExpand">
       <div class="info-title">
-        <span class="sort"><HolderOutlined v-show="showSort" /></span>
+        <span v-if="showSort" class="sort"><HolderOutlined /></span>
+        <span v-else class="sort-slot"></span>
         {{ title }}
         <DownOutlined v-if="!isExpand" />
         <UpOutlined v-else />
@@ -94,7 +95,7 @@ const handleDeleteModel = () => {
       <template v-for="item in items" :key="item.id">
         <div class="form-item">
           <a-form>
-            <a-row v-for="field in fields" :key="field.prop" gutter="16">
+            <a-row v-for="field in fields" :key="field.prop" :gutter="16">
               <a-col :span="field.type === 'editor' ? 24 : field.span || 12">
                 <a-form-item :label="field.label" :name="field.prop">
                   <template v-if="field.type === 'editor'">
@@ -173,6 +174,7 @@ const handleDeleteModel = () => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  margin-top: 10px;
 
   .info {
     width: 100%;
