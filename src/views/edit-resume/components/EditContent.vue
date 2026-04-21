@@ -44,10 +44,6 @@ const moduleList = [
     id: 'skills',
     title: '个人技能',
   },
-  {
-    id: 'custom',
-    title: '自定义模块',
-  },
 ]
 
 const resume: Resume = inject('resume') as Resume
@@ -135,6 +131,14 @@ const onEnd = () => {
     section.order = String(index + 1)
   })
 }
+
+const showDivider = computed(() =>
+  moduleList.some(
+    item =>
+      item.id !== 'basic' &&
+      !resume.menuSections.some(section => section.id === item.id),
+  ),
+)
 </script>
 
 <template>
@@ -187,7 +191,7 @@ const onEnd = () => {
                 {{ item.title }}
               </a-menu-item>
             </template>
-            <a-menu-divider />
+            <a-menu-divider v-if="showDivider" />
             <a-menu-item @click="handleAddCustom">自定义模块</a-menu-item>
           </a-menu>
         </template>
