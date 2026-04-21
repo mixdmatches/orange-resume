@@ -99,6 +99,12 @@ const handleImportConfig = async () => {
   input.addEventListener('change', handleChange)
   input.click()
 }
+
+const transition = {
+  type: 'spring',
+  visualDuration: 0.6,
+  bounce: 0.4,
+}
 </script>
 
 <template>
@@ -129,7 +135,18 @@ const handleImportConfig = async () => {
       </a-space>
     </div>
     <div v-if="resumes.length > 0" class="resumes">
-      <a-card v-for="item in resumes" :key="item.id" hoverable>
+      <a-card
+        v-for="item in resumes"
+        :key="item.id"
+        v-motion
+        :while-hover="{ scale: 1.2 }"
+        :while-press="{ scale: 0.8 }"
+        :initial="{ opacity: 0, y: 30 }"
+        :animate="{ opacity: 1, y: 0 }"
+        :exit="{ opacity: 0, scale: 0 }"
+        :transition="{ ...transition, delay: 0.3 }"
+        hoverable
+      >
         <template #actions>
           <edit-outlined key="edit" @click="handleEditResume(item.id)" />
           <DeleteOutlined

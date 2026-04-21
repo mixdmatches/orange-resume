@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, h } from 'vue'
+import { motion } from 'motion-v'
 import type { ResumeFormProps, ResumeFormEmits } from '@/types/form.d.ts'
 import {
   DownOutlined,
-  UpOutlined,
   DeleteOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
@@ -73,27 +73,72 @@ const handleDeleteModel = () => {
   <a-modal v-model:open="open" :title="deleteTitle" @ok="handleOk">
     <p>{{ deleteConfirmText }}</p>
   </a-modal>
-  <div class="collapse">
-    <div v-if="showExpand" class="info" @click.stop="handleExpand">
+
+  <motion.div
+    class="collapse"
+    :initial="{ opacity: 0, y: 20 }"
+    :animate="{ opacity: 1, y: 0 }"
+    :transition="{ duration: 0.5, ease: 'easeOut' }"
+  >
+    <!-- 卡片头部 -->
+    <motion.div
+      v-if="showExpand"
+      class="info"
+      :initial="{ opacity: 0, y: 10 }"
+      :animate="{ opacity: 1, y: 0 }"
+      :transition="{ duration: 0.3 }"
+      :while-hover="{ backgroundColor: 'rgba(59, 130, 246, 0.08)' }"
+      :while-tap="{ scale: 0.98 }"
+      @click.stop="handleExpand"
+    >
       <div class="info-title">
         <span v-if="showSort" class="sort"><HolderOutlined /></span>
         <span v-else class="sort-slot"></span>
         {{ title }}
-        <DownOutlined v-if="!isExpand" />
-        <UpOutlined v-else />
+        <motion.span
+          :animate="{ rotate: isExpand ? 180 : 0 }"
+          :transition="{ duration: 0.3, ease: 'easeInOut' }"
+        >
+          <DownOutlined />
+        </motion.span>
       </div>
       <div class="info-work">
-        <DeleteOutlined
+        <motion.span
           v-if="showDelete"
-          style="font-size: 16px; color: red"
+          :while-hover="{ scale: 1.1, color: '#ff4d4f' }"
+          :while-tap="{ scale: 0.9 }"
           @click.stop="handleDeleteModel"
-        />
-        <EyeOutlined v-if="showTitleEye" style="font-size: 16px" />
+        >
+          <DeleteOutlined style="font-size: 16px; color: red" />
+        </motion.span>
+        <motion.span
+          v-if="showTitleEye"
+          :while-hover="{ scale: 1.1, color: '#1890ff' }"
+          :while-tap="{ scale: 0.9 }"
+        >
+          <EyeOutlined style="font-size: 16px" />
+        </motion.span>
       </div>
-    </div>
-    <div v-if="isExpand || !showExpand" class="collapse-content">
-      <template v-for="item in items" :key="item.id">
-        <div class="form-item">
+    </motion.div>
+
+    <!-- 卡片内容 -->
+    <motion.div
+      v-if="isExpand || !showExpand"
+      class="collapse-content"
+      :initial="{ opacity: 0, height: 0 }"
+      :animate="{
+        opacity: isExpand || !showExpand ? 1 : 0,
+        height: isExpand || !showExpand ? 'auto' : 0,
+      }"
+      :transition="{ duration: 0.3, ease: 'easeInOut' }"
+    >
+      <template v-for="(item, index) in items" :key="item.id">
+        <motion.div
+          class="form-item"
+          :initial="{ opacity: 0, x: -20 }"
+          :animate="{ opacity: 1, x: 0 }"
+          :transition="{ duration: 0.3, delay: index * 0.1 }"
+        >
           <a-form>
             <a-row v-for="field in fields" :key="field.prop" :gutter="16">
               <a-col :span="field.type === 'editor' ? 24 : field.span || 12">
@@ -152,10 +197,16 @@ const handleDeleteModel = () => {
             </a-space-compact>
           </a-form>
           <slot name="custom"></slot>
-        </div>
+        </motion.div>
       </template>
 
-      <div v-if="showAdd" class="form-actions">
+      <motion.div
+        v-if="showAdd"
+        class="form-actions"
+        :initial="{ opacity: 0, y: 10 }"
+        :animate="{ opacity: 1, y: 0 }"
+        :transition="{ duration: 0.3, delay: 0.2 }"
+      >
         <a-button
           type="primary"
           block
@@ -164,9 +215,9 @@ const handleDeleteModel = () => {
         >
           {{ addText || '添加条目' }}
         </a-button>
-      </div>
-    </div>
-  </div>
+      </motion.div>
+    </motion.div>
+  </motion.div>
 </template>
 
 <style scoped lang="scss">

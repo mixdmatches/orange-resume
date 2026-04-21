@@ -5,13 +5,14 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 import Icons from 'unplugin-icons/vite'
 import IconsResolver from 'unplugin-icons/resolver'
 import Components from 'unplugin-vue-components/vite'
+import MotionResolver from 'motion-v/resolver'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
     vueDevTools(),
     Components({
-      resolvers: [IconsResolver()],
+      resolvers: [IconsResolver(), MotionResolver()],
     }),
     Icons({}),
   ],

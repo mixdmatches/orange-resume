@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, h, inject, ref } from 'vue'
+import { motion } from 'motion-v'
 import BasicCard from '@/views/edit-resume/cards/BasicCard.vue'
 import EducationCard from '@/views/edit-resume/cards/EducationCard.vue'
 import InternshipCard from '@/views/edit-resume/cards/InternshipCard.vue'
@@ -137,8 +138,19 @@ const onEnd = () => {
 </script>
 
 <template>
-  <div class="edit-content" size="small">
-    <div class="model">
+  <motion.div
+    class="edit-content"
+    size="small"
+    :initial="{ opacity: 0, y: 20 }"
+    :animate="{ opacity: 1, y: 0 }"
+    :transition="{ duration: 0.5, ease: 'easeOut' }"
+  >
+    <motion.div
+      class="model"
+      :initial="{ opacity: 0, y: 20 }"
+      :animate="{ opacity: 1, y: 0 }"
+      :transition="{ duration: 0.4, delay: 0.1 }"
+    >
       <div class="model-title">布局内容</div>
       <div class="model-content">
         <component
@@ -190,10 +202,15 @@ const onEnd = () => {
           <DownOutlined />
         </a-button>
       </a-dropdown>
-    </div>
+    </motion.div>
 
     <!-- 排版 -->
-    <div class="model">
+    <motion.div
+      class="model"
+      :initial="{ opacity: 0, y: 20 }"
+      :animate="{ opacity: 1, y: 0 }"
+      :transition="{ duration: 0.4, delay: 0.2 }"
+    >
       <div class="model-title">排版</div>
       <div class="model-content">
         <div class="set">
@@ -251,12 +268,17 @@ const onEnd = () => {
           </a-col>
         </a-row>
       </div>
-    </div>
+    </motion.div>
     <!-- 主题色 -->
-    <div class="model">
+    <motion.div
+      class="model"
+      :initial="{ opacity: 0, y: 20 }"
+      :animate="{ opacity: 1, y: 0 }"
+      :transition="{ duration: 0.4, delay: 0.3 }"
+    >
       <div class="model-title">主题色</div>
       <div class="theme-palette">
-        <div
+        <motion.div
           v-for="color in themeColors"
           :key="color"
           :class="[
@@ -264,8 +286,10 @@ const onEnd = () => {
             { active: resume.globalConfiguration.themeColor === color },
           ]"
           :style="{ backgroundColor: color }"
+          :while-hover="{ scale: 1.1 }"
+          :while-tap="{ scale: 0.95 }"
           @click="handleChangeColor(color)"
-        ></div>
+        ></motion.div>
         <input
           type="color"
           :value="resume.globalConfiguration.themeColor"
@@ -273,9 +297,14 @@ const onEnd = () => {
           @input="handleChangeColor(($event.target as HTMLInputElement).value)"
         />
       </div>
-    </div>
+    </motion.div>
     <!-- 间距 -->
-    <div class="model">
+    <motion.div
+      class="model"
+      :initial="{ opacity: 0, y: 20 }"
+      :animate="{ opacity: 1, y: 0 }"
+      :transition="{ duration: 0.4, delay: 0.4 }"
+    >
       <div class="model-title">间距</div>
       <div class="spacing-controls">
         <div class="spacing-row">
@@ -307,8 +336,8 @@ const onEnd = () => {
           />
         </div>
       </div>
-    </div>
-  </div>
+    </motion.div>
+  </motion.div>
 </template>
 
 <style scoped lang="scss">
