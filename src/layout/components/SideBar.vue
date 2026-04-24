@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { reactive, ref, VueElement } from 'vue'
+import { reactive, ref, VueElement, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { header_routes } from '@/router'
 import { MenuUnfoldOutlined, MenuFoldOutlined } from '@ant-design/icons-vue'
@@ -7,7 +7,7 @@ import type { MenuProps, ItemType } from 'ant-design-vue'
 
 const router = useRouter()
 
-const selectedKeys = ref<string[]>([header_routes[0].path])
+const selectedKeys = ref<string[]>([])
 
 function getItem(
   label: VueElement | string,
@@ -37,6 +37,14 @@ const handleClick: MenuProps['onClick'] = e => {
   selectedKeys.value = [e.key as string]
   router.push(e.key as string)
 }
+
+watch(
+  () => router.currentRoute.value.path,
+  newVal => {
+    selectedKeys.value = [newVal as string]
+  },
+  { immediate: true },
+)
 
 const toggleCollapsed = () => {
   collapsed.value = !collapsed.value
