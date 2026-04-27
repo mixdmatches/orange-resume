@@ -4,6 +4,7 @@ import {
   addResumeIDB,
   deleteResumeIDB,
   getAllResumesIDB,
+  getSettingIDB,
 } from '@/service/indexDB'
 import type { Resume } from '@/types/resume'
 import {
@@ -11,11 +12,13 @@ import {
   EditOutlined,
   DeleteOutlined,
   VerticalAlignTopOutlined,
+  WarningOutlined,
 } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
-import { h, onMounted, ref } from 'vue'
+import { h, onBeforeMount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
+import { message, notification } from 'ant-design-vue'
+
 const router = useRouter()
 
 const activeResumeId = ref<string>('')
@@ -105,6 +108,17 @@ const transition = {
   visualDuration: 0.6,
   bounce: 0.4,
 }
+
+onBeforeMount(async () => {
+  const dirInfo = await getSettingIDB('syncDir')
+  if (dirInfo) return
+  if (document.querySelector('.ant-notification-notice')) return
+  notification.warning({
+    message: '请先选择同步目录',
+    description: '在设置中选择一个文件夹来同步和备份您的简历',
+    icon: h(WarningOutlined, { style: { color: '#ff4d4f' } }),
+  })
+})
 </script>
 
 <template>
