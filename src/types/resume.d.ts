@@ -2,7 +2,7 @@ export interface Resume {
   id: string
   title: string
   createdAt: number
-  updatedAt: number
+  updatedAt: number | null
   basic: Basic
   educations: Education[]
   internships: Internship[]

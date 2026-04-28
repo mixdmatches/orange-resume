@@ -4,20 +4,23 @@ import {
   addResumeIDB,
   deleteResumeIDB,
   getAllResumesIDB,
-  getSettingIDB,
-} from '@/service/indexDB'
+} from '@/service/resumeIDB'
 import type { Resume } from '@/types/resume'
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
   VerticalAlignTopOutlined,
-  WarningOutlined,
+  CheckCircleOutlined,
+  ExclamationCircleOutlined,
+  CloseCircleOutlined,
 } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
-import { h, onBeforeMount, onMounted, ref } from 'vue'
+import { h, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { message, notification } from 'ant-design-vue'
+import { getConfigIDB, getFileHandleIDB } from '@/service/fileIDB'
+import { useSyncStore } from '@/stores/sync'
 
 const router = useRouter()
 
@@ -38,7 +41,11 @@ onMounted(() => {
  * 创建简历
  */
 const handleAddResume = async () => {
-  const newResume: Omit<Resume, 'id'> = Object.assign({}, DEFAULT_RESUME)
+  const newResume: Omit<Resume, 'id'> = {
+    ...DEFAULT_RESUME,
+  }
+  newResume.title = `新建简历${crypto.randomUUID().substring(0, 5)}`
+
   await addResumeIDB(newResume)
   await getAllResume()
 }
@@ -109,15 +116,25 @@ const transition = {
   bounce: 0.4,
 }
 
-onBeforeMount(async () => {
-  const dirInfo = await getSettingIDB('syncDir')
-  if (dirInfo) return
-  if (document.querySelector('.ant-notification-notice')) return
-  notification.warning({
-    message: '请先选择同步目录',
-    description: '在设置中选择一个文件夹来同步和备份您的简历',
-    icon: h(WarningOutlined, { style: { color: '#ff4d4f' } }),
-  })
+const syncStore = useSyncStore()
+
+const hasDirConfig = ref(false)
+const folderPath = ref<string>('')
+
+onMounted(async () => {
+  const dirHandle = await getFileHandleIDB('syncDirectory')
+  const path = await getConfigIDB('syncDirectoryPath')
+  if (dirHandle && path) {
+    folderPath.value = path
+    hasDirConfig.value = true
+  } else {
+    hasDirConfig.value = false
+    if (!document.querySelector('.ant-notification-notice'))
+      notification.error({
+        message: '同步目录未配置',
+        description: '同步目录未配置，将无法自动备份您的简历数据',
+      })
+  }
 })
 </script>
 
@@ -147,6 +164,34 @@ onBeforeMount(async () => {
           >导入配置</a-button
         >
       </a-space>
+    </div>
+
+    <!-- 同步结果显示 -->
+    <div v-if="syncStore.syncResult" class="sync-result">
+      <a-alert
+        message="同步完成"
+        type="info"
+        show-icon
+        closable
+        @close="syncStore.clearSyncResult()"
+      >
+        <template #description>
+          <div class="sync-stats">
+            <span class="sync-stat">
+              <CheckCircleOutlined class="stat-icon synced" />
+              同步: <strong>{{ syncStore.syncResult.synced }}</strong>
+            </span>
+            <span class="sync-stat">
+              <ExclamationCircleOutlined class="stat-icon skipped" />
+              跳过: <strong>{{ syncStore.syncResult.skipped }}</strong>
+            </span>
+            <span class="sync-stat">
+              <CloseCircleOutlined class="stat-icon failed" />
+              失败: <strong>{{ syncStore.syncResult.failed }}</strong>
+            </span>
+          </div>
+        </template>
+      </a-alert>
     </div>
     <div v-if="resumes.length > 0" class="resumes">
       <a-card
@@ -208,5 +253,42 @@ onBeforeMount(async () => {
 }
 .work {
   margin-bottom: 2rem;
+}
+
+.sync-result {
+  margin-bottom: 2rem;
+
+  .sync-stats {
+    display: flex;
+    gap: 24px;
+    margin-top: 8px;
+
+    .sync-stat {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+
+      .stat-icon {
+        font-size: 16px;
+
+        &.synced {
+          color: #52c41a;
+        }
+
+        &.skipped {
+          color: #faad14;
+        }
+
+        &.failed {
+          color: #ff4d4f;
+        }
+      }
+
+      strong {
+        font-weight: 600;
+      }
+    }
+  }
 }
 </style>

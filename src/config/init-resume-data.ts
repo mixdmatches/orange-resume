@@ -17,7 +17,7 @@ export const initialGlobalConfiguration = {
 export const DEFAULT_RESUME: Omit<Resume, 'id'> = {
   title: '未命名简历',
   createdAt: dayjs().unix(),
-  updatedAt: dayjs().unix(),
+  updatedAt: null,
   basic: {
     name: '陈下饭',
     position: '前端开发工程师',

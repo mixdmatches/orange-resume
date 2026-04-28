@@ -1,16 +1,9 @@
-/**
- * IndexedDB 简历数据存储服务
- * 提供简历数据的增删改查功能
- */
+import type { Resume } from '@/types/resume'
+import { debounceSyncToFile } from '@/utils/resumeSync'
 
-// 数据库名称和版本
 const DB_NAME = 'resumeDB'
 const DB_VERSION = 2
 const STORE_NAME = 'resumes'
-const SETTING_STORE_NAME = 'settings'
-
-// 简历数据类型定义
-import type { Resume } from '@/types/resume'
 
 /**
  * 打开数据库连接
@@ -30,18 +23,13 @@ export const openDB = (): Promise<IDBDatabase> => {
 
     request.onupgradeneeded = event => {
       const db = (event.target as IDBOpenDBRequest).result
-
+      db.deleteObjectStore('settings')
       // 如果存储对象不存在，创建它
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' })
         // 创建索引，方便查询
         store.createIndex('createdAt', 'createdAt', { unique: false })
         store.createIndex('updatedAt', 'updatedAt', { unique: false })
-      }
-      if (!db.objectStoreNames.contains(SETTING_STORE_NAME)) {
-        db.createObjectStore(SETTING_STORE_NAME, {
-          keyPath: 'key',
-        })
       }
     }
   })
@@ -64,7 +52,7 @@ export const addResumeIDB = async (
       ...resume,
       id: crypto.randomUUID(),
       createdAt: Date.now(),
-      updatedAt: Date.now(),
+      updatedAt: null,
     }
 
     const request = store.add(newResume)
@@ -152,6 +140,8 @@ export const updateResumeIDB = async (
         updatedAt: Date.now(),
       }
 
+      debounceSyncToFile(updatedResume, existingResume)
+
       const putRequest = store.put(updatedResume)
 
       putRequest.onsuccess = () => {
@@ -208,76 +198,6 @@ export const clearAllResumesIDB = async (): Promise<boolean> => {
 
     request.onerror = () => {
       reject(new Error('清空简历数据失败'))
-    }
-  })
-}
-
-/**
- * 保存设置信息（如目录句柄）
- * @param key 设置的键名
- * @param value 设置的值
- * @returns Promise<boolean> 保存是否成功
- */
-export const saveSettingIDB = async (
-  key: string,
-  value: unknown,
-): Promise<boolean> => {
-  const db = await openDB()
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(SETTING_STORE_NAME, 'readwrite')
-    const store = transaction.objectStore(SETTING_STORE_NAME)
-    const request = store.put({ key, value })
-
-    request.onsuccess = () => {
-      resolve(true)
-    }
-
-    request.onerror = () => {
-      reject(new Error('保存设置失败'))
-    }
-  })
-}
-
-/**
- * 获取设置信息
- * @param key 设置的键名
- * @returns Promise<any> 设置的值或null
- */
-export const getSettingIDB = async (key: string): Promise<unknown | null> => {
-  const db = await openDB()
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(SETTING_STORE_NAME, 'readonly')
-    const store = transaction.objectStore(SETTING_STORE_NAME)
-    const request = store.get(key)
-
-    request.onsuccess = () => {
-      resolve(request.result?.value || null)
-    }
-
-    request.onerror = () => {
-      reject(new Error('获取设置失败'))
-    }
-  })
-}
-
-/**
- * 删除设置信息
- * @param key 设置的键名
- * @returns Promise<boolean> 删除是否成功
- */
-export const deleteSettingIDB = async (key: string): Promise<boolean> => {
-  const db = await openDB()
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(SETTING_STORE_NAME, 'readwrite')
-    const store = transaction.objectStore(SETTING_STORE_NAME)
-    const request = store.delete(key)
-
-    request.onsuccess = () => {
-      resolve(true)
-    }
-
-    request.onerror = () => {
-      reject(new Error('删除设置失败'))
     }
   })
 }

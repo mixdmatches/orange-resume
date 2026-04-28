@@ -6,7 +6,7 @@ import EditContent from '@/views/edit-resume/components/EditContent.vue'
 import ResumePreview from '@/views/edit-resume/components/ResumePreview.vue'
 import dayjs from 'dayjs'
 import { useRoute } from 'vue-router'
-import { getResumeByIdIDB, updateResumeIDB } from '@/service/indexDB'
+import { getResumeByIdIDB, updateResumeIDB } from '@/service/resumeIDB'
 
 const route = useRoute()
 
