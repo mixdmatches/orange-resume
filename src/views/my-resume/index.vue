@@ -217,7 +217,11 @@ onMounted(async () => {
         </template>
         <a-card-meta
           :title="item.title"
-          :description="dayjs(item.createdAt).format('YYYY-MM-DD')"
+          :description="`创建：${dayjs(item.createdAt).format('YYYY-MM-DD HH:mm')}`"
+        >
+        </a-card-meta>
+        <a-card-meta
+          :description="`更新：${item.updatedAt ? dayjs(item.updatedAt).format('YYYY-MM-DD HH:mm') : '未更新'}`"
         >
         </a-card-meta>
       </a-card>
