@@ -41,7 +41,7 @@ export const openDB = (): Promise<IDBDatabase> => {
  * @returns Promise<string> 新创建的简历ID
  */
 export const addResumeIDB = async (
-  resume: Omit<Resume, 'id' | 'createdAt' | 'updatedAt'>,
+  resume: Omit<Resume, 'createdAt' | 'updatedAt'>,
 ): Promise<string> => {
   const db = await openDB()
   return new Promise((resolve, reject) => {
@@ -50,7 +50,6 @@ export const addResumeIDB = async (
 
     const newResume: Resume = {
       ...resume,
-      id: crypto.randomUUID(),
       createdAt: Date.now(),
       updatedAt: null,
     }

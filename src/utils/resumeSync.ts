@@ -1,6 +1,10 @@
 /* eslint-disable no-console */
 import { getFileHandleIDB, verifyPermission } from '@/service/fileIDB'
-import { addResumeIDB, getResumeByIdIDB } from '@/service/resumeIDB'
+import {
+  addResumeIDB,
+  getResumeByIdIDB,
+  updateResumeIDB,
+} from '@/service/resumeIDB'
 import type { Resume } from '@/types/resume'
 
 const isResumeData = (value: unknown) => {
@@ -109,9 +113,9 @@ const updateResumeFromFile = async (
   // 不需要从文件中导入
   if (!shouldImportedResumeFromFile(fileResume, localResume, lastModifiedTime))
     return false
-  // 需要将简历文件导入应用中
+  // 如果应用中存在，
   const importedResume = normalizeImportedResume(fileResume, lastModifiedTime)
-  await addResumeIDB(importedResume)
+  await updateResumeIDB(importedResume.id, importedResume)
 
   return true
 }
@@ -151,7 +155,6 @@ const syncResumeToFile = async (resumeData: Resume, prevResume?: Resume) => {
     const writable = await fileHandle.createWritable()
     await writable.write(JSON.stringify(resumeData, null, 2))
     await writable.close()
-    console.log('同步成功')
   } catch (error) {
     console.warn('同步简历到文件失败', error)
   }
@@ -231,7 +234,6 @@ export const syncResumeFromDirectory = async () => {
   } catch (error) {
     console.error('同步简历失败', error)
   }
-  console.log(result)
 
   return result
 }

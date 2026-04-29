@@ -41,8 +41,9 @@ onMounted(() => {
  * 创建简历
  */
 const handleAddResume = async () => {
-  const newResume: Omit<Resume, 'id'> = {
+  const newResume: Omit<Resume, 'createdAt' | 'updatedAt'> = {
     ...DEFAULT_RESUME,
+    id: crypto.randomUUID().substring(0, 5),
   }
   newResume.title = `新建简历${crypto.randomUUID().substring(0, 5)}`
 

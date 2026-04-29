@@ -1,5 +1,4 @@
 import type { Resume } from '@/types/resume'
-import dayjs from 'dayjs'
 
 // 初始全局设置
 export const initialGlobalConfiguration = {
@@ -16,7 +15,7 @@ export const initialGlobalConfiguration = {
 // 初始默认简历内容
 export const DEFAULT_RESUME: Omit<Resume, 'id'> = {
   title: '未命名简历',
-  createdAt: dayjs().unix(),
+  createdAt: Date.now(),
   updatedAt: null,
   basic: {
     name: '陈下饭',
