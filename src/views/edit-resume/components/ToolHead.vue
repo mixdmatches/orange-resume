@@ -25,6 +25,11 @@ const handleDownloadPDF = async () => {
     resume.globalConfiguration.basePagePadding,
   )
 }
+
+const handleChangeTemplate = () => {
+  resume.templateId =
+    resume.templateId === 'creative-design' ? 'default' : 'creative-design'
+}
 </script>
 
 <template>
@@ -35,7 +40,9 @@ const handleDownloadPDF = async () => {
     </div>
     <div class="tools">
       <a-tooltip title="切换模板">
-        <a-button><line-md-arrows-horizontal /></a-button>
+        <a-button @click="handleChangeTemplate"
+          ><line-md-arrows-horizontal
+        /></a-button>
       </a-tooltip>
       <a-dropdown>
         <a-button type="primary" class="tool-download">

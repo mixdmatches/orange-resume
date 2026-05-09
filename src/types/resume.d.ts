@@ -1,5 +1,6 @@
 export interface Resume {
   id: string
+  templateId: string
   title: string
   createdAt: number
   updatedAt: number | null
