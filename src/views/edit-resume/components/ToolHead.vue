@@ -5,8 +5,11 @@ import LineMdArrowsHorizontal from '~icons/line-md/arrows-horizontal'
 import { DownOutlined } from '@ant-design/icons-vue'
 import { exportResumeToBrowserPrint } from '@/utils/print'
 import ThemeIcon from '@/components/ThemeIcon.vue'
-import { inject } from 'vue'
+import { inject, ref } from 'vue'
 import type { Resume } from '@/types/resume'
+import templates from '@/template'
+import previewImage from '@/assets/images/classic.fcafadcb.svg'
+
 const resume: Resume = inject('resume') as Resume
 
 const handleDownloadJson = () => {
@@ -26,9 +29,14 @@ const handleDownloadPDF = async () => {
   )
 }
 
+const drawerOpen = ref(false)
+
 const handleChangeTemplate = () => {
-  resume.templateId =
-    resume.templateId === 'creative-design' ? 'default' : 'creative-design'
+  drawerOpen.value = true
+}
+
+const afterOpenChange = (open: boolean) => {
+  drawerOpen.value = open
 }
 </script>
 
@@ -59,6 +67,32 @@ const handleChangeTemplate = () => {
       <theme-icon></theme-icon>
     </div>
   </div>
+  <a-drawer
+    v-model:open="drawerOpen"
+    class="custom-class"
+    root-class-name="root-class-name"
+    :root-style="{ color: 'blue' }"
+    title="选择模板"
+    width="700px"
+    placement="left"
+    @after-open-change="afterOpenChange"
+  >
+    <a-radio-group
+      v-model:value="resume.templateId"
+      @change="handleChangeTemplate"
+    >
+      <div class="template-container">
+        <div
+          v-for="template in templates"
+          :key="template.id"
+          class="template-box"
+        >
+          <img :src="previewImage" alt="" />
+          <a-radio :value="template.id">{{ template.name }}</a-radio>
+        </div>
+      </div>
+    </a-radio-group>
+  </a-drawer>
 </template>
 
 <style scoped lang="scss">
@@ -90,6 +124,28 @@ const handleChangeTemplate = () => {
     .tool-download {
       display: flex;
       align-items: center;
+    }
+  }
+}
+.template-container {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  .template-box {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    border-radius: 10px;
+    border: 1px solid $border-color;
+    padding: 10px;
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 10px;
     }
   }
 }
