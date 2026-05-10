@@ -2,13 +2,13 @@ import type { Resume } from '@/types/resume'
 
 // 初始全局设置
 export const initialGlobalConfiguration = {
-  baseFontSize: 16, // 基础字体大小
+  baseFontSize: 14, // 基础字体大小
   basePagePadding: 10, // 基础页面内边距
   baseLineHeight: 1.5, // 基础行高
   baseModuleSpacing: 10, // 基础模块间距
   paragraphSpacing: 10, // 段落间距
-  titleFontSize: 20, // 标题字体大小
-  subTitleFontSize: 18, // 子标题字体大小
+  titleFontSize: 16, // 标题字体大小
+  subTitleFontSize: 14, // 子标题字体大小
   themeColor: '#111827', // 主题颜色
 }
 

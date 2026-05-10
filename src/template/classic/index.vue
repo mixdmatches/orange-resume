@@ -102,8 +102,6 @@ const getSectionItems = (sectionId: string) => {
 
 <style lang="scss" scoped>
 .classic {
-  width: 210mm;
-  min-height: 297mm;
   margin: 0 auto;
 }
 .preview-header {

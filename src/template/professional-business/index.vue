@@ -174,8 +174,6 @@ const sortedSections = computed(() => {
 
 <style scoped lang="scss">
 .professional-business-resume {
-  width: 210mm;
-  min-height: 297mm;
   margin: 0 auto;
   background: #fff;
   font-size: var(--base-font-size);

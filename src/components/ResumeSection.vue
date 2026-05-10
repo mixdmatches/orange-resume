@@ -24,6 +24,7 @@ const styles = computed(() => ({
   subTitleFontSize: `${resume.globalConfiguration.subTitleFontSize}px`,
   paragraphSpacing: `${resume.globalConfiguration.paragraphSpacing}px`,
   baseFontSize: `${resume.globalConfiguration.baseFontSize}px`,
+  baseModuleSpacing: `${resume.globalConfiguration.baseModuleSpacing}px`,
 }))
 </script>
 
@@ -65,7 +66,7 @@ const styles = computed(() => ({
   gap: 4px;
   cursor: pointer;
   transition: background 0.3s ease-in-out;
-
+  margin-bottom: v-bind('styles.baseModuleSpacing');
   &:hover {
     background: #f5f7fa;
   }
@@ -79,7 +80,7 @@ const styles = computed(() => ({
   color: v-bind('styles.themeColor');
   font-size: v-bind('styles.titleFontSize');
   border-left: 4px solid v-bind('styles.themeColor');
-  background-color: v-bind('styles.themeColor') + '33';
+  background-color: color-mix(in srgb, v-bind('styles.themeColor') 15%, white);
 }
 
 .cards {

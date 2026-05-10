@@ -110,9 +110,15 @@ const handleClearDir = async () => {
   .setting-dir {
     flex: 1;
     border: 1px solid #d9d9d9;
-    background-color: #fcfcfd;
     padding: 8px 16px;
     border-radius: 8px;
+    @include themify(
+      (
+        color: $text-color,
+        background-color: $bg-color,
+        border-color: $border-color-mode,
+      )
+    );
   }
 }
 </style>
