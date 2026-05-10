@@ -80,11 +80,28 @@ const handleUseTemplate = async () => {
 const handleClose = () => {
   previewVisible.value = false
 }
+
+const transition = {
+  type: 'spring',
+  visualDuration: 0.6,
+  bounce: 0.4,
+}
 </script>
 
 <template>
   <div class="template-container">
-    <div v-for="temp in templates" :key="temp.id" class="template-box">
+    <div
+      v-for="temp in templates"
+      :key="temp.id"
+      v-motion
+      class="template-box"
+      :while-hover="{ scale: 1.2 }"
+      :while-press="{ scale: 0.8 }"
+      :initial="{ opacity: 0, y: 30 }"
+      :animate="{ opacity: 1, y: 0 }"
+      :exit="{ opacity: 0, scale: 0 }"
+      :transition="{ ...transition, delay: 0.3 }"
+    >
       <div class="template-wrapper">
         <div class="template-image">
           <img :src="classicPreview" alt="模板预览" />
