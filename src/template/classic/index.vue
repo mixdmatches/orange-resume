@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import type { Resume } from '@/types/resume'
 import SectionPreview from '@/components/ResumeSection.vue'
+import { provide } from 'vue'
+
 const props = defineProps<{
   resume: Resume
 }>()
 
 const { resume } = props
+
+// 提供 resume 给子组件
+provide('resume', resume)
 
 // 根据 menuSections 的 order 排序
 const sortedMenuSections = () => {
@@ -72,28 +77,35 @@ const getSectionItems = (sectionId: string) => {
 </script>
 
 <template>
-  <!-- 基本信息 -->
-  <section class="preview-header">
-    <div class="profile">
-      <h1>{{ resume.basic.name }}</h1>
-      <p>{{ resume.basic.position }}</p>
-    </div>
-    <div class="contact">
-      <span>电话：{{ resume.basic.phone }}</span>
-      <span>邮箱：{{ resume.basic.email }}</span>
-      <span>地址：{{ resume.basic.address }}</span>
-    </div>
-  </section>
-  <template v-for="section in sortedMenuSections()" :key="section.id">
-    <SectionPreview
-      :id="section.id"
-      :title="section.title"
-      :items="getSectionItems(section.id)"
-    />
-  </template>
+  <div class="classic">
+    <!-- 基本信息 -->
+    <section class="preview-header">
+      <div class="profile">
+        <h1>{{ resume.basic.name }}</h1>
+        <p>{{ resume.basic.position }}</p>
+      </div>
+      <div class="contact">
+        <span>电话：{{ resume.basic.phone }}</span>
+        <span>邮箱：{{ resume.basic.email }}</span>
+        <span>地址：{{ resume.basic.address }}</span>
+      </div>
+    </section>
+    <template v-for="section in sortedMenuSections()" :key="section.id">
+      <SectionPreview
+        :id="section.id"
+        :title="section.title"
+        :items="getSectionItems(section.id)"
+      />
+    </template>
+  </div>
 </template>
 
 <style lang="scss" scoped>
+.classic {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+}
 .preview-header {
   display: flex;
   align-items: flex-start;
