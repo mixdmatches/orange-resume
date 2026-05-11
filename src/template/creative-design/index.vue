@@ -1,31 +1,25 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import type { Resume } from '@/types/resume'
+import { useTemplateStyles } from '@/template'
 
-const props = defineProps<{
-  resume: Resume
-}>()
+const resume: Resume = inject('resume') as Resume
 
-const resumeStyles = computed(() => ({
-  '--theme-color': props.resume.globalConfiguration.themeColor || '#ff6b6b',
-  '--base-font-size': `${props.resume.globalConfiguration.baseFontSize || 14}px`,
-  '--title-font-size': `${props.resume.globalConfiguration.titleFontSize || 32}px`,
-  '--sub-title-font-size': `${props.resume.globalConfiguration.subTitleFontSize || 18}px`,
-}))
+const { resumeStyles: styles } = useTemplateStyles(resume)
 
 const sortedSections = computed(() => {
-  return [...props.resume.menuSections]
+  return [...resume.menuSections]
     .filter(s => s.id !== 'skills' && s.id !== 'basic') // 技能在侧边栏显示
     .sort((a, b) => parseInt(a.order) - parseInt(b.order))
 })
 
 const hasSkills = computed(() => {
-  return props.resume.skills && props.resume.skills.length > 0
+  return resume.skills && resume.skills.length > 0
 })
 </script>
 
 <template>
-  <div class="creative-design-resume" :style="resumeStyles">
+  <div class="creative-design-resume">
     <!-- 创意头部 -->
     <header class="resume-header">
       <div class="header-bg">
@@ -83,15 +77,13 @@ const hasSkills = computed(() => {
         <!-- 右侧主内容 -->
         <div class="main-content">
           <div
-            v-for="section in sortedSections"
+            v-for="(section, index) in sortedSections"
             :key="section.id"
             class="section"
           >
             <div class="section-header">
-              <span class="section-number">{{
-                String(section.order).padStart(2, '0')
-              }}</span>
-              <h2 class="section-title">{{ section.title }}</h2>
+              <span class="section-number">{{ index + 1 }}</span>
+              <p class="section-title">{{ section.title }}</p>
             </div>
 
             <div class="section-content">
@@ -149,6 +141,7 @@ const hasSkills = computed(() => {
                     <span class="badge">{{ project.dateRange }}</span>
                   </div>
                   <p class="subtitle">{{ project.role }}</p>
+                  <p class="link">{{ project.gitAddress }}</p>
                   <div
                     v-if="project.description"
                     class="description"
@@ -186,11 +179,9 @@ const hasSkills = computed(() => {
 
 <style scoped lang="scss">
 .creative-design-resume {
-  width: 210mm;
-  min-height: 297mm;
   margin: 0 auto;
   background: #fff;
-  font-size: var(--base-font-size);
+  font-size: v-bind('styles.baseFontSize');
   color: #333;
   line-height: 1.6;
 
@@ -204,7 +195,11 @@ const hasSkills = computed(() => {
       left: 0;
       right: 0;
       height: 200px;
-      background: linear-gradient(135deg, var(--theme-color) 0%, #ffd93d 100%);
+      background: linear-gradient(
+        135deg,
+        v-bind('styles.themeColor') 0%,
+        #ffd93d 100%
+      );
       overflow: hidden;
 
       .geometric-shapes {
@@ -275,7 +270,7 @@ const hasSkills = computed(() => {
         padding-bottom: 10px;
 
         .name {
-          font-size: var(--title-font-size);
+          font-size: 18px;
           font-weight: 800;
           color: #fff;
           text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
@@ -283,7 +278,7 @@ const hasSkills = computed(() => {
         }
 
         .position {
-          font-size: var(--sub-title-font-size);
+          font-size: 16px;
           color: rgba(255, 255, 255, 0.9);
           margin-bottom: 16px;
         }
@@ -307,12 +302,10 @@ const hasSkills = computed(() => {
   }
 
   .resume-body {
-    padding: 0 40px 40px;
-
     .body-layout {
       display: grid;
       grid-template-columns: 240px 1fr;
-      gap: 40px;
+      gap: 20px;
     }
 
     .sidebar {
@@ -324,10 +317,10 @@ const hasSkills = computed(() => {
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 2px;
-          color: var(--theme-color);
+          color: v-bind('styles.themeColor');
           margin-bottom: 16px;
           padding-bottom: 8px;
-          border-bottom: 2px solid var(--theme-color);
+          border-bottom: 2px solid v-bind('styles.themeColor');
         }
 
         .contact-list {
@@ -351,9 +344,9 @@ const hasSkills = computed(() => {
         }
 
         .skills-list {
-          font-size: 14px;
+          font-size: v-bind('styles.baseFontSize');
           color: #555;
-          line-height: 1.8;
+          line-height: v-bind('styles.baseLineHeight');
           :deep(ul) {
             list-style: none;
             padding: 0;
@@ -368,7 +361,7 @@ const hasSkills = computed(() => {
                 content: '▸';
                 position: absolute;
                 left: 0;
-                color: var(--theme-color);
+                color: v-bind('styles.themeColor');
               }
             }
           }
@@ -378,7 +371,7 @@ const hasSkills = computed(() => {
 
     .main-content {
       .section {
-        margin-bottom: 32px;
+        margin-bottom: v-bind('styles.baseModuleSpacing');
 
         &:last-child {
           margin-bottom: 0;
@@ -388,17 +381,17 @@ const hasSkills = computed(() => {
           display: flex;
           align-items: center;
           gap: 12px;
-          margin-bottom: 20px;
+          margin-bottom: 10px;
 
           .section-number {
             font-size: 24px;
             font-weight: 800;
-            color: var(--theme-color);
+            color: v-bind('styles.themeColor');
             opacity: 0.3;
           }
 
           .section-title {
-            font-size: var(--sub-title-font-size);
+            font-size: v-bind('styles.titleFontSize');
             font-weight: 700;
             color: #333;
           }
@@ -409,7 +402,7 @@ const hasSkills = computed(() => {
             background: #f8f9fa;
             border-radius: 12px;
             padding: 20px;
-            margin-bottom: 16px;
+            margin-bottom: v-bind('styles.paragraphSpacing');
             position: relative;
             overflow: hidden;
 
@@ -420,7 +413,7 @@ const hasSkills = computed(() => {
               left: 0;
               width: 4px;
               height: 100%;
-              background: var(--theme-color);
+              background: v-bind('styles.themeColor');
             }
 
             &:last-child {
@@ -434,30 +427,34 @@ const hasSkills = computed(() => {
               margin-bottom: 8px;
 
               h3 {
-                font-size: 16px;
+                font-size: v-bind('styles.subTitleFontSize');
                 font-weight: 600;
                 color: #333;
               }
 
               .badge {
-                background: var(--theme-color);
+                background: v-bind('styles.themeColor');
                 color: #fff;
                 padding: 4px 12px;
                 border-radius: 20px;
-                font-size: 12px;
+                font-size: 13px;
               }
             }
 
             .subtitle {
               font-size: 14px;
               color: #666;
+              font-weight: 500;
               margin-bottom: 12px;
+            }
+            .link {
+              color: v-bind('styles.themeColor');
             }
 
             .description {
-              font-size: 14px;
+              font-size: v-bind('styles.baseFontSize');
               color: #555;
-              line-height: 1.8;
+              line-height: v-bind('styles.baseLineHeight');
 
               :deep(p) {
                 margin-bottom: 8px;

@@ -3,7 +3,8 @@ import ModernTech from '@/template/modern-tech/index.vue'
 import MinimalClean from '@/template/minimal-clean/index.vue'
 import CreativeDesign from '@/template/creative-design/index.vue'
 import ProfessionalBusiness from '@/template/professional-business/index.vue'
-import type { Component } from 'vue'
+import { computed, type Component } from 'vue'
+import type { Resume } from '@/types/resume'
 
 export interface TemplateInfo {
   id: string
@@ -53,6 +54,78 @@ export const templates: TemplateInfo[] = [
 
 export const getTemplateById = (id: string): TemplateInfo | undefined => {
   return templates.find(t => t.id === id)
+}
+
+export function useTemplateStyles(resume: Resume) {
+  const resumeStyles = computed(() => ({
+    ...resume.globalConfiguration,
+    titleFontSize: `${resume.globalConfiguration.titleFontSize}px`,
+    subTitleFontSize: `${resume.globalConfiguration.subTitleFontSize}px`,
+    paragraphSpacing: `${resume.globalConfiguration.paragraphSpacing}px`,
+    baseFontSize: `${resume.globalConfiguration.baseFontSize}px`,
+    baseModuleSpacing: `${resume.globalConfiguration.baseModuleSpacing}px`,
+  }))
+
+  // 整合适合 ResumeSection 组件的数据
+  const getSectionItems = (sectionId: string) => {
+    switch (sectionId) {
+      case 'education':
+        return resume.educations.map(item => ({
+          id: item.id,
+          visible: item.visible,
+          subMain: [item.school, item.degree, item.major, item.dateRange],
+          address: '',
+          description: item.description,
+        }))
+      case 'internship':
+        return resume.internships.map(item => ({
+          id: item.id,
+          visible: item.visible,
+          subMain: [
+            item.companyName,
+            item.department,
+            item.position,
+            item.dateRange,
+          ],
+          address: '',
+          description: item.description,
+        }))
+      case 'project':
+        return resume.projects.map(item => ({
+          id: item.id,
+          visible: item.visible,
+          subMain: [item.name, '', item.role, item.dateRange],
+          address: item.gitAddress,
+          description: item.description,
+        }))
+      case 'skills':
+        return [
+          {
+            id: 'skills',
+            visible: true,
+            subMain: [],
+            address: '',
+            description: resume.skills,
+          },
+        ]
+      default:
+        if (sectionId.startsWith('custom-')) {
+          return (resume.customData[sectionId] || []).map(item => ({
+            id: item.id,
+            visible: item.visible,
+            subMain: [item.title, item.subTitle, '', item.dateRange],
+            address: '',
+            description: item.description,
+          }))
+        }
+        return []
+    }
+  }
+
+  return {
+    resumeStyles,
+    getSectionItems,
+  }
 }
 
 export default templates

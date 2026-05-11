@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { useTemplateStyles } from '@/template'
 import type { Resume } from '@/types/resume'
-import { computed, inject } from 'vue'
+import { inject } from 'vue'
 
 interface SectionProps {
   id: string
@@ -18,14 +19,7 @@ defineProps<SectionProps>()
 
 const resume: Resume = inject('resume') as Resume
 
-const styles = computed(() => ({
-  ...resume.globalConfiguration,
-  titleFontSize: `${resume.globalConfiguration.titleFontSize}px`,
-  subTitleFontSize: `${resume.globalConfiguration.subTitleFontSize}px`,
-  paragraphSpacing: `${resume.globalConfiguration.paragraphSpacing}px`,
-  baseFontSize: `${resume.globalConfiguration.baseFontSize}px`,
-  baseModuleSpacing: `${resume.globalConfiguration.baseModuleSpacing}px`,
-}))
+const { resumeStyles: styles } = useTemplateStyles(resume)
 </script>
 
 <template>

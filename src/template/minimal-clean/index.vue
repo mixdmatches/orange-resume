@@ -1,20 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import type { Resume } from '@/types/resume'
+import { useTemplateStyles } from '@/template'
+import SectionPreview from './ResumeSection.vue'
 
-const props = defineProps<{
-  resume: Resume
-}>()
+const resume = inject('resume') as Resume
 
-const resumeStyles = computed(() => ({
-  '--theme-color': props.resume.globalConfiguration.themeColor || '#2c3e50',
-  '--base-font-size': `${props.resume.globalConfiguration.baseFontSize || 14}px`,
-  '--title-font-size': `${props.resume.globalConfiguration.titleFontSize || 28}px`,
-  '--sub-title-font-size': `${props.resume.globalConfiguration.subTitleFontSize || 16}px`,
-}))
+const { resumeStyles: styles, getSectionItems } = useTemplateStyles(resume)
 
 const sortedSections = computed(() => {
-  const sections = props.resume.menuSections.filter(i => i.id !== 'basic')
+  const sections = resume.menuSections.filter(i => i.id !== 'basic')
   return sections.sort((a, b) => {
     return parseInt(a.order) - parseInt(b.order)
   })
@@ -22,7 +17,7 @@ const sortedSections = computed(() => {
 </script>
 
 <template>
-  <div class="minimal-clean-resume" :style="resumeStyles">
+  <div class="minimal-clean-resume">
     <!-- 简洁头部 -->
     <header class="resume-header">
       <h1 class="name">{{ resume.basic.name }}</h1>
@@ -38,98 +33,13 @@ const sortedSections = computed(() => {
 
     <!-- 主体内容 -->
     <main class="resume-body">
-      <div v-for="section in sortedSections" :key="section.id" class="section">
-        <h2 class="section-title">{{ section.title }}</h2>
-
-        <div class="section-content">
-          <!-- 教育经历 -->
-          <template v-if="section.id === 'education'">
-            <div
-              v-for="edu in resume.educations"
-              :key="edu.id"
-              class="timeline-item"
-            >
-              <div class="timeline-header">
-                <span class="school">{{ edu.school }}</span>
-                <span class="date">{{ edu.dateRange }}</span>
-              </div>
-              <p class="detail">{{ edu.major }} · {{ edu.degree }}</p>
-              <div
-                v-if="edu.description"
-                class="description"
-                v-html="edu.description"
-              ></div>
-            </div>
-          </template>
-
-          <!-- 实习经历 -->
-          <template v-if="section.id === 'internship'">
-            <div
-              v-for="intern in resume.internships"
-              :key="intern.id"
-              class="timeline-item"
-            >
-              <div class="timeline-header">
-                <span class="company">{{ intern.companyName }}</span>
-                <span class="date">{{ intern.dateRange }}</span>
-              </div>
-              <p class="detail">{{ intern.position }}</p>
-              <div
-                v-if="intern.description"
-                class="description"
-                v-html="intern.description"
-              ></div>
-            </div>
-          </template>
-
-          <!-- 项目经历 -->
-          <template v-if="section.id === 'project'">
-            <div
-              v-for="project in resume.projects"
-              :key="project.id"
-              class="timeline-item"
-            >
-              <div class="timeline-header">
-                <span class="project-name">{{ project.name }}</span>
-                <span class="date">{{ project.dateRange }}</span>
-              </div>
-              <p class="detail">{{ project.role }}</p>
-              <div
-                v-if="project.description"
-                class="description"
-                v-html="project.description"
-              ></div>
-            </div>
-          </template>
-
-          <!-- 技能特长 -->
-          <template v-if="section.id === 'skills'">
-            <div class="timeline-item">
-              <div class="description" v-html="resume.skills"></div>
-            </div>
-          </template>
-
-          <!-- 自定义模块 -->
-          <template v-if="section.id.startsWith('custom-')">
-            <div
-              v-for="item in resume.customData[section.id]"
-              :key="item.id"
-              class="timeline-item"
-            >
-              <div class="timeline-header">
-                <span class="title">{{ item.title }}</span>
-                <span class="date">{{ item.dateRange }}</span>
-              </div>
-              <p class="detail">{{ item.subTitle }}</p>
-              <div
-                v-if="item.description"
-                class="description"
-                v-html="item.description"
-              ></div>
-            </div>
-          </template>
-        </div>
-      </div>
+      <template v-for="section in sortedSections" :key="section.id">
+        <SectionPreview
+          :id="section.id"
+          :title="section.title"
+          :items="getSectionItems(section.id)"
+        />
+      </template>
     </main>
   </div>
 </template>
@@ -138,7 +48,7 @@ const sortedSections = computed(() => {
 .minimal-clean-resume {
   margin: 0 auto;
   background: #fff;
-  font-size: var(--base-font-size);
+  font-size: v-bind('styles.baseFontSize');
   color: #2c3e50;
   line-height: 1.6;
   font-family:
@@ -146,19 +56,19 @@ const sortedSections = computed(() => {
 
   .resume-header {
     text-align: center;
-    padding: 50px 40px 30px;
+    padding: 10px 40px 30px;
     border-bottom: 1px solid #eee;
 
     .name {
-      font-size: var(--title-font-size);
+      font-size: v-bind('styles.titleFontSize');
       font-weight: 300;
       letter-spacing: 8px;
       margin-bottom: 10px;
-      color: var(--theme-color);
+      color: v-bind('styles.themeColor');
     }
 
     .position {
-      font-size: var(--sub-title-font-size);
+      font-size: v-bind('styles.subTitleFontSize');
       color: #666;
       margin-bottom: 16px;
       font-weight: 400;
@@ -176,19 +86,17 @@ const sortedSections = computed(() => {
   }
 
   .resume-body {
-    padding: 30px 50px;
-
     .section {
-      margin-bottom: 32px;
+      margin-bottom: v-bind('styles.baseModuleSpacing');
 
       &:last-child {
         margin-bottom: 0;
       }
 
       .section-title {
-        font-size: var(--sub-title-font-size);
+        font-size: v-bind('styles.subTitleFontSize');
         font-weight: 600;
-        color: var(--theme-color);
+        color: v-bind('styles.themeColor');
         margin-bottom: 20px;
         padding-bottom: 8px;
         border-bottom: 1px solid #eee;
@@ -197,7 +105,7 @@ const sortedSections = computed(() => {
 
       .section-content {
         .timeline-item {
-          margin-bottom: 24px;
+          margin-bottom: v-bind('styles.paragraphSpacing');
           padding-left: 20px;
           border-left: 2px solid #eee;
           position: relative;
@@ -210,7 +118,7 @@ const sortedSections = computed(() => {
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: var(--theme-color);
+            background: v-bind('styles.themeColor');
           }
 
           &:last-child {
@@ -245,7 +153,7 @@ const sortedSections = computed(() => {
           .description {
             font-size: 14px;
             color: #555;
-            line-height: 1.8;
+            line-height: v-bind('styles.baseLineHeight');
 
             :deep(p) {
               margin-bottom: 6px;
@@ -279,8 +187,8 @@ const sortedSections = computed(() => {
               transition: all 0.3s;
 
               &:hover {
-                border-color: var(--theme-color);
-                color: var(--theme-color);
+                border-color: v-bind('styles.themeColor');
+                color: v-bind('styles.themeColor');
               }
             }
           }

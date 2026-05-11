@@ -13,6 +13,7 @@ const route = useRoute()
 const resume = reactive<Resume>({
   id: '',
   title: '',
+  templateId: '',
   createdAt: dayjs().unix(),
   updatedAt: dayjs().unix(),
   basic: {

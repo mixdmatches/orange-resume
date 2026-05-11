@@ -1,33 +1,25 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import type { Resume } from '@/types/resume'
 import {
   PhoneOutlined,
   MailOutlined,
   EnvironmentOutlined,
-  GithubOutlined,
   BookOutlined,
   ExperimentOutlined,
   ProjectOutlined,
   ToolOutlined,
   AppstoreOutlined,
 } from '@ant-design/icons-vue'
+import { useTemplateStyles } from '@/template'
 
-const props = defineProps<{
-  resume: Resume
-}>()
+const resume: Resume = inject('resume') as Resume
 
-// 计算样式
-const resumeStyles = computed(() => ({
-  '--theme-color': props.resume.globalConfiguration.themeColor || '#1890ff',
-  '--base-font-size': `${props.resume.globalConfiguration.baseFontSize || 14}px`,
-  '--title-font-size': `${props.resume.globalConfiguration.titleFontSize || 24}px`,
-  '--sub-title-font-size': `${props.resume.globalConfiguration.subTitleFontSize || 16}px`,
-}))
+const { resumeStyles: styles } = useTemplateStyles(resume)
 
 // 按 order 排序的菜单项
 const sortedSections = computed(() => {
-  return [...props.resume.menuSections]
+  return [...resume.menuSections]
     .sort((a, b) => {
       return parseInt(a.order) - parseInt(b.order)
     })
@@ -36,7 +28,7 @@ const sortedSections = computed(() => {
 
 // 获取模块图标
 const getSectionIcon = (sectionId: string) => {
-  const iconMap: Record<string, any> = {
+  const iconMap: Record<string, typeof BookOutlined> = {
     education: BookOutlined,
     internship: ExperimentOutlined,
     project: ProjectOutlined,
@@ -47,7 +39,7 @@ const getSectionIcon = (sectionId: string) => {
 </script>
 
 <template>
-  <div class="modern-tech-resume" :style="resumeStyles">
+  <div class="modern-tech-resume">
     <!-- 头部区域 -->
     <header class="resume-header">
       <div class="header-content">
@@ -98,10 +90,11 @@ const getSectionIcon = (sectionId: string) => {
               class="education-item"
             >
               <div class="item-header">
-                <h3 class="school">{{ edu.school }}</h3>
+                <p class="school">{{ edu.school }}</p>
+                <p class="major">{{ edu.major }} | {{ edu.degree }}</p>
                 <span class="date">{{ edu.dateRange }}</span>
               </div>
-              <p class="major">{{ edu.major }} | {{ edu.degree }}</p>
+
               <p v-if="edu.gpa" class="gpa">GPA: {{ edu.gpa }}</p>
               <div
                 v-if="edu.description"
@@ -119,12 +112,12 @@ const getSectionIcon = (sectionId: string) => {
               class="internship-item"
             >
               <div class="item-header">
-                <h3 class="company">{{ intern.companyName }}</h3>
+                <p class="company">{{ intern.companyName }}</p>
+                <p class="position">
+                  {{ intern.position }} | {{ intern.department }}
+                </p>
                 <span class="date">{{ intern.dateRange }}</span>
               </div>
-              <p class="position">
-                {{ intern.position }} | {{ intern.department }}
-              </p>
               <div
                 v-if="intern.description"
                 class="description"
@@ -141,12 +134,12 @@ const getSectionIcon = (sectionId: string) => {
               class="project-item"
             >
               <div class="item-header">
-                <h3 class="project-name">{{ project.name }}</h3>
+                <p class="project-name">{{ project.name }}</p>
+                <p class="role">{{ project.role }}</p>
                 <span class="date">{{ project.dateRange }}</span>
               </div>
-              <p class="role">{{ project.role }}</p>
               <p v-if="project.gitAddress" class="git-link">
-                <GithubOutlined /> {{ project.gitAddress }}
+                {{ project.gitAddress }}
               </p>
               <div
                 v-if="project.description"
@@ -171,10 +164,11 @@ const getSectionIcon = (sectionId: string) => {
               class="custom-item"
             >
               <div class="item-header">
-                <h3 class="item-title">{{ item.title }}</h3>
+                <p class="item-title">{{ item.title }}</p>
+                <p class="sub-title">{{ item.subTitle }}</p>
                 <span class="date">{{ item.dateRange }}</span>
               </div>
-              <p class="sub-title">{{ item.subTitle }}</p>
+
               <div
                 v-if="item.description"
                 class="description"
@@ -192,12 +186,12 @@ const getSectionIcon = (sectionId: string) => {
 .modern-tech-resume {
   margin: 0 auto;
   background: #fff;
-  font-size: var(--base-font-size);
+  font-size: v-bind('styles.baseFontSize');
   color: #333;
   line-height: 1.6;
 
   .resume-header {
-    background: linear-gradient(135deg, var(--theme-color) 0%);
+    background: linear-gradient(135deg, v-bind('styles.themeColor') 0%);
     color: #fff;
     padding: 40px;
     position: relative;
@@ -229,14 +223,13 @@ const getSectionIcon = (sectionId: string) => {
       flex: 1;
 
       .name {
-        font-size: var(--title-font-size);
+        font-size: 20px;
         font-weight: 700;
         margin-bottom: 8px;
-        letter-spacing: 2px;
       }
 
       .position {
-        font-size: var(--sub-title-font-size);
+        font-size: 14px;
         opacity: 0.9;
         margin-bottom: 16px;
       }
@@ -297,10 +290,9 @@ const getSectionIcon = (sectionId: string) => {
   }
 
   .resume-body {
-    padding: 30px 40px;
-
+    padding-top: 20px;
     .section {
-      margin-bottom: 28px;
+      margin-bottom: v-bind('styles.baseModuleSpacing');
 
       &:last-child {
         margin-bottom: 0;
@@ -312,13 +304,13 @@ const getSectionIcon = (sectionId: string) => {
         gap: 12px;
         margin-bottom: 16px;
         padding-bottom: 8px;
-        border-bottom: 2px solid var(--theme-color);
+        border-bottom: 2px solid v-bind('styles.themeColor');
 
         .section-icon {
           width: 36px;
           height: 36px;
           border-radius: 8px;
-          background: var(--theme-color);
+          background: v-bind('styles.themeColor');
           color: #fff;
           display: flex;
           align-items: center;
@@ -327,9 +319,9 @@ const getSectionIcon = (sectionId: string) => {
         }
 
         .section-title {
-          font-size: var(--sub-title-font-size);
+          font-size: v-bind('styles.titleFontSize');
           font-weight: 600;
-          color: var(--theme-color);
+          color: v-bind('styles.themeColor');
         }
 
         .section-line {
@@ -337,7 +329,7 @@ const getSectionIcon = (sectionId: string) => {
           height: 1px;
           background: linear-gradient(
             to right,
-            var(--theme-color),
+            v-bind('styles.themeColor'),
             transparent
           );
         }
@@ -345,16 +337,18 @@ const getSectionIcon = (sectionId: string) => {
 
       .section-content {
         padding-left: 48px;
+        display: flex;
+        flex-direction: column;
+        gap: v-bind('styles.paragraphSpacing');
 
         .education-item,
         .internship-item,
         .project-item,
         .custom-item {
-          margin-bottom: 20px;
           padding: 16px;
           background: #f8f9fa;
           border-radius: 8px;
-          border-left: 4px solid var(--theme-color);
+          border-left: 4px solid v-bind('styles.themeColor');
 
           &:last-child {
             margin-bottom: 0;
@@ -364,16 +358,15 @@ const getSectionIcon = (sectionId: string) => {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
 
-            h3 {
-              font-size: 16px;
+            p {
+              font-size: v-bind('styles.subTitleFontSize');
               font-weight: 600;
               color: #333;
             }
 
             .date {
-              font-size: 14px;
+              font-size: v-bind('styles.subTitleFontSize');
               color: #666;
               font-family: 'Courier New', monospace;
             }
@@ -383,27 +376,27 @@ const getSectionIcon = (sectionId: string) => {
           .position,
           .role,
           .sub-title {
-            font-size: 14px;
+            font-size: v-bind('styles.subTitleFontSize');
             color: #666;
             margin-bottom: 8px;
           }
 
           .gpa {
-            font-size: 13px;
-            color: var(--theme-color);
+            font-size: v-bind('styles.subTitleFontSize');
+            color: v-bind('styles.themeColor');
             font-weight: 500;
           }
 
           .git-link {
             font-size: 13px;
-            color: var(--theme-color);
+            color: v-bind('styles.themeColor');
             margin-bottom: 8px;
           }
 
           .description {
-            font-size: 14px;
+            font-size: v-bind('styles.baseFontSize');
             color: #555;
-            line-height: 1.8;
+            line-height: v-bind('styles.baseLineHeight');
 
             :deep(p) {
               margin-bottom: 8px;
@@ -420,7 +413,7 @@ const getSectionIcon = (sectionId: string) => {
             padding: 0;
 
             li {
-              background: var(--theme-color);
+              background: v-bind('styles.themeColor');
               color: #fff;
               padding: 6px 16px;
               border-radius: 20px;

@@ -1,78 +1,18 @@
 <script setup lang="ts">
 import type { Resume } from '@/types/resume'
-import SectionPreview from '@/components/ResumeSection.vue'
-import { provide } from 'vue'
+import SectionPreview from '@/template/classic/ResumeSection.vue'
+import { inject } from 'vue'
+import { useTemplateStyles } from '@/template'
 
-const props = defineProps<{
-  resume: Resume
-}>()
+const resume: Resume = inject<Resume>('resume') as Resume
 
-const { resume } = props
-
-// 提供 resume 给子组件
-provide('resume', resume)
+const { getSectionItems } = useTemplateStyles(resume)
 
 // 根据 menuSections 的 order 排序
 const sortedMenuSections = () => {
   return resume.menuSections
     .filter(section => section.id !== 'basic') // 过滤掉 basic，因为基本信息单独渲染
     .sort((a, b) => parseInt(a.order) - parseInt(b.order))
-}
-
-// 整合适合 SectionPreview 组件的数据
-const getSectionItems = (sectionId: string) => {
-  switch (sectionId) {
-    case 'education':
-      return resume.educations.map(item => ({
-        id: item.id,
-        visible: item.visible,
-        subMain: [item.school, item.degree, item.major, item.dateRange],
-        address: '',
-        description: item.description,
-      }))
-    case 'internship':
-      return resume.internships.map(item => ({
-        id: item.id,
-        visible: item.visible,
-        subMain: [
-          item.companyName,
-          item.department,
-          item.position,
-          item.dateRange,
-        ],
-        address: '',
-        description: item.description,
-      }))
-    case 'project':
-      return resume.projects.map(item => ({
-        id: item.id,
-        visible: item.visible,
-        subMain: [item.name, '', item.role, item.dateRange],
-        address: item.gitAddress,
-        description: item.description,
-      }))
-    case 'skills':
-      return [
-        {
-          id: 'skills',
-          visible: true,
-          subMain: [],
-          address: '',
-          description: resume.skills,
-        },
-      ]
-    default:
-      if (sectionId.startsWith('custom-')) {
-        return (resume.customData[sectionId] || []).map(item => ({
-          id: item.id,
-          visible: item.visible,
-          subMain: [item.title, item.subTitle, '', item.dateRange],
-          address: '',
-          description: item.description,
-        }))
-      }
-      return []
-  }
 }
 </script>
 
