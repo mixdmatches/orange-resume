@@ -1,36 +1,102 @@
 <script setup lang="ts">
-import { message } from 'ant-design-vue'
-import { ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { KeyOutlined } from '@ant-design/icons-vue'
+import SettingForm from './SettingForm.vue'
+import type { APIManufacturer } from '@/types/APISetting'
+import { storage } from '@/utils/storage'
 
-// AI 设置
-const selectedModel = ref('doubao')
-const apiKey = ref('')
-const modelId = ref('')
-const isTesting = ref(false)
-const prompt = ref(
-  '优化原则： 1. 使用更专业的词汇和表达方式 2. 突出关键成就和技能 3. 保持简洁清晰 4. 使用主动语气 5. 保持原有信息的完整性 6. 保留我输入的格式 请直接返回优化后的文本，不要包含任何解释或其他内容。',
+const apiState = ref<APIManufacturer[]>([
+  {
+    id: 'deepseek',
+    name: 'DeepSeek',
+    icon: '🤖',
+    hint: '在DeepSeek获取 API 密钥',
+    apiKey: '',
+    apiEndpoint: '',
+  },
+  {
+    id: 'doubao',
+    name: '豆包',
+    icon: '🧉',
+    hint: '在火山引擎获取 API 密钥',
+    apiKey: '',
+    apiEndpoint: '',
+    modelId: '',
+  },
+  {
+    id: 'openai',
+    name: 'OpenAI',
+    icon: '🔮',
+    hint: '在 OpenAI 平台获取 API 密钥',
+    apiKey: '',
+    apiEndpoint: '',
+    modelId: '',
+  },
+  {
+    id: 'custom',
+    name: '自定义提供商',
+    icon: '⚙️',
+    hint: '配置兼容 OpenAI 格式的自定义 AI 提供商（如 OpenRouter）',
+    apiKey: '',
+    apiEndpoint: '',
+    modelId: '',
+    providerName: '',
+  },
+])
+
+const currenModel = ref('deepseek') // 界面选择的模型
+
+const selectedModel = ref('deepseek') // 使用的模型
+
+const currentApiForm = computed<APIManufacturer>(
+  () =>
+    apiState.value.find(item => item.id == currenModel.value) ||
+    apiState.value[0],
 )
-const apiEndpoint = ref('')
-const providerName = ref('')
 
-const models = [
-  { id: 'deepseek', name: 'DeepSeek', icon: '🤖' },
-  { id: 'doubao', name: '豆包', icon: '🧉', hint: '在火山引擎获取 API 密钥' },
-  { id: 'openai', name: 'OpenAI', icon: '🔮' },
-  { id: 'custom', name: '自定义提供商', icon: '⚙️' },
-]
+watch(
+  () => currentApiForm.value,
+  newVal => {
+    apiState.value.forEach(item => {
+      if (item.id == newVal.id) {
+        item = newVal
+      }
+    })
+    storage.set('apiState', apiState.value)
+  },
+  {
+    deep: true,
+  },
+)
 
-const handleTestConnection = async () => {
-  isTesting.value = true
-  setTimeout(() => {
-    isTesting.value = false
-    message.success('连接测试成功')
-  }, 1500)
-}
+// AI 润色提示词
+const polishPrompt = ref(
+  `你是一个专业的简历优化助手。请帮助优化以下文本，使其更加专业和有吸引力。
+              优化原则：
+              1. 使用更专业的词汇和表达方式
+              2. 突出关键成就和技能
+              3. 保持简洁清晰
+              4. 使用主动语气
+              5. 保持原有信息的完整性
+              6. 保留我输入的格式
+              请直接返回优化后的文本，不要包含任何解释或其他内容。`,
+)
 
-const resetPrompt = () => {
-  message.info('已重置提示词')
-}
+const models = computed(() =>
+  apiState.value.map(item => ({
+    id: item.id,
+    name: item.name,
+    icon: item.icon,
+    hint: item.hint,
+  })),
+)
+
+onMounted(() => {
+  const state = storage.get('apiState')
+  if (state) {
+    apiState.value = state as APIManufacturer[]
+  }
+})
 </script>
 
 <template>
@@ -62,8 +128,8 @@ const resetPrompt = () => {
         <div
           v-for="model in models"
           :key="model.id"
-          :class="['model-item', { active: selectedModel === model.id }]"
-          @click="selectedModel = model.id"
+          :class="['model-item', { active: currenModel === model.id }]"
+          @click="currenModel = model.id"
         >
           <span class="model-icon">{{ model.icon }}</span>
           <span class="model-name">{{ model.name }}</span>
@@ -74,87 +140,23 @@ const resetPrompt = () => {
         <!-- 模型信息 -->
         <div class="model-info">
           <span class="model-info-icon">{{
-            models.find(m => m.id === selectedModel)?.icon
+            models.find(m => m.id === currenModel)?.icon
           }}</span>
           <div class="model-info-content">
             <div class="model-info-name">
-              {{ models.find(m => m.id === selectedModel)?.name }}
+              {{ models.find(m => m.id === currenModel)?.name }}
             </div>
             <div class="model-info-hint">
-              {{ models.find(m => m.id === selectedModel)?.hint }}
+              {{ models.find(m => m.id === currenModel)?.hint }}
             </div>
           </div>
         </div>
 
-        <!-- AI服务商名称 -->
-        <div v-if="selectedModel === 'custom'" class="setting-item">
-          <label class="setting-label">提供商名称</label>
-          <a-input
-            v-model="providerName"
-            placeholder="提供商名称"
-            class="setting-input"
-          />
-        </div>
-
-        <!-- API Key -->
-        <div class="setting-item">
-          <label class="setting-label">
-            API Key
-            <a href="#" class="setting-link">获取 API Key</a>
-          </label>
-          <a-input
-            v-model="apiKey"
-            placeholder="API Key"
-            class="setting-input"
-          />
-        </div>
-
-        <!-- 模型 ID -->
-        <div v-if="selectedModel !== 'deepseek'" class="setting-item">
-          <label class="setting-label">模型 ID</label>
-          <a-input
-            v-model="modelId"
-            placeholder="模型 ID"
-            class="setting-input"
-          />
-        </div>
-
-        <!-- API端点 -->
-        <div v-if="selectedModel !== 'deepseek'" class="setting-item">
-          <label class="setting-label">API端点</label>
-          <a-input
-            v-model="apiEndpoint"
-            class="setting-input"
-            placeholder="API端点"
-          />
-        </div>
-
-        <!-- 连接测试 -->
-        <div class="setting-item">
-          <label class="setting-label">连接测试</label>
-          <a-button
-            type="primary"
-            :loading="isTesting"
-            @click="handleTestConnection"
-          >
-            <RefreshOutlined />
-            测试连接
-          </a-button>
-        </div>
-
-        <!-- AI 润色提示词 -->
-        <div class="setting-item">
-          <label class="setting-label">
-            AI 润色提示词
-            <a-button @click="resetPrompt"> <RefreshOutlined /> 重置 </a-button>
-          </label>
-          <a-textarea
-            v-model:value="prompt"
-            placeholder="请输入提示词..."
-            :rows="10"
-          >
-          </a-textarea>
-        </div>
+        <!-- 设置表单 -->
+        <SettingForm
+          v-model:api-form="currentApiForm"
+          v-model:polish-prompt="polishPrompt"
+        />
       </div>
     </div>
   </a-card>
@@ -242,35 +244,6 @@ const resetPrompt = () => {
       font-size: 13px;
       color: rgba(0, 0, 0, 0.5);
     }
-  }
-}
-
-.setting-item {
-  margin-bottom: 20px;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-
-  .setting-label {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 14px;
-    font-weight: 500;
-    color: #333;
-    margin-bottom: 8px;
-
-    .setting-link {
-      font-size: 13px;
-      font-weight: normal;
-      color: #1890ff;
-    }
-  }
-
-  .setting-input {
-    width: 100%;
-    max-width: 400px;
   }
 }
 </style>
