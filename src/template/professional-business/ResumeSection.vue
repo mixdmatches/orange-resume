@@ -45,7 +45,7 @@ const { resumeStyles: styles } = useTemplateStyles(resume)
                   <span v-if="item.subMain?.[1]" class="separator">|</span>
                   {{ item.subMain?.[1] || '' }}
                 </div>
-                <div class="extra">
+                <div v-if="item.address" class="extra">
                   <LinkOutlined /> {{ item.address || '' }}
                 </div>
                 <div
