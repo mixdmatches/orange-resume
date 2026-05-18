@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, provide } from 'vue'
 import { templates } from '@/template/index'
 import { DEFAULT_RESUME } from '@/config/init-resume-data'
 import type { Resume } from '@/types/resume'
@@ -14,10 +14,11 @@ const router = useRouter()
 const previewResume: Resume = {
   ...DEFAULT_RESUME,
   id: 'preview',
+  templateId: '',
   title: '预览简历',
-  createdAt: Date.now(),
-  updatedAt: Date.now(),
 }
+
+provide('resume', previewResume)
 
 // 预览模态框状态
 const previewVisible = ref(false)
@@ -44,18 +45,43 @@ const handlePreview = (tempId: string) => {
 }
 
 /**
+ * 直接使用模板
+ */
+const handleUse = async (templateId: string) => {
+  currentTemplateId.value = templateId
+  try {
+    // 创建新简历数据
+    const newResume: Resume = {
+      ...previewResume,
+      id: `resume_${Date.now()}`,
+      templateId,
+      title: `${currentTemplateName.value}简历-${crypto.randomUUID().substring(0, 5)}`,
+    }
+
+    // 保存到 IndexedDB
+    await addResumeIDB(newResume)
+
+    // 跳转到编辑页面
+    router.push(`/edit-resume/${newResume.id}`)
+
+    message.success(`成功使用「${currentTemplateName.value}」模板创建简历`)
+  } catch (error) {
+    console.error('使用模板失败:', error)
+    message.error('使用模板失败，请重试')
+  }
+}
+
+/**
  * 使用模板创建新简历
  */
 const handleUseTemplate = async () => {
   try {
     // 创建新简历数据
     const newResume: Resume = {
-      ...DEFAULT_RESUME,
+      ...previewResume,
       id: `resume_${Date.now()}`,
       templateId: currentTemplateId.value,
-      title: `${currentTemplateName.value}简历`,
-      createdAt: Date.now(),
-      updatedAt: null,
+      title: `${currentTemplateName.value}简历-${crypto.randomUUID().substring(0, 5)}`,
     }
 
     // 保存到 IndexedDB
@@ -113,7 +139,9 @@ const transition = {
         </div>
       </div>
       <div class="template-button">
-        <a-button type="primary" size="large">使用模板</a-button>
+        <a-button type="primary" size="large" @click="handleUse(temp.id)"
+          >使用模板</a-button
+        >
         <a-button size="large" @click="handlePreview(temp.id)">
           预览模板
         </a-button>
@@ -130,11 +158,7 @@ const transition = {
   >
     <div class="preview-content">
       <div class="resume-preview-wrapper">
-        <component
-          :is="currentTemplate"
-          v-if="currentTemplate"
-          :resume="previewResume"
-        />
+        <component :is="currentTemplate" v-if="currentTemplate" />
       </div>
     </div>
 
