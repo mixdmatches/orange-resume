@@ -10,6 +10,11 @@ import type { Resume } from '@/types/resume'
 import templates from '@/template'
 import previewImage from '@/assets/images/classic.fcafadcb.svg'
 
+const resumeMode = defineModel('resumeMode', {
+  type: String,
+  default: 'edit',
+})
+
 const resume: Resume = inject('resume') as Resume
 
 const handleDownloadJson = () => {
@@ -45,6 +50,18 @@ const afterOpenChange = (open: boolean) => {
     <div class="tool-head-left">
       <line-md-arrow-small-left @click="$router.back()" />
       <a-input v-model:value="resume.title" class="title"></a-input>
+      <div class="tool-mode">
+        <span
+          :class="{ active: resumeMode === 'edit' }"
+          @click="resumeMode = 'edit'"
+          >编辑简历</span
+        >
+        <span
+          :class="{ active: resumeMode === 'interview' }"
+          @click="resumeMode = 'interview'"
+          >模拟面试</span
+        >
+      </div>
     </div>
     <div class="tools">
       <a-tooltip title="切换模板">
@@ -102,7 +119,6 @@ const afterOpenChange = (open: boolean) => {
   justify-content: space-between;
   width: 100%;
   height: $site-header-height;
-  line-height: $site-header-height;
   padding: 1rem 2rem;
   font-size: 2rem;
   border-bottom: 1px solid;
@@ -117,6 +133,25 @@ const afterOpenChange = (open: boolean) => {
     display: flex;
     align-items: center;
     gap: 1rem;
+    .tool-mode {
+      display: flex;
+      gap: 1rem;
+      span {
+        padding: 4px 6px;
+        border-radius: 4px;
+        font-size: 1.4rem;
+        cursor: pointer;
+        text-wrap: nowrap;
+        &.active {
+          // color: $primary-color;
+          @include themify(
+            (
+              background-color: $layout-bg-color,
+            )
+          );
+        }
+      }
+    }
   }
   .tools {
     display: flex;

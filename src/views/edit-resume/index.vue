@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onMounted, provide, reactive, watch } from 'vue'
+import { onMounted, provide, reactive, ref, watch } from 'vue'
 import type { Resume } from '@/types/resume'
 import ToolHead from './components/ToolHead.vue'
 import EditContent from '@/views/edit-resume/components/EditContent.vue'
 import ResumePreview from '@/views/edit-resume/components/ResumePreview.vue'
+import AiInterview from '@/views/edit-resume/components/AiInterview.vue'
 import dayjs from 'dayjs'
 import { useRoute } from 'vue-router'
 import { getResumeByIdIDB, updateResumeIDB } from '@/service/resumeIDB'
@@ -15,7 +16,7 @@ const resume = reactive<Resume>({
   title: '',
   templateId: '',
   createdAt: dayjs().unix(),
-  updatedAt: dayjs().unix(),
+  updatedAt: null,
   basic: {
     name: '',
     position: '',
@@ -66,13 +67,16 @@ watch(
 )
 
 provide('resume', resume)
+
+const resumeMode = ref('edit')
 </script>
 
 <template>
   <div class="edit-container">
-    <tool-head></tool-head>
+    <tool-head v-model:resume-mode="resumeMode"></tool-head>
     <div class="edit-resume">
-      <edit-content> </edit-content>
+      <edit-content v-if="resumeMode === 'edit'" />
+      <ai-interview v-else />
       <span class="line"></span>
       <div class="view-content">
         <resume-preview />
