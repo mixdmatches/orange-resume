@@ -1,10 +1,18 @@
 <script setup lang="ts">
-import { computed, h, ref } from 'vue'
+import { h, inject, ref } from 'vue'
+import { MessageOutlined, EyeOutlined } from '@ant-design/icons-vue'
+import { message } from 'ant-design-vue'
 import {
-  MessageOutlined,
-  CopyOutlined,
-  EyeOutlined,
-} from '@ant-design/icons-vue'
+  generateInterviewQuestions,
+  generateAnswer,
+  hasApiKey,
+} from '@/utils/deepseek'
+import type { Resume } from '@/types/resume'
+
+/**
+ * 获取简历数据
+ */
+const resume = inject<Resume>('resume')
 
 /**
  * Tab页签状态
@@ -22,45 +30,75 @@ interface InterviewQuestion {
 }
 
 /**
- * 模拟面试问题列表
+ * 面试问题列表
  */
-const questions = ref<InterviewQuestion[]>([
-  {
-    id: 1,
-    question: '请简单介绍一下你自己？',
-    answer:
-      '您好，我是一名具有3年开发经验的前端工程师。我热爱编程，对新技术充满热情。在过去的工作中，我参与了多个大型项目的开发，积累了丰富的实战经验。我擅长使用Vue、React等现代前端框架，并且对用户体验有深刻的理解。',
-    showAnswer: false,
-  },
-  {
-    id: 2,
-    question: '你为什么选择我们公司？',
-    answer:
-      '我一直关注贵公司的发展，非常认同公司的技术理念和企业文化。贵公司在行业内的创新精神和技术实力深深吸引了我。我相信在这里我能够充分发挥自己的专业技能，同时也能不断学习和成长。',
-    showAnswer: false,
-  },
-  {
-    id: 3,
-    question: '请描述一个你遇到过的最具挑战性的项目？',
-    answer:
-      '在之前的项目中，我负责重构一个老旧的企业级管理系统。这个项目的挑战在于代码质量参差不齐，技术栈陈旧，并且需要在不影响业务的情况下进行迁移。我通过制定详细的迁移计划，采用渐进式重构策略，最终成功完成了项目，并将系统性能提升了40%。',
-    showAnswer: false,
-  },
-  {
-    id: 4,
-    question: '你的优缺点是什么？',
-    answer:
-      '我的优点是学习能力强，能够快速适应新技术。同时我注重团队协作，善于沟通。我的缺点可能是有时候过于追求完美，在细节上花费过多时间。不过我正在学习如何在质量和效率之间找到平衡。',
-    showAnswer: false,
-  },
-  {
-    id: 5,
-    question: '你未来的职业规划是什么？',
-    answer:
-      '在短期内，我希望能够深入学习架构设计和性能优化方面的知识，成为一名技术骨干。长期来看，我希望能够带领团队，在技术领域做出更大的贡献。',
-    showAnswer: false,
-  },
-])
+const questions = ref<InterviewQuestion[]>([])
+
+/**
+ * 解析AI返回的问题和答案
+ */
+const parseQuestions = (content: string): InterviewQuestion[] => {
+  const result: InterviewQuestion[] = []
+  const lines = content.split('\n')
+  let currentQuestion = ''
+  let currentAnswer = ''
+  let isAnswer = false
+
+  for (const line of lines) {
+    // 匹配问题行 (如 Q1:, Q2:, 问题：, 1.)
+    const questionMatch = line.match(/^(Q\d+|\d+\.|问题\d+|问题：?)\s*(.+)/)
+    if (questionMatch) {
+      // 如果有之前的问题，先保存
+      if (currentQuestion) {
+        result.push({
+          id: result.length + 1,
+          question: currentQuestion.trim(),
+          answer: currentAnswer.trim() || '暂无参考回答',
+          showAnswer: false,
+        })
+      }
+      currentQuestion = questionMatch[2]
+      currentAnswer = ''
+      isAnswer = false
+      continue
+    }
+
+    // 匹配回答开始
+    if (
+      line.includes('回答：') ||
+      line.includes('参考答案：') ||
+      line.includes('答：')
+    ) {
+      isAnswer = true
+      currentAnswer = line.replace(/^(回答|参考答案|答)：?\s*/, '')
+      continue
+    }
+
+    // 如果正在收集回答，继续添加
+    if (isAnswer) {
+      currentAnswer += '\n' + line
+    }
+  }
+
+  // 保存最后一个问题
+  if (currentQuestion) {
+    result.push({
+      id: result.length + 1,
+      question: currentQuestion.trim(),
+      answer: currentAnswer.trim() || '暂无参考回答',
+      showAnswer: false,
+    })
+  }
+
+  return result
+}
+
+/**
+ * 将简历转换为文本格式
+ */
+const resumeToText = (res: Resume): string => {
+  return JSON.stringify(res)
+}
 
 /**
  * 是否已点击查看（调用AI出题）
@@ -81,13 +119,70 @@ const showAllAnswers = ref(false)
  * 点击查看按钮，调用AI生成问题
  */
 const handleViewQuestions = async () => {
+  // 检查API Key是否配置
+  if (!hasApiKey()) {
+    message.error('请先在设置中配置API Key')
+    return
+  }
+
+  // 检查简历是否有内容
+  if (!resume || !resume.basic.name) {
+    message.warning('请先填写简历基本信息')
+    return
+  }
+
   isGeneratingQuestions.value = true
 
-  // 模拟AI生成问题的延迟
-  await new Promise(resolve => setTimeout(resolve, 1000))
+  try {
+    // 将简历转换为文本
+    const resumeText = resumeToText(resume)
 
-  hasClickedView.value = true
-  isGeneratingQuestions.value = false
+    // 调用API生成面试问题
+    const result = await generateInterviewQuestions(resumeText, 5)
+
+    // 解析问题
+    const parsedQuestions = parseQuestions(result)
+
+    if (parsedQuestions.length > 0) {
+      questions.value = parsedQuestions
+    } else {
+      // 如果解析失败，使用默认问题
+      questions.value = [
+        {
+          id: 1,
+          question: '请介绍一下你最近参与的项目？',
+          answer:
+            '根据您的简历，您参与了多个项目。请详细描述您在项目中的角色、职责和主要贡献。',
+          showAnswer: false,
+        },
+        {
+          id: 2,
+          question: '您掌握的核心技术栈有哪些？',
+          answer:
+            '根据您的简历，您的技能包括：' +
+            (resume.skills || '未填写') +
+            '。请详细说明您在这些技术方面的实践经验。',
+          showAnswer: false,
+        },
+        {
+          id: 3,
+          question: '您的职业规划是什么？',
+          answer:
+            '作为一名' +
+            (resume.basic.position || '求职者') +
+            '，您未来的职业发展方向是什么？有哪些具体的计划？',
+          showAnswer: false,
+        },
+      ]
+    }
+
+    hasClickedView.value = true
+  } catch (error) {
+    message.error((error as Error).message || '生成面试问题失败')
+    console.error('生成面试问题失败:', error)
+  } finally {
+    isGeneratingQuestions.value = false
+  }
 }
 
 /**
@@ -114,12 +209,14 @@ const viewAllAnswers = () => {
 /**
  * 重新生成问题
  */
-const regenerateQuestions = () => {
-  hasClickedView.value = false
+const regenerateQuestions = async () => {
   showAllAnswers.value = false
   questions.value.forEach(q => {
     q.showAnswer = false
   })
+
+  // 重新生成问题
+  await handleViewQuestions()
 }
 
 /**
@@ -131,21 +228,30 @@ const isGenerating = ref(false)
 const copySuccess = ref(false)
 
 /**
- * 模拟生成回答
+ * 生成回答
  */
-const generateAnswer = async () => {
+const generateUserAnswer = async () => {
   if (!userQuestion.value.trim()) return
+
+  // 检查API Key是否配置
+  if (!hasApiKey()) {
+    message.error('请先在设置中配置API Key')
+    return
+  }
 
   isGenerating.value = true
   generatedResult.value = ''
 
-  // 模拟API调用延迟
-  await new Promise(resolve => setTimeout(resolve, 1500))
-
-  // 模拟生成的回答
-  generatedResult.value = `针对您的问题「${userQuestion.value}」，以下是我的建议：\n\n首先，建议您明确问题的核心需求，梳理关键要点。其次，可以参考相关的行业最佳实践和案例，从中获取灵感。最后，结合自身的经验和专业知识，形成完整的解决方案。\n\n如果您需要更具体的指导，请提供更多背景信息，我会为您提供更详细的分析和建议。`
-
-  isGenerating.value = false
+  try {
+    // 调用API生成回答
+    const result = await generateAnswer(userQuestion.value)
+    generatedResult.value = result
+  } catch (error) {
+    message.error((error as Error).message || '生成回答失败')
+    console.error('生成回答失败:', error)
+  } finally {
+    isGenerating.value = false
+  }
 }
 
 /**
@@ -157,6 +263,7 @@ const copyResult = async () => {
   try {
     await navigator.clipboard.writeText(generatedResult.value)
     copySuccess.value = true
+    message.success('复制成功')
     setTimeout(() => {
       copySuccess.value = false
     }, 2000)
@@ -168,13 +275,10 @@ const copyResult = async () => {
 /**
  * 重试生成
  */
-const retryGenerate = () => {
+const retryGenerate = async () => {
   generatedResult.value = ''
+  await generateUserAnswer()
 }
-
-const activeKeys = ref([
-  ...questions.value.filter(q => q.showAnswer).map(q => String(q.id)),
-])
 </script>
 
 <template>
@@ -278,7 +382,7 @@ const activeKeys = ref([
               block
               :loading="isGenerating"
               :disabled="!userQuestion.trim()"
-              @click="generateAnswer"
+              @click="generateUserAnswer"
             >
               {{ isGenerating ? '生成中...' : '生成回答' }}
             </a-button>
@@ -296,7 +400,7 @@ const activeKeys = ref([
             />
             <a-space style="margin-top: 10px">
               <a-button type="primary" @click="copyResult"> 复制 </a-button>
-              <a-button>重试</a-button>
+              <a-button @click="retryGenerate">重试</a-button>
             </a-space>
           </div>
         </div>

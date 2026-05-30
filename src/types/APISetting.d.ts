@@ -8,3 +8,8 @@ export interface APIManufacturer {
   apiEndpoint: string
   providerName?: string
 }
+
+export interface APIState {
+  selectedModel?: string | null
+  states: APIManufacturer[]
+}

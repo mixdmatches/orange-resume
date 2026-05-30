@@ -5,12 +5,13 @@ import SettingForm from './SettingForm.vue'
 import type { APIManufacturer } from '@/types/APISetting'
 import { storage } from '@/utils/storage'
 
-const apiState = ref<APIManufacturer[]>([
+const defaultApiState = [
   {
     id: 'deepseek',
     name: 'DeepSeek',
     icon: '🤖',
     hint: '在DeepSeek获取 API 密钥',
+    modelId: '',
     apiKey: '',
     apiEndpoint: '',
   },
@@ -42,32 +43,15 @@ const apiState = ref<APIManufacturer[]>([
     modelId: '',
     providerName: '',
   },
-])
+]
+
+const apiState = ref<APIManufacturer[]>(
+  storage.get('apiState')?.states || defaultApiState,
+)
 
 const currenModel = ref('deepseek') // 界面选择的模型
 
-const selectedModel = ref('deepseek') // 使用的模型
-
-const currentApiForm = computed<APIManufacturer>(
-  () =>
-    apiState.value.find(item => item.id == currenModel.value) ||
-    apiState.value[0],
-)
-
-watch(
-  () => currentApiForm.value,
-  newVal => {
-    apiState.value.forEach(item => {
-      if (item.id == newVal.id) {
-        item = newVal
-      }
-    })
-    storage.set('apiState', apiState.value)
-  },
-  {
-    deep: true,
-  },
-)
+const selectedModel = ref(storage.get('apiState')?.selectedModel || 'deepseek') // 使用的模型
 
 // AI 润色提示词
 const polishPrompt = ref(
@@ -82,6 +66,12 @@ const polishPrompt = ref(
               请直接返回优化后的文本，不要包含任何解释或其他内容。`,
 )
 
+const currentApiForm = computed<APIManufacturer>(
+  () =>
+    apiState.value.find(item => item.id == currenModel.value) ||
+    apiState.value[0],
+)
+
 const models = computed(() =>
   apiState.value.map(item => ({
     id: item.id,
@@ -91,10 +81,55 @@ const models = computed(() =>
   })),
 )
 
+watch(
+  () => currentApiForm.value,
+  newVal => {
+    apiState.value.forEach(item => {
+      if (item.id == newVal.id) {
+        item = newVal
+      }
+    })
+    storage.set('apiState', {
+      selectedModel: selectedModel.value,
+      states: apiState.value,
+      polishPrompt: polishPrompt.value,
+    })
+  },
+  {
+    deep: true,
+  },
+)
+
+watch(
+  () => selectedModel.value,
+  newVal => {
+    storage.set('apiState', {
+      selectedModel: newVal,
+      states: apiState.value,
+      polishPrompt: polishPrompt.value,
+    })
+  },
+)
+
+watch(
+  () => polishPrompt.value,
+  newVal => {
+    storage.set('apiState', {
+      selectedModel: selectedModel.value,
+      states: apiState.value,
+      polishPrompt: newVal,
+    })
+  },
+)
+
 onMounted(() => {
   const state = storage.get('apiState')
-  if (state) {
-    apiState.value = state as APIManufacturer[]
+  if (!state) return
+  if (state.apiState) {
+    apiState.value = state.apiState as APIManufacturer[]
+    if (state.selectedModel) {
+      selectedModel.value = state.selectedModel
+    }
   }
 })
 </script>
