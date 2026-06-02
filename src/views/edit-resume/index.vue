@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, provide, reactive, ref, watch } from 'vue'
+import { onMounted, provide, reactive, ref, watch, onUnmounted } from 'vue'
 import type { Resume } from '@/types/resume'
 import ToolHead from './components/ToolHead.vue'
 import EditContent from '@/views/edit-resume/components/EditContent.vue'
@@ -41,6 +41,7 @@ const resume = reactive<Resume>({
     titleFontSize: 24,
     subTitleFontSize: 20,
     themeColor: '#007bff',
+    autoOnePage: false,
   },
 })
 
@@ -69,18 +70,55 @@ watch(
 provide('resume', resume)
 
 const resumeMode = ref('edit')
+
+const splitterContainer = ref<HTMLElement | null>(null)
+const leftWidth = ref(50)
+const isDragging = ref(false)
+let startX = 0
+let startWidth = 0
+
+const handleDividerMouseDown = (event: MouseEvent) => {
+  event.preventDefault()
+  isDragging.value = true
+  startX = event.clientX
+  startWidth = leftWidth.value
+  window.addEventListener('mousemove', handleDividerMouseMove)
+  window.addEventListener('mouseup', handleDividerMouseUp)
+}
+
+const handleDividerMouseMove = (event: MouseEvent) => {
+  if (!isDragging.value || !splitterContainer.value) return
+  const rect = splitterContainer.value.getBoundingClientRect()
+  const deltaX = event.clientX - startX
+  const newWidth =
+    (((startWidth / 100) * rect.width + deltaX) / rect.width) * 100
+  leftWidth.value = Math.min(50, Math.max(30, newWidth))
+}
+
+const handleDividerMouseUp = () => {
+  if (!isDragging.value) return
+  isDragging.value = false
+  window.removeEventListener('mousemove', handleDividerMouseMove)
+  window.removeEventListener('mouseup', handleDividerMouseUp)
+}
+
+onUnmounted(() => {
+  window.removeEventListener('mousemove', handleDividerMouseMove)
+  window.removeEventListener('mouseup', handleDividerMouseUp)
+})
 </script>
 
 <template>
   <div class="edit-container">
     <tool-head v-model:resume-mode="resumeMode"></tool-head>
-    <div class="edit-resume">
-      <edit-content v-if="resumeMode === 'edit'" />
-      <ai-interview v-else />
-      <span class="line"></span>
-      <div class="view-content">
-        <resume-preview />
-      </div>
+    <div ref="splitterContainer" class="edit-resume">
+      <edit-content
+        v-if="resumeMode === 'edit'"
+        :style="{ width: `${leftWidth}%` }"
+      />
+      <ai-interview v-else :style="{ width: `${leftWidth}%` }" />
+      <span class="line" @mousedown="handleDividerMouseDown"></span>
+      <resume-preview :style="{ width: `${100 - leftWidth}%` }" />
     </div>
   </div>
 </template>
@@ -100,24 +138,23 @@ const resumeMode = ref('edit')
   display: flex;
 
   .line {
-    width: 2px;
+    width: 8px;
     height: 100%;
     margin: 0 0.2rem;
-    @include themify(
-      (
-        background-color: $border-color-mode,
-      )
-    );
+    border-radius: 4px;
+    cursor: col-resize;
+    background-color: transparent;
+    position: relative;
   }
-  .view-content {
+  .line::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 2px;
     height: 100%;
-    border-radius: 0.5rem;
-    padding: 1rem;
-    @include themify(
-      (
-        color: $text-color,
-      )
-    );
+    background-color: var(--border-color-mode, #d9d9d9);
+    border-radius: 2px;
   }
 }
 </style>

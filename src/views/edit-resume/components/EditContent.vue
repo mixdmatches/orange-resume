@@ -227,8 +227,8 @@ const showDivider = computed(() =>
             :step="0.1"
           />
         </div>
-        <a-row>
-          <a-col :span="6">
+        <div class="layout-settings-row">
+          <div class="layout-settings-item">
             <span>基础字号</span>
             <a-select
               v-model:value="resume.globalConfiguration.baseFontSize"
@@ -241,8 +241,8 @@ const showDivider = computed(() =>
                 >{{ font }}px</a-select-option
               >
             </a-select>
-          </a-col>
-          <a-col :span="6">
+          </div>
+          <div class="layout-settings-item">
             <span>模块标题字号</span>
             <a-select
               v-model:value="resume.globalConfiguration.titleFontSize"
@@ -255,8 +255,8 @@ const showDivider = computed(() =>
                 >{{ font }}px</a-select-option
               >
             </a-select>
-          </a-col>
-          <a-col :span="6">
+          </div>
+          <div class="layout-settings-item">
             <span>模块一级标题字号</span>
             <a-select
               v-model:value="resume.globalConfiguration.subTitleFontSize"
@@ -269,8 +269,14 @@ const showDivider = computed(() =>
                 >{{ font }}px</a-select-option
               >
             </a-select>
-          </a-col>
-        </a-row>
+          </div>
+          <div class="layout-settings-item layout-settings-item-switch">
+            <span>自动一页纸</span>
+            <a-switch
+              v-model:checked="resume.globalConfiguration.autoOnePage"
+            />
+          </div>
+        </div>
       </div>
     </motion.div>
     <!-- 主题色 -->
@@ -388,6 +394,23 @@ const showDivider = computed(() =>
     .model-list {
       display: flex;
       flex-direction: column;
+    }
+    .layout-settings-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .layout-settings-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .layout-settings-item-switch {
+      display: flex;
+      align-items: start;
+      gap: 0.75rem;
+      min-width: 110px;
     }
   }
 }

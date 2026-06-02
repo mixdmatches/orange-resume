@@ -84,60 +84,51 @@ const currentTemplate = computed(() => {
 </script>
 
 <template>
-  <div class="preview-wrapper">
-    <div
-      ref="previewCardRef"
-      class="preview-card"
-      :style="{
-        gap: `${styles.baseModuleSpacing}px`,
-        padding: `${styles.basePagePadding}px`,
-      }"
-    >
-      <!-- 分页标识 -->
+  <div class="view-content">
+    <div class="preview-wrapper">
       <div
-        v-for="(position, index) in pageBreakPositions"
-        :key="index"
-        class="page-break"
-        :style="{ top: `${position}mm` }"
+        ref="previewCardRef"
+        class="preview-card"
+        :style="{
+          gap: `${styles.baseModuleSpacing}px`,
+          padding: `${styles.basePagePadding}px`,
+        }"
       >
-        <div class="page-break-line"></div>
-        <div class="page-break-text">第 {{ index + 1 }} 页 截止</div>
-      </div>
+        <!-- 分页标识 -->
+        <div
+          v-for="(position, index) in pageBreakPositions"
+          :key="index"
+          class="page-break"
+          :style="{ top: `${position}mm` }"
+        >
+          <div class="page-break-line"></div>
+          <div class="page-break-text">第 {{ index + 1 }} 页 截止</div>
+        </div>
 
-      <component :is="currentTemplate" :resume="resume"></component>
+        <component :is="currentTemplate" :resume="resume"></component>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
+.view-content {
+  height: 100%;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  @include themify(
+    (
+      color: $text-color,
+    )
+  );
+}
+
 .preview-wrapper {
-  width: 100%;
+  display: flex;
+  justify-content: center;
   height: 100%;
   overflow-y: auto;
   position: relative;
-}
-
-.preview-controls {
-  position: absolute;
-  top: 10px;
-  right: 20px;
-  z-index: 100;
-  background: white;
-  padding: 8px 12px;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  font-size: 14px;
-}
-
-.control-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-}
-
-.control-checkbox {
-  margin: 0;
 }
 
 .preview-card {
