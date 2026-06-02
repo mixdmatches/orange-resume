@@ -41,9 +41,6 @@ const sortedMenuSections = () => {
 </template>
 
 <style lang="scss" scoped>
-.classic {
-  margin: 0 auto;
-}
 .preview-header {
   display: flex;
   align-items: flex-start;

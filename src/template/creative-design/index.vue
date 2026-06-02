@@ -179,7 +179,6 @@ const hasSkills = computed(() => {
 
 <style scoped lang="scss">
 .creative-design-resume {
-  margin: 0 auto;
   background: #fff;
   font-size: v-bind('styles.baseFontSize');
   color: #333;

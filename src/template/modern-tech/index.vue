@@ -184,7 +184,6 @@ const getSectionIcon = (sectionId: string) => {
 
 <style scoped lang="scss">
 .modern-tech-resume {
-  margin: 0 auto;
   background: #fff;
   font-size: v-bind('styles.baseFontSize');
   color: #333;

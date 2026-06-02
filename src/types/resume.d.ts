@@ -23,6 +23,7 @@ export interface GlobalConfiguration {
   titleFontSize: number // 标题字体大小
   subTitleFontSize: number // 子标题字体大小
   themeColor: string // 主题颜色
+  autoOnePage: boolean // 是否自动适配一页纸
 }
 
 export interface Basic {

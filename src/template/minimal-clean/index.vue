@@ -46,7 +46,6 @@ const sortedSections = computed(() => {
 
 <style scoped lang="scss">
 .minimal-clean-resume {
-  margin: 0 auto;
   background: #fff;
   font-size: v-bind('styles.baseFontSize');
   color: #2c3e50;

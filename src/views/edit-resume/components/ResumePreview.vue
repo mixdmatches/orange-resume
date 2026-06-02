@@ -2,6 +2,8 @@
 import type { Resume } from '@/types/resume'
 import { computed, inject, ref, onMounted, watch, onUnmounted } from 'vue'
 import { getTemplateById } from '@/template'
+import { useAutoOnePage } from '@/hooks/useAutoOnePage'
+import { message } from 'ant-design-vue'
 
 const resume: Resume = inject('resume') as Resume
 
@@ -10,23 +12,41 @@ const styles = computed(() => resume.globalConfiguration)
 const previewCardRef = ref<HTMLElement | null>(null) // 引用预览卡片元素
 const contentHeight = ref(0) // 实际内容高度
 
-// 计算页面高度（A4 高度减去上下边距）
-const pageHeight = computed(() => {
-  const a4Height = 297 // A4 高度（mm）
-  return a4Height
+const pagePadding = computed(() => resume.globalConfiguration.basePagePadding)
+const autoOnePageEnabled = computed(
+  () => resume.globalConfiguration.autoOnePage,
+)
+
+const { scaleFactor, isScaled, cannotFit } = useAutoOnePage({
+  contentHeight,
+  pagePadding,
+  enabled: autoOnePageEnabled,
 })
+
+watch(
+  () => cannotFit.value,
+  newVal => {
+    if (newVal) {
+      message.warning('内容过多无法完美一页')
+    }
+  },
+)
 
 // 计算分页位置
 const pageBreakPositions = computed(() => {
   const positions: number[] = []
   if (contentHeight.value <= 0) return positions
+  // 仅在真正能成功缩放到一页时隐藏分页线
+  if (isScaled.value && !cannotFit.value) return positions
 
-  // 计算需要的页数
-  const pageCount = Math.ceil(contentHeight.value / pageHeight.value)
+  const MM_TO_PX = 3.78
+  // 将内容高度从像素转换为毫米，然后计算页数
+  const contentHeightMm = contentHeight.value / MM_TO_PX
+  const pageCount = Math.ceil(contentHeightMm / 297)
 
-  // 生成分页位置
+  // 生成分页位置（毫米单位）
   for (let i = 1; i < pageCount; i++) {
-    positions.push(pageHeight.value * i)
+    positions.push(297 * i)
   }
 
   return positions
@@ -35,32 +55,13 @@ const pageBreakPositions = computed(() => {
 // 计算实际内容高度
 const updateContentHeight = () => {
   if (previewCardRef.value) {
-    // 获取实际内容高度（转换为mm）
-    const rect = previewCardRef.value.getBoundingClientRect()
-    // 假设 1px = 0.2645833333 mm
-    contentHeight.value = rect.height * 0.2645833333
+    contentHeight.value = previewCardRef.value.offsetHeight
   }
 }
 
-// 监听内容变化
+// 监听内容/配置变化，确保高度随更新重新计算
 watch(
-  () => [
-    resume.educations,
-    resume.internships,
-    resume.projects,
-    resume.skills,
-    resume.customData,
-  ],
-  () => {
-    // 延迟更新，确保DOM已更新
-    setTimeout(updateContentHeight, 100)
-  },
-  { deep: true },
-)
-
-// 监听样式变化
-watch(
-  () => styles.value,
+  () => resume,
   () => {
     setTimeout(updateContentHeight, 100)
   },
@@ -92,6 +93,13 @@ const currentTemplate = computed(() => {
         :style="{
           gap: `${styles.baseModuleSpacing}px`,
           padding: `${styles.basePagePadding}px`,
+          ...(isScaled
+            ? {
+                transform: `scale(${scaleFactor})`,
+                transformOrigin: 'top left',
+                width: `${100 / scaleFactor}%`,
+              }
+            : {}),
         }"
       >
         <!-- 分页标识 -->
@@ -113,6 +121,8 @@ const currentTemplate = computed(() => {
 
 <style scoped lang="scss">
 .view-content {
+  display: flex;
+  justify-content: center;
   height: 100%;
   border-radius: 0.5rem;
   padding: 1rem;
@@ -121,21 +131,19 @@ const currentTemplate = computed(() => {
       color: $text-color,
     )
   );
+  overflow-y: auto;
 }
 
 .preview-wrapper {
-  display: flex;
-  justify-content: center;
-  height: 100%;
-  overflow-y: auto;
+  width: 210mm;
+  min-height: 297mm; /* A4 高度 */
   position: relative;
+  background-color: #fff;
 }
 
 .preview-card {
-  width: 210mm;
-  min-height: 297mm; /* A4 高度 */
+  padding: v-bind('styles.basePagePadding') + px;
   color: #111827;
-  padding: 24px;
   display: flex;
   flex-direction: column;
   background-color: #fff;

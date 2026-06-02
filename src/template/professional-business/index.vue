@@ -66,7 +66,6 @@ const sortedSections = computed(() => {
 
 <style scoped lang="scss">
 .professional-business-resume {
-  margin: 0 auto;
   background: #fff;
   font-size: v-bind('styles.baseFontSize');
   color: #333;

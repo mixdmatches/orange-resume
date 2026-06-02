@@ -10,10 +10,12 @@ export const initialGlobalConfiguration = {
   titleFontSize: 16, // 标题字体大小
   subTitleFontSize: 14, // 子标题字体大小
   themeColor: '#111827', // 主题颜色
+  autoOnePage: false, // 自动适配一页纸
 }
 
 // 初始默认简历内容
 export const DEFAULT_RESUME: Omit<Resume, 'id'> = {
+  templateId: 'classic',
   title: '未命名简历',
   createdAt: Date.now(),
   updatedAt: null,
