@@ -23,9 +23,9 @@ export const DEFAULT_RESUME: Omit<Resume, 'id'> = {
     name: '陈下饭',
     position: '前端开发工程师',
     age: 20,
-    phone: '17343691959',
+    phone: '17311002299',
     address: '南京',
-    email: '1919600547@qq.com',
+    email: 'zhangsan@example.com',
     photo: '',
   },
   educations: [
@@ -34,7 +34,7 @@ export const DEFAULT_RESUME: Omit<Resume, 'id'> = {
       school: '清华大学',
       major: '软件工程',
       degree: '本科',
-      dateRange: '2018-09-01 - 2022-06-30',
+      dateRange: '2023-09-01 - 2027-06-30',
       visible: true,
       gpa: '',
       description: `<ul>
@@ -48,7 +48,7 @@ export const DEFAULT_RESUME: Omit<Resume, 'id'> = {
     <p>连续两年获得校二等奖学金</p>
   </li>
   <li>
-    <p>2021 校极客杯网页设计大赛 一等奖</p>
+    <p>2024 校极客杯网页设计大赛 一等奖</p>
   </li>
 </ul>
 `,
@@ -84,7 +84,7 @@ export const DEFAULT_RESUME: Omit<Resume, 'id'> = {
       name: '校园助手',
       role: '前端开发',
       gitAddress: 'github.com',
-      dateRange: '2022-07-01 - 2023-06-30',
+      dateRange: '2023-07-01 - 2024-06-30',
       visible: true,
       description: `
       <p><strong>技术栈：</strong> React + Taro + TailwindCSS + 小程序云开发</p>
@@ -110,7 +110,7 @@ export const DEFAULT_RESUME: Omit<Resume, 'id'> = {
       name: '技术笔记系统',
       role: '前端开发',
       gitAddress: 'github.com',
-      dateRange: '2022-07-01 - 2023-06-30',
+      dateRange: '2024-07-01 - 2025-06-30',
       visible: true,
       description: `
       <p><strong>技术栈：</strong> Next.js + MDX + TailwindCSS + Vercel</p>
@@ -135,7 +135,7 @@ export const DEFAULT_RESUME: Omit<Resume, 'id'> = {
       companyName: '字节跳动',
       position: '前端开发工程师',
       department: '',
-      dateRange: '2023-07-01 - 2024-06-30',
+      dateRange: '2024-07-01 - 2025-06-30',
       visible: true,
       description: `
       <ul>
