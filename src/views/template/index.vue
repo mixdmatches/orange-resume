@@ -198,12 +198,28 @@ const transition = {
     font-size: 16px;
     font-weight: 700;
     color: #102a43;
+    @include themify(
+      (
+        color: (
+          light: #102a43,
+          dark: #f8faff,
+        ),
+      )
+    );
   }
 
   .preview-note {
     font-size: 13px;
     color: #61708c;
     line-height: 1.6;
+    @include themify(
+      (
+        color: (
+          light: #61708c,
+          dark: #cbd5e1,
+        ),
+      )
+    );
   }
 
   .resume-preview-wrapper {
@@ -220,6 +236,22 @@ const transition = {
     display: flex;
     justify-content: center;
     align-items: flex-start;
+    @include themify(
+      (
+        background: (
+          light: linear-gradient(180deg, #f7fbff 0%, #ffffff 100%),
+          dark: linear-gradient(180deg, #0f172a 0%, #111827 100%),
+        ),
+        border-color: (
+          light: rgba(24, 144, 255, 0.16),
+          dark: rgba(255, 255, 255, 0.08),
+        ),
+        box-shadow: (
+          light: 0 18px 48px rgba(15, 23, 42, 0.12),
+          dark: 0 18px 48px rgba(0, 0, 0, 0.45),
+        ),
+      )
+    );
 
     .preview-stage {
       width: 100%;

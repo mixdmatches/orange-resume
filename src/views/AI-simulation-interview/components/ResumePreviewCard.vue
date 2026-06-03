@@ -111,6 +111,18 @@ const firstInternship = computed(() => props.resume?.internships?.[0] ?? null)
   border-radius: 1rem;
   min-width: 360px;
   min-height: 320px;
+  @include themify(
+    (
+      background: (
+        light: #fff,
+        dark: #111827,
+      ),
+      border-color: (
+        light: #f0f0f0,
+        dark: rgba(255, 255, 255, 0.12),
+      ),
+    )
+  );
 }
 
 .preview-header {
@@ -129,6 +141,14 @@ const firstInternship = computed(() => props.resume?.internships?.[0] ?? null)
 .preview-header p {
   margin: 0.6rem 0 0;
   color: rgba(0, 0, 0, 0.65);
+  @include themify(
+    (
+      color: (
+        light: rgba(0, 0, 0, 0.65),
+        dark: rgba(255, 255, 255, 0.65),
+      ),
+    )
+  );
 }
 
 .preview-body {
@@ -148,11 +168,31 @@ const firstInternship = computed(() => props.resume?.internships?.[0] ?? null)
   border: 1px solid #f0f0f0;
   border-radius: 1rem;
   background: #fafafa;
+  @include themify(
+    (
+      border-color: (
+        light: #f0f0f0,
+        dark: rgba(255, 255, 255, 0.12),
+      ),
+      background: (
+        light: #fafafa,
+        dark: #0f172a,
+      ),
+    )
+  );
 }
 
 .summary-label {
   color: rgba(0, 0, 0, 0.65);
   font-size: 1.2rem;
+  @include themify(
+    (
+      color: (
+        light: rgba(0, 0, 0, 0.65),
+        dark: rgba(255, 255, 255, 0.65),
+      ),
+    )
+  );
 }
 
 .summary-value {
@@ -160,6 +200,14 @@ const firstInternship = computed(() => props.resume?.internships?.[0] ?? null)
   font-size: 1.35rem;
   font-weight: 600;
   line-height: 1.4;
+  @include themify(
+    (
+      color: (
+        light: #111827,
+        dark: #f8faff,
+      ),
+    )
+  );
 }
 
 .detail-section {
@@ -173,33 +221,85 @@ const firstInternship = computed(() => props.resume?.internships?.[0] ?? null)
   border: 1px solid #f0f0f0;
   border-radius: 1rem;
   min-height: 140px;
+  @include themify(
+    (
+      border-color: (
+        light: #f0f0f0,
+        dark: rgba(255, 255, 255, 0.12),
+      ),
+      background: (
+        light: #fff,
+        dark: #0f172a,
+      ),
+    )
+  );
 }
 
 .block-title {
   margin-bottom: 0.8rem;
   font-weight: 600;
+  @include themify(
+    (
+      color: (
+        light: #111827,
+        dark: #f8faff,
+      ),
+    )
+  );
 }
 
 .item-title {
   font-size: 1.3rem;
   font-weight: 600;
   margin-bottom: 0.3rem;
+  @include themify(
+    (
+      color: (
+        light: #111827,
+        dark: #f8faff,
+      ),
+    )
+  );
 }
 
 .item-subtitle {
   color: rgba(0, 0, 0, 0.65);
   margin-bottom: 0.6rem;
+  @include themify(
+    (
+      color: (
+        light: rgba(0, 0, 0, 0.65),
+        dark: rgba(255, 255, 255, 0.65),
+      ),
+    )
+  );
 }
 
 .item-desc {
   margin: 0;
   color: rgba(0, 0, 0, 0.75);
   line-height: 1.7;
+  @include themify(
+    (
+      color: (
+        light: rgba(0, 0, 0, 0.75),
+        dark: rgba(255, 255, 255, 0.75),
+      ),
+    )
+  );
 }
 
 .empty-text {
   margin: 0;
   color: rgba(0, 0, 0, 0.45);
+  @include themify(
+    (
+      color: (
+        light: rgba(0, 0, 0, 0.45),
+        dark: rgba(255, 255, 255, 0.45),
+      ),
+    )
+  );
 }
 
 .empty-state {
@@ -207,6 +307,14 @@ const firstInternship = computed(() => props.resume?.internships?.[0] ?? null)
   display: flex;
   align-items: center;
   justify-content: center;
+  @include themify(
+    (
+      color: (
+        light: #000,
+        dark: #f8faff,
+      ),
+    )
+  );
 }
 
 @media screen and (max-width: 1100px) {

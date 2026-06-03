@@ -209,16 +209,44 @@ onMounted(() => {
   padding: 0 10px;
   border-radius: 8px;
   overflow: hidden;
+  @include themify(
+    (
+      background: (
+        light: #fff,
+        dark: #111827,
+      ),
+      border-color: (
+        light: #e8e8e8,
+        dark: rgba(255, 255, 255, 0.12),
+      ),
+    )
+  );
 
   .model-list-header {
     padding: 12px 0;
     color: rgba(0, 0, 0, 0.5);
+    @include themify(
+      (
+        color: (
+          light: rgba(0, 0, 0, 0.5),
+          dark: rgba(255, 255, 255, 0.65),
+        ),
+      )
+    );
   }
 
   .model-line {
     height: 1px;
     background: #e8e8e8;
     margin: 12px 0;
+    @include themify(
+      (
+        background: (
+          light: #e8e8e8,
+          dark: rgba(255, 255, 255, 0.12),
+        ),
+      )
+    );
   }
 
   .model-item {
@@ -233,10 +261,26 @@ onMounted(() => {
 
     &:hover {
       background: #f5f5f5;
+      @include themify(
+        (
+          background: (
+            light: #f5f5f5,
+            dark: rgba(255, 255, 255, 0.08),
+          ),
+        )
+      );
     }
 
     &.active {
       background: #e6f7ff;
+      @include themify(
+        (
+          background: (
+            light: #e6f7ff,
+            dark: rgba(59, 130, 246, 0.18),
+          ),
+        )
+      );
     }
 
     .model-icon {
@@ -246,6 +290,14 @@ onMounted(() => {
     .model-name {
       font-size: 14px;
       color: #333;
+      @include themify(
+        (
+          color: (
+            light: #333,
+            dark: #f8faff,
+          ),
+        )
+      );
     }
   }
 }
@@ -262,6 +314,18 @@ onMounted(() => {
   background: #fafafa;
   border-radius: 8px;
   margin-bottom: 24px;
+  @include themify(
+    (
+      background: (
+        light: #fafafa,
+        dark: #111827,
+      ),
+      border-color: (
+        light: #f0f0f0,
+        dark: rgba(255, 255, 255, 0.12),
+      ),
+    )
+  );
 
   .model-info-icon {
     font-size: 32px;
@@ -273,11 +337,27 @@ onMounted(() => {
       font-weight: 600;
       color: #333;
       margin-bottom: 4px;
+      @include themify(
+        (
+          color: (
+            light: #333,
+            dark: #f8faff,
+          ),
+        )
+      );
     }
 
     .model-info-hint {
       font-size: 13px;
       color: rgba(0, 0, 0, 0.5);
+      @include themify(
+        (
+          color: (
+            light: rgba(0, 0, 0, 0.5),
+            dark: rgba(255, 255, 255, 0.65),
+          ),
+        )
+      );
     }
   }
 }

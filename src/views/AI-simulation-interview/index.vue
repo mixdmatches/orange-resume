@@ -134,6 +134,18 @@ onMounted(() => {
   border-radius: 1rem;
   background: #fff;
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
+  @include themify(
+    (
+      background: (
+        light: #fff,
+        dark: #111827,
+      ),
+      box-shadow: (
+        light: 0 12px 30px rgba(15, 23, 42, 0.04),
+        dark: 0 12px 30px rgba(0, 0, 0, 0.3),
+      ),
+    )
+  );
 }
 
 .page-header h2 {
@@ -145,6 +157,14 @@ onMounted(() => {
   margin: 0.45rem 0 0;
   color: rgba(0, 0, 0, 0.65);
   max-width: 620px;
+  @include themify(
+    (
+      color: (
+        light: rgba(0, 0, 0, 0.65),
+        dark: rgba(255, 255, 255, 0.65),
+      ),
+    )
+  );
 }
 
 .selection-panel {

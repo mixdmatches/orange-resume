@@ -93,6 +93,18 @@ const currentValue = computed({
   min-width: 320px;
   border-radius: 1rem;
   background: #fff;
+  @include themify(
+    (
+      background: (
+        light: #fff,
+        dark: #111827,
+      ),
+      border-color: (
+        light: #f0f0f0,
+        dark: rgba(255, 255, 255, 0.12),
+      ),
+    )
+  );
 }
 
 .select-header {
@@ -113,6 +125,14 @@ const currentValue = computed({
 .resume-summary {
   padding: 1rem 0;
   color: #333;
+  @include themify(
+    (
+      color: (
+        light: #333,
+        dark: #f8faff,
+      ),
+    )
+  );
 }
 
 .summary-line {
@@ -124,9 +144,25 @@ const currentValue = computed({
 .label {
   color: rgba(0, 0, 0, 0.65);
   min-width: 70px;
+  @include themify(
+    (
+      color: (
+        light: rgba(0, 0, 0, 0.65),
+        dark: rgba(255, 255, 255, 0.65),
+      ),
+    )
+  );
 }
 
 .empty-hint {
   padding: 1rem 0;
+  @include themify(
+    (
+      color: (
+        light: #000,
+        dark: #f8faff,
+      ),
+    )
+  );
 }
 </style>

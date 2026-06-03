@@ -141,17 +141,53 @@ const apiLink = computed(() => {
     font-weight: 500;
     color: #333;
     margin-bottom: 8px;
+    @include themify(
+      (
+        color: (
+          light: #333,
+          dark: #f8faff,
+        ),
+      )
+    );
 
     .setting-link {
       font-size: 13px;
       font-weight: normal;
       color: #1890ff;
+      @include themify(
+        (
+          color: (
+            light: #1890ff,
+            dark: #60a5fa,
+          ),
+        )
+      );
     }
   }
 
   .setting-input {
     width: 100%;
     max-width: 400px;
+
+    input,
+    textarea {
+      @include themify(
+        (
+          background: (
+            light: #fff,
+            dark: #111827,
+          ),
+          color: (
+            light: #000,
+            dark: #f8faff,
+          ),
+          border-color: (
+            light: #d9d9d9,
+            dark: rgba(255, 255, 255, 0.12),
+          ),
+        )
+      );
+    }
   }
 }
 </style>

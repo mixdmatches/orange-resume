@@ -45,8 +45,6 @@ const emit = defineEmits(['preview', 'use'])
 
 .card-banner {
   min-height: 30px;
-  background: #fff;
-  color: #111;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -60,8 +58,12 @@ const emit = defineEmits(['preview', 'use'])
 
 .banner-subtitle {
   font-size: 1.2rem;
-  color: rgba(0, 0, 0, 0.65);
   margin-top: 4px;
+  @include themify(
+    (
+      color: $text-color,
+    )
+  );
 }
 
 .template-action {

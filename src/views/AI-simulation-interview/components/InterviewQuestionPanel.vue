@@ -152,6 +152,18 @@ watch(
   background: #fff;
   border-radius: 1rem;
   min-height: 380px;
+  @include themify(
+    (
+      background: (
+        light: #fff,
+        dark: #111827,
+      ),
+      border-color: (
+        light: #f0f0f0,
+        dark: rgba(255, 255, 255, 0.12),
+      ),
+    )
+  );
 }
 
 .panel-header {
@@ -170,6 +182,14 @@ watch(
 .panel-header p {
   margin: 0.6rem 0 0;
   color: rgba(0, 0, 0, 0.65);
+  @include themify(
+    (
+      color: (
+        light: rgba(0, 0, 0, 0.65),
+        dark: rgba(255, 255, 255, 0.65),
+      ),
+    )
+  );
 }
 
 .panel-actions {
@@ -186,6 +206,14 @@ watch(
   padding: 1rem 0;
   line-height: 1.8;
   color: rgba(0, 0, 0, 0.75);
+  @include themify(
+    (
+      color: (
+        light: rgba(0, 0, 0, 0.75),
+        dark: rgba(255, 255, 255, 0.85),
+      ),
+    )
+  );
 }
 
 .empty-state {
@@ -193,5 +221,13 @@ watch(
   display: flex;
   align-items: center;
   justify-content: center;
+  @include themify(
+    (
+      color: (
+        light: #000,
+        dark: #f8faff,
+      ),
+    )
+  );
 }
 </style>

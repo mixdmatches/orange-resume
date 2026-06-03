@@ -139,6 +139,18 @@ const handleReset = () => {
   background: #fff;
   border-radius: 1rem;
   min-height: 380px;
+  @include themify(
+    (
+      background: (
+        light: #fff,
+        dark: #111827,
+      ),
+      border-color: (
+        light: #f0f0f0,
+        dark: rgba(255, 255, 255, 0.12),
+      ),
+    )
+  );
 }
 
 .panel-header {
@@ -157,6 +169,14 @@ const handleReset = () => {
 .panel-header p {
   margin: 0.6rem 0 0;
   color: rgba(0, 0, 0, 0.65);
+  @include themify(
+    (
+      color: (
+        light: rgba(0, 0, 0, 0.65),
+        dark: rgba(255, 255, 255, 0.65),
+      ),
+    )
+  );
 }
 
 .custom-body {
@@ -180,6 +200,18 @@ const handleReset = () => {
   border-radius: 1rem;
   padding: 1rem;
   background: #fafafa;
+  @include themify(
+    (
+      border-color: (
+        light: #f0f0f0,
+        dark: rgba(255, 255, 255, 0.12),
+      ),
+      background: (
+        light: #fafafa,
+        dark: #111827,
+      ),
+    )
+  );
 }
 
 .result-header {
@@ -196,6 +228,14 @@ const handleReset = () => {
 
 .result-header span {
   color: rgba(0, 0, 0, 0.65);
+  @include themify(
+    (
+      color: (
+        light: rgba(0, 0, 0, 0.65),
+        dark: rgba(255, 255, 255, 0.65),
+      ),
+    )
+  );
 }
 
 .result-content {
