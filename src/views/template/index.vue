@@ -3,7 +3,7 @@ import { ref, computed, provide } from 'vue'
 import { templates } from '@/template/index'
 import { DEFAULT_RESUME } from '@/config/init-resume-data'
 import type { Resume } from '@/types/resume'
-import classicPreview from '@/assets/images/classic.fcafadcb.svg'
+import TemplateCard from './components/TemplateCard.vue'
 import { useRouter } from 'vue-router'
 import { addResumeIDB } from '@/service/resumeIDB'
 import { message } from 'ant-design-vue'
@@ -65,8 +65,7 @@ const handleUse = async (templateId: string) => {
     router.push(`/edit-resume/${newResume.id}`)
 
     message.success(`成功使用「${currentTemplateName.value}」模板创建简历`)
-  } catch (error) {
-    console.error('使用模板失败:', error)
+  } catch {
     message.error('使用模板失败，请重试')
   }
 }
@@ -94,8 +93,7 @@ const handleUseTemplate = async () => {
     router.push(`/edit-resume/${newResume.id}`)
 
     message.success(`成功使用「${currentTemplateName.value}」模板创建简历`)
-  } catch (error) {
-    console.error('使用模板失败:', error)
+  } catch {
     message.error('使用模板失败，请重试')
   }
 }
@@ -116,49 +114,46 @@ const transition = {
 
 <template>
   <div class="template-container">
-    <div
-      v-for="temp in templates"
-      :key="temp.id"
-      v-motion
-      class="template-box"
-      :while-hover="{ scale: 1.2 }"
-      :while-press="{ scale: 0.8 }"
-      :initial="{ opacity: 0, y: 30 }"
-      :animate="{ opacity: 1, y: 0 }"
-      :exit="{ opacity: 0, scale: 0 }"
-      :transition="{ ...transition, delay: 0.3 }"
-    >
-      <div class="template-wrapper">
-        <div class="template-image">
-          <img :src="classicPreview" alt="模板预览" />
-        </div>
-        <!-- 蒙版 -->
-        <div class="template-mask">
-          <div class="template-name">{{ temp.name }}</div>
-          <div class="template-description">{{ temp.description }}</div>
-        </div>
+    <template v-for="temp in templates" :key="temp.id">
+      <div
+        v-motion
+        class="template-box"
+        :while-hover="{ scale: 1.02 }"
+        :while-press="{ scale: 0.98 }"
+        :initial="{ opacity: 0, y: 20 }"
+        :animate="{ opacity: 1, y: 0 }"
+        :exit="{ opacity: 0, scale: 0.95 }"
+        :transition="{ ...transition, delay: 0.15 }"
+      >
+        <template-card
+          :template="temp"
+          @use="handleUse"
+          @preview="handlePreview"
+        />
       </div>
-      <div class="template-button">
-        <a-button type="primary" size="large" @click="handleUse(temp.id)"
-          >使用模板</a-button
-        >
-        <a-button size="large" @click="handlePreview(temp.id)">
-          预览模板
-        </a-button>
-      </div>
-    </div>
+    </template>
   </div>
 
   <!-- 预览模态框 -->
   <a-modal
     v-model:open="previewVisible"
-    :title="`${currentTemplateName} - 简历预览`"
-    :width="950"
+    :title="`${currentTemplateName} - 模板预览`"
+    :width="900"
     @cancel="handleClose"
   >
     <div class="preview-content">
+      <div class="preview-header">
+        <span class="preview-title">预览当前模板布局与页面样式</span>
+        <span class="preview-note"
+          >该预览仅展示模板样式，不会同步实际简历数据。</span
+        >
+      </div>
       <div class="resume-preview-wrapper">
-        <component :is="currentTemplate" v-if="currentTemplate" />
+        <div class="preview-stage">
+          <div class="preview-paper">
+            <component :is="currentTemplate" v-if="currentTemplate" />
+          </div>
+        </div>
       </div>
     </div>
 
@@ -177,110 +172,82 @@ const transition = {
 <style scoped lang="scss">
 .template-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
   padding: 20px;
-
-  .template-box {
-    height: 600px;
-    background-color: #f9f9f9;
-    border-radius: 10px;
-    overflow: hidden;
-    position: relative;
-    border: 1px solid #ccc;
-
-    .template-wrapper {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-    }
-
-    .template-image {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-
-      img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-    }
-
-    .template-mask {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.6);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      z-index: 10;
-
-      .template-name {
-        font-size: 24px;
-        font-weight: bold;
-        color: #fff;
-        margin-bottom: 12px;
-      }
-
-      .template-description {
-        font-size: 14px;
-        color: rgba(255, 255, 255, 0.85);
-        text-align: center;
-        padding: 0 20px;
-      }
-    }
-
-    .template-button {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      right: 20px;
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      z-index: 20;
-    }
-
-    // 鼠标移入显示蒙版
-    &:hover {
-      .template-mask {
-        opacity: 1;
-      }
-    }
-  }
 }
 
-// 预览模态框样式
+.template-box {
+  width: 100%;
+}
+
 .preview-content {
-  padding: 20px;
-  background: #f5f5f5;
-  border-radius: 8px;
+  padding: 0;
+  background: transparent;
+
+  .preview-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 18px;
+    gap: 6px;
+    text-align: center;
+  }
+
+  .preview-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #102a43;
+  }
+
+  .preview-note {
+    font-size: 13px;
+    color: #61708c;
+    line-height: 1.6;
+  }
 
   .resume-preview-wrapper {
     width: 100%;
-    max-height: 600px;
+    max-width: 860px;
+    max-height: calc(100vh - 260px);
     overflow-y: auto;
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(180deg, #f7fbff 0%, #ffffff 100%);
+    border: 1px solid rgba(24, 144, 255, 0.16);
+    padding: 16px;
+    border-radius: 18px;
+    box-shadow: 0 18px 48px rgba(15, 23, 42, 0.12);
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+
+    .preview-stage {
+      width: 100%;
+      transform: scale(0.54);
+      transform-origin: top center;
+      border-radius: 18px;
+      overflow: visible;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .preview-paper {
+      width: 100%;
+      aspect-ratio: 0.707 / 1;
+      max-width: 720px;
+      background: #ffffff;
+      border-radius: 18px;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
 
     :deep(.resume-preview) {
       width: 100%;
-      transform: scale(0.7);
-      transform-origin: center top;
-      transform-box: fill-box;
+      min-height: 100%;
     }
   }
 }
