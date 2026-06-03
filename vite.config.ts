@@ -8,6 +8,7 @@ import Components from 'unplugin-vue-components/vite'
 import MotionResolver from 'motion-v/resolver'
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/orange-resume/',
   plugins: [
     vue(),
     vueDevTools(),
