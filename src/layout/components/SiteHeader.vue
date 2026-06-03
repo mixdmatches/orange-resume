@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import LineMdGithub from '~icons/line-md/github'
 import ThemeIcon from '@/components/ThemeIcon.vue'
+
+const goToGithub = () => {
+  window.location.href = 'https://github.com/mixdmatches/orange-resume'
+}
 </script>
 
 <template>
   <div class="head">
     <span class="title">{{ $route.meta.title }}</span>
     <div class="work">
-      <line-md-github />
+      <line-md-github @click="goToGithub" />
       <theme-icon></theme-icon>
     </div>
   </div>
