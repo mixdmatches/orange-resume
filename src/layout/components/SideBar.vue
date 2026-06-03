@@ -12,7 +12,7 @@ const selectedKeys = ref<string[]>([])
 function getItem(
   label: VueElement | string,
   key: string,
-  icon?: any,
+  icon?: VueElement,
   children?: ItemType[],
   type?: 'group',
 ): ItemType {
