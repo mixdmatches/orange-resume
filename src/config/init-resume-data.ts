@@ -3,7 +3,7 @@ import type { Resume } from '@/types/resume'
 // 初始全局设置
 export const initialGlobalConfiguration = {
   baseFontSize: 14, // 基础字体大小
-  basePagePadding: 10, // 基础页面内边距
+  basePagePadding: 20, // 基础页面内边距
   baseLineHeight: 1.5, // 基础行高
   baseModuleSpacing: 10, // 基础模块间距
   paragraphSpacing: 10, // 段落间距
@@ -37,87 +37,96 @@ export const DEFAULT_RESUME: Omit<Resume, 'id'> = {
       dateRange: '2018-09-01 - 2022-06-30',
       visible: true,
       gpa: '',
-      description: `主修课程：数据结构、算法设计、操作系统、计算机网络、Web开发技术
-
-
-
-专业排名前 5%，连续三年获得一等奖学金
-
-
-
-担任计算机协会技术部部长，组织多次技术分享会
-
-
-
-参与开源项目贡献，获得 GitHub Campus Expert 认证`,
+      description: `<ul>
+  <li>
+    <p>综合绩点：3.8/4.0，专业前15%</p>
+  </li>
+  <li>
+    <p>主修课程：Web前端开发（92）、数据结构（88）、数据库设计（90）、人机交互（89）</p>
+  </li>
+  <li>
+    <p>连续两年获得校二等奖学金</p>
+  </li>
+  <li>
+    <p>2021 校极客杯网页设计大赛 一等奖</p>
+  </li>
+</ul>
+`,
     },
   ],
   skills: `
+  <ul>
+  <li>
+    <p>语言基础：熟练掌握 HTML5/CSS3，JavaScript (ES6+)，TypeScript</p>
+  </li>
+  <li>
+    <p>框架与库：React (Hooks, Router, Redux Toolkit)，Vue3 (基础使用)，Next.js (SSG/SSR
+      了解)</p>
+  </li>
+  <li>
+    <p>样式工具：TailwindCSS，Sass，Ant Design，Element Plus</p>
+  </li>
+  <li>
+    <p>工程化/工具：Webpack，Vite，Git，ESLint，Prettier，Yarn/npm</p>
+  </li>
+  <li>
+    <p>后端/其他：Node.js (Express 简单搭建)，RESTful API 调用，MySQL 基础</p>
+  </li>
+  <li>
+    <p>开发环境：VS Code，Chrome DevTools，Postman，Figma（协作）</p>
+  </li>
+</ul>
 
-
-
-前端框架：熟悉 React、Vue.js，熟悉 Next.js、Nuxt.js 等 SSR 框架
-
-
-
-开发语言：TypeScript、JavaScript(ES6+)、HTML5、CSS3
-
-
-
-UI/样式：熟悉 TailwindCSS、Sass/Less、CSS Module、Styled-components
-
-
-
-状态管理：Redux、Vuex、Zustand、Jotai、React Query
-
-
-
-工程化工具：Webpack、Vite、Rollup、Babel、ESLint
-
-
-
-测试工具：Jest、React Testing Library、Cypress
-
-
-
-性能优化：熟悉浏览器渲染原理、性能指标监控、代码分割、懒加载等优化技术
-
-
-
-版本控制：Git、SVN
-
-
-
-技术管理：具备团队管理经验，主导过多个大型项目的技术选型和架构设计`,
+  `,
   projects: [
     {
       id: '1',
-      name: '中后台管理系统',
-      role: '前端开发工程师',
+      name: '校园助手',
+      role: '前端开发',
       gitAddress: 'github.com',
       dateRange: '2022-07-01 - 2023-06-30',
       visible: true,
       description: `
+      <p><strong>技术栈：</strong> React + Taro + TailwindCSS + 小程序云开发</p>
+<ul>
+  <li>
+    <p>独立完成小程序前端界面设计与交互，包括周课表展示、按节次筛选空教室、考试倒计时三大模块。</p>
+  </li>
+  <li>
+    <p>利用云函数爬取学校教务系统公开课表数据，进行清洗与缓存，实现课程实时同步与离线数据降级展示。</p>
+  </li>
+  <li>
+    <p>使用 Taro UI + 自定义日历组件，支持周/日视图切换；数据存储采用本地缓存 + 云数据库双写。</p>
+  </li>
+  <li>
+    <p>小程序累计被 600+ 本校同学使用，并完成两轮用户体验迭代（评分 4.8/5）。</p>
+  </li>
+</ul>
 
-
-
-基于 React 开发的创作者数据分析和内容管理平台，服务百万级创作者群体
-
-
-
-包含数据分析、内容管理、收益管理等多个子系统
-
-
-
-使用 Redux 进行状态管理，实现复杂数据流的高效处理
-
-
-
-采用 Ant Design 组件库，确保界面设计的一致性和用户体验
-
-
-
-实施代码分割和懒加载策略，优化大规模应用的加载性能`,
+      `,
+    },
+    {
+      id: '2',
+      name: '技术笔记系统',
+      role: '前端开发',
+      gitAddress: 'github.com',
+      dateRange: '2022-07-01 - 2023-06-30',
+      visible: true,
+      description: `
+      <p><strong>技术栈：</strong> Next.js + MDX + TailwindCSS + Vercel</p>
+<p>搭建轻量级静态博客站，支持 Markdown/MDX 渲染、代码高亮、暗色主题切换。</p>
+<ul>
+  <li>
+    <p>自定义文章目录生成、评论模块（基于 Giscus），以及标签分类聚合页面。</p>
+  </li>
+  <li>
+    <p>通过 Next.js 的 SSG 生成超 30 篇前端学习笔记与项目复盘文章，月均访问量约 500 PV。</p>
+  </li>
+  <li>
+    <p>引入 ESLint + Husky 规范 Git 提交，提高代码质量。</p>
+  </li>
+</ul>
+      `,
     },
   ],
   internships: [
@@ -125,30 +134,23 @@ UI/样式：熟悉 TailwindCSS、Sass/Less、CSS Module、Styled-components
       id: '1',
       companyName: '字节跳动',
       position: '前端开发工程师',
-      department: '研发部',
+      department: '',
       dateRange: '2023-07-01 - 2024-06-30',
       visible: true,
       description: `
-
-
-
-负责抖音创作者平台的开发与维护，主导多个核心功能的技术方案设计
-
-
-
-优化项目工程化配置，将构建时间从 8 分钟优化至 2 分钟，提升团队开发效率
-
-
-
-设计并实现组件库，提升代码复用率达 70%，显著减少开发时间
-
-
-
-主导性能优化项目，使平台首屏加载时间减少 50%，接入 APM 监控系统
-
-
-
-指导初级工程师，组织技术分享会，提升团队整体技术水平`,
+      <ul>
+  <li>
+    <p>协助开发低代码表单生成器的迭代工作，负责维护 Form Render 组件，支持 JSON Schema
+      动态渲染输入控件（输入框、下拉框、日期选择器等），提升了活动页表单配置效率。</p>
+  </li>
+  <li>
+    <p>基于 Vue3 + Element Plus 完成 3 个内部运营工具页面的迁移，实现组件懒加载，首屏加载时间减少约 15%。</p>
+  </li>
+  <li>
+    <p>参与设计系统的基础布局组件与动态路由权限控制（路由守卫 + 角色权限），为后续权限扩展打下基础。</p>
+  </li>
+</ul>
+      `,
     },
   ],
   customData: {},
