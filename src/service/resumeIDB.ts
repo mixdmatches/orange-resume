@@ -23,7 +23,6 @@ export const openDB = (): Promise<IDBDatabase> => {
 
     request.onupgradeneeded = event => {
       const db = (event.target as IDBOpenDBRequest).result
-      db.deleteObjectStore('settings')
       // 如果存储对象不存在，创建它
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' })
