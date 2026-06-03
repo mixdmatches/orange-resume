@@ -10,10 +10,10 @@ import type { Resume } from '@/types/resume'
 import templates from '@/template'
 import previewImage from '@/assets/images/classic.fcafadcb.svg'
 
-const resumeMode = defineModel('resumeMode', {
-  type: String,
-  default: 'edit',
-})
+// const resumeMode = defineModel('resumeMode', {
+//   type: String,
+//   default: 'edit',
+// })
 
 const resume: Resume = inject('resume') as Resume
 
@@ -50,7 +50,7 @@ const afterOpenChange = (open: boolean) => {
     <div class="tool-head-left">
       <line-md-arrow-small-left @click="$router.back()" />
       <a-input v-model:value="resume.title" class="title"></a-input>
-      <div class="tool-mode">
+      <!-- <div class="tool-mode">
         <span
           :class="{ active: resumeMode === 'edit' }"
           @click="resumeMode = 'edit'"
@@ -61,7 +61,7 @@ const afterOpenChange = (open: boolean) => {
           @click="resumeMode = 'interview'"
           >模拟面试</span
         >
-      </div>
+      </div> -->
     </div>
     <div class="tools">
       <a-tooltip title="切换模板">
