@@ -1,4 +1,4 @@
-const i={baseFontSize:14,basePagePadding:20,baseLineHeight:1.5,baseModuleSpacing:10,paragraphSpacing:10,titleFontSize:16,subTitleFontSize:14,themeColor:"#111827",autoOnePage:!1},e={templateId:"classic",title:"未命名简历",createdAt:Date.now(),updatedAt:null,basic:{name:"陈下饭",position:"前端开发工程师",age:20,phone:"17343691959",address:"南京",email:"1919600547@qq.com",photo:""},educations:[{id:"1",school:"清华大学",major:"软件工程",degree:"本科",dateRange:"2018-09-01 - 2022-06-30",visible:!0,gpa:"",description:`<ul>
+const i={baseFontSize:14,basePagePadding:20,baseLineHeight:1.5,baseModuleSpacing:10,paragraphSpacing:10,titleFontSize:16,subTitleFontSize:14,themeColor:"#111827",autoOnePage:!1},e={templateId:"classic",title:"未命名简历",createdAt:Date.now(),updatedAt:null,basic:{name:"陈下饭",position:"前端开发工程师",age:20,phone:"17311002299",address:"南京",email:"zhangsan@example.com",photo:""},educations:[{id:"1",school:"清华大学",major:"软件工程",degree:"本科",dateRange:"2023-09-01 - 2027-06-30",visible:!0,gpa:"",description:`<ul>
   <li>
     <p>综合绩点：3.8/4.0，专业前15%</p>
   </li>
@@ -9,7 +9,7 @@ const i={baseFontSize:14,basePagePadding:20,baseLineHeight:1.5,baseModuleSpacing
     <p>连续两年获得校二等奖学金</p>
   </li>
   <li>
-    <p>2021 校极客杯网页设计大赛 一等奖</p>
+    <p>2024 校极客杯网页设计大赛 一等奖</p>
   </li>
 </ul>
 `}],skills:`
@@ -35,7 +35,7 @@ const i={baseFontSize:14,basePagePadding:20,baseLineHeight:1.5,baseModuleSpacing
   </li>
 </ul>
 
-  `,projects:[{id:"1",name:"校园助手",role:"前端开发",gitAddress:"github.com",dateRange:"2022-07-01 - 2023-06-30",visible:!0,description:`
+  `,projects:[{id:"1",name:"校园助手",role:"前端开发",gitAddress:"github.com",dateRange:"2023-07-01 - 2024-06-30",visible:!0,description:`
       <p><strong>技术栈：</strong> React + Taro + TailwindCSS + 小程序云开发</p>
 <ul>
   <li>
@@ -52,7 +52,7 @@ const i={baseFontSize:14,basePagePadding:20,baseLineHeight:1.5,baseModuleSpacing
   </li>
 </ul>
 
-      `},{id:"2",name:"技术笔记系统",role:"前端开发",gitAddress:"github.com",dateRange:"2022-07-01 - 2023-06-30",visible:!0,description:`
+      `},{id:"2",name:"技术笔记系统",role:"前端开发",gitAddress:"github.com",dateRange:"2024-07-01 - 2025-06-30",visible:!0,description:`
       <p><strong>技术栈：</strong> Next.js + MDX + TailwindCSS + Vercel</p>
 <p>搭建轻量级静态博客站，支持 Markdown/MDX 渲染、代码高亮、暗色主题切换。</p>
 <ul>
@@ -66,7 +66,7 @@ const i={baseFontSize:14,basePagePadding:20,baseLineHeight:1.5,baseModuleSpacing
     <p>引入 ESLint + Husky 规范 Git 提交，提高代码质量。</p>
   </li>
 </ul>
-      `}],internships:[{id:"1",companyName:"字节跳动",position:"前端开发工程师",department:"",dateRange:"2023-07-01 - 2024-06-30",visible:!0,description:`
+      `}],internships:[{id:"1",companyName:"字节跳动",position:"前端开发工程师",department:"",dateRange:"2024-07-01 - 2025-06-30",visible:!0,description:`
       <ul>
   <li>
     <p>协助开发低代码表单生成器的迭代工作，负责维护 Form Render 组件，支持 JSON Schema
