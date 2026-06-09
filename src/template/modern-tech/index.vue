@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue'
+import { computed, inject, toRefs } from 'vue'
 import type { Resume } from '@/types/resume'
 import {
   PhoneOutlined,
@@ -12,8 +12,10 @@ import {
   AppstoreOutlined,
 } from '@ant-design/icons-vue'
 import { useTemplateStyles } from '@/template'
+import PhotoImg from '@/components/PhotoImg.vue'
 
 const resume: Resume = inject('resume') as Resume
+const { basic } = toRefs(resume)
 
 const { resumeStyles: styles } = useTemplateStyles(resume)
 
@@ -43,9 +45,17 @@ const getSectionIcon = (sectionId: string) => {
     <!-- 头部区域 -->
     <header class="resume-header">
       <div class="header-content">
-        <div v-if="resume.basic.photo" class="avatar">
-          <img :src="resume.basic.photo" :alt="resume.basic.name" />
-        </div>
+        <PhotoImg
+          v-if="basic.photoConfig.visible"
+          :url="basic.photo"
+          :width="basic.photoConfig.width"
+          :height="basic.photoConfig.height"
+          :radius="
+            basic.photoConfig.borderRadius ||
+            basic.photoConfig.customBorderRadius
+          "
+        />
+
         <div class="header-info">
           <h1 class="name">{{ resume.basic.name }}</h1>
           <p class="position">{{ resume.basic.position }}</p>
@@ -204,18 +214,10 @@ const getSectionIcon = (sectionId: string) => {
       z-index: 1;
     }
 
-    .avatar {
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      overflow: hidden;
-      border: 4px solid rgba(255, 255, 255, 0.3);
-
-      img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .header-info {

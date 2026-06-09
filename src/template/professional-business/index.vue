@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue'
+import { computed, inject, toRefs } from 'vue'
 import type { Resume } from '@/types/resume'
 import {
   PhoneOutlined,
@@ -8,8 +8,10 @@ import {
 } from '@ant-design/icons-vue'
 import ResumeSection from './ResumeSection.vue'
 import { useTemplateStyles } from '@/template'
+import PhotoImg from '@/components/PhotoImg.vue'
 
 const resume: Resume = inject('resume') as Resume
+const { basic } = toRefs(resume)
 
 const { resumeStyles: styles, getSectionItems } = useTemplateStyles(resume)
 
@@ -28,9 +30,16 @@ const sortedSections = computed(() => {
     <header class="resume-header">
       <div class="header-top">
         <div class="header-brand">
-          <div v-if="resume.basic.photo" class="avatar">
-            <img :src="resume.basic.photo" :alt="resume.basic.name" />
-          </div>
+          <PhotoImg
+            v-if="basic.photoConfig.visible"
+            :url="basic.photo"
+            :width="basic.photoConfig.width"
+            :height="basic.photoConfig.height"
+            :radius="
+              basic.photoConfig.borderRadius ||
+              basic.photoConfig.customBorderRadius
+            "
+          />
           <div class="brand-info">
             <h1 class="name">{{ resume.basic.name }}</h1>
             <p class="position">{{ resume.basic.position }}</p>
@@ -85,17 +94,10 @@ const sortedSections = computed(() => {
         align-items: center;
         gap: 20px;
 
-        .avatar {
-          width: 80px;
-          height: 100px;
-          border: 2px solid v-bind('styles.themeColor');
-          padding: 3px;
-
-          img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-          }
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
 
         .brand-info {

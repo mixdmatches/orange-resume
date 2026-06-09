@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import type { Resume } from '@/types/resume'
 import SectionPreview from '@/template/classic/ResumeSection.vue'
-import { inject } from 'vue'
+import PhotoImg from '@/components/PhotoImg.vue'
+import { inject, toRefs } from 'vue'
 import { useTemplateStyles } from '@/template'
 
 const resume: Resume = inject<Resume>('resume') as Resume
+
+const { basic } = toRefs(resume)
 
 const { getSectionItems } = useTemplateStyles(resume)
 
@@ -21,8 +24,20 @@ const sortedMenuSections = () => {
     <!-- 基本信息 -->
     <section class="preview-header">
       <div class="profile">
-        <h1>{{ resume.basic.name }}</h1>
-        <p>{{ resume.basic.position }}</p>
+        <PhotoImg
+          v-if="basic.photoConfig.visible"
+          :url="basic.photo"
+          :width="basic.photoConfig.width"
+          :height="basic.photoConfig.height"
+          :radius="
+            basic.photoConfig.borderRadius ||
+            basic.photoConfig.customBorderRadius
+          "
+        />
+        <span class="info">
+          <h1>{{ resume.basic.name }}</h1>
+          <p>{{ resume.basic.position }}</p>
+        </span>
       </div>
       <div class="contact">
         <span>电话：{{ resume.basic.phone }}</span>
@@ -48,7 +63,14 @@ const sortedMenuSections = () => {
   padding-bottom: 12px;
   border-bottom: 1px solid #e5e6eb;
   margin-bottom: 10px;
+
   .profile {
+    display: flex;
+    gap: 10px;
+    .img {
+      width: 100px;
+    }
+
     h1 {
       font-size: 32px;
       margin: 0;

@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue'
+import { computed, inject, toRefs } from 'vue'
 import type { Resume } from '@/types/resume'
 import { useTemplateStyles } from '@/template'
+import PhotoImg from '@/components/PhotoImg.vue'
 
 const resume: Resume = inject('resume') as Resume
+const { basic } = toRefs(resume)
 
 const { resumeStyles: styles } = useTemplateStyles(resume)
 
@@ -30,9 +32,17 @@ const hasSkills = computed(() => {
         </div>
       </div>
       <div class="header-content">
-        <div v-if="resume.basic.photo" class="avatar">
-          <img :src="resume.basic.photo" :alt="resume.basic.name" />
-        </div>
+        <PhotoImg
+          v-if="basic.photoConfig.visible"
+          :url="basic.photo"
+          :width="basic.photoConfig.width"
+          :height="basic.photoConfig.height"
+          :radius="
+            basic.photoConfig.borderRadius ||
+            basic.photoConfig.customBorderRadius
+          "
+        />
+
         <div class="header-text">
           <h1 class="name">{{ resume.basic.name }}</h1>
           <p class="position">{{ resume.basic.position }}</p>
@@ -249,19 +259,10 @@ const hasSkills = computed(() => {
       align-items: flex-end;
       gap: 30px;
 
-      .avatar {
-        width: 140px;
-        height: 140px;
-        border-radius: 20px;
-        overflow: hidden;
-        border: 4px solid #fff;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-
-        img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
       }
 
       .header-text {

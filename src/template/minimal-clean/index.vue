@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue'
+import { computed, inject, toRefs } from 'vue'
 import type { Resume } from '@/types/resume'
+import PhotoImg from '@/components/PhotoImg.vue'
 import { useTemplateStyles } from '@/template'
 import SectionPreview from './ResumeSection.vue'
 
 const resume = inject('resume') as Resume
+const { basic } = toRefs(resume)
 
 const { resumeStyles: styles, getSectionItems } = useTemplateStyles(resume)
 
@@ -20,6 +22,15 @@ const sortedSections = computed(() => {
   <div class="minimal-clean-resume">
     <!-- 简洁头部 -->
     <header class="resume-header">
+      <PhotoImg
+        v-if="basic.photoConfig.visible"
+        :url="basic.photo"
+        :width="basic.photoConfig.width"
+        :height="basic.photoConfig.height"
+        :radius="
+          basic.photoConfig.borderRadius || basic.photoConfig.customBorderRadius
+        "
+      />
       <h1 class="name">{{ resume.basic.name }}</h1>
       <p class="position">{{ resume.basic.position }}</p>
       <div class="contact-bar">
@@ -54,9 +65,16 @@ const sortedSections = computed(() => {
     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   .resume-header {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
     text-align: center;
     padding: 10px 40px 30px;
     border-bottom: 1px solid #eee;
+
+    .image {
+      width: 100px;
+    }
 
     .name {
       font-size: v-bind('styles.titleFontSize');

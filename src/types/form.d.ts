@@ -3,7 +3,7 @@
 export interface FieldConfig {
   prop: string // 字段名
   label: string // 字段标签
-  type?: 'input' | 'textarea' | 'select' | 'editor' | 'date' // 字段类型
+  type?: 'input' | 'textarea' | 'select' | 'editor' | 'date' | 'img' // 字段类型
   placeholder?: string // 占位符
   options?: string[] // 下拉选项（仅 select 类型）
   span?: number // 占用列数，默认 12
@@ -31,4 +31,5 @@ export interface ResumeFormEmits {
   (e: 'deleteModel'): void // 删除模块事件
   (e: 'hide', id: string): void // 隐藏事件
   (e: 'update', payload: { index: number; field: string; value: any }): void // 更新事件
+  (e: 'changeHideImg'): void // 隐藏img事件
 }

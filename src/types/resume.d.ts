@@ -26,6 +26,15 @@ export interface GlobalConfiguration {
   autoOnePage: boolean // 是否自动适配一页纸
 }
 
+interface PhotoConfig {
+  aspectRatio: string
+  width: number
+  height: number
+  visible: boolean
+  borderRadius: number
+  customBorderRadius: number
+}
+
 export interface Basic {
   name: string
   position: string
@@ -34,6 +43,7 @@ export interface Basic {
   address: string
   email: string
   photo: string
+  photoConfig: PhotoConfig
 }
 
 export interface Education {

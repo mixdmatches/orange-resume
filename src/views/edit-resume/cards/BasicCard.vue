@@ -7,6 +7,7 @@ import type { FieldConfig } from '@/types/form'
 const resume: Resume = inject('resume') as Resume
 
 const basicFields: FieldConfig[] = [
+  { label: '证件照', prop: 'photo', type: 'img' },
   { label: '姓名', prop: 'name', type: 'input' },
   { label: '职位', prop: 'position', type: 'input' },
   { label: '联系电话', prop: 'phone', type: 'input' },
@@ -15,6 +16,11 @@ const basicFields: FieldConfig[] = [
 ]
 
 const basicItems = computed(() => [resume.basic])
+
+// 隐藏img
+const handleHideImg = () => {
+  resume.basic.photoConfig.visible = !resume.basic.photoConfig.visible
+}
 </script>
 
 <template>
@@ -26,6 +32,7 @@ const basicItems = computed(() => [resume.basic])
     :show-add="false"
     :show-actions="false"
     :show-sort="false"
+    @change-hide-img="handleHideImg"
   >
   </DataCard>
 </template>

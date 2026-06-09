@@ -27,6 +27,14 @@ export const DEFAULT_RESUME: Omit<Resume, 'id'> = {
     address: '南京',
     email: 'zhangsan@example.com',
     photo: '',
+    photoConfig: {
+      aspectRatio: '',
+      width: 90,
+      height: 120,
+      visible: true,
+      borderRadius: 5,
+      customBorderRadius: 0,
+    },
   },
   educations: [
     {

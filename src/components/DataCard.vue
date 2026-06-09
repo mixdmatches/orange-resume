@@ -11,6 +11,7 @@ import {
   HolderOutlined,
 } from '@ant-design/icons-vue'
 import AiEditor from '@/components/AiEditor.vue'
+import ImgDrawer from '@/components/ImgDrawer.vue'
 
 withDefaults(defineProps<ResumeFormProps>(), {
   showExpand: true,
@@ -67,12 +68,25 @@ const handleDeleteModel = () => {
   deleteConfirmText.value = '确定删除该模块吗？此操作不可撤销'
   open.value = true
 }
+
+// 调出调节img侧边栏
+const openImgDrawer = ref(false)
+const handleChangeImg = () => {
+  openImgDrawer.value = true
+}
+
+// 隐藏img
+const handleHideImg = () => {
+  emit('changeHideImg')
+}
 </script>
 
 <template>
   <a-modal v-model:open="open" :title="deleteTitle" @ok="handleOk">
     <p>{{ deleteConfirmText }}</p>
   </a-modal>
+
+  <ImgDrawer v-model:open="openImgDrawer"></ImgDrawer>
 
   <motion.div
     class="collapse"
@@ -141,7 +155,7 @@ const handleDeleteModel = () => {
         >
           <a-form>
             <a-row v-for="field in fields" :key="field.prop" :gutter="16">
-              <a-col :span="field.type === 'editor' ? 24 : field.span || 12">
+              <a-col :span="field.type === 'editor' ? 24 : field.span || 16">
                 <a-form-item :label="field.label" :name="field.prop">
                   <template v-if="field.type === 'editor'">
                     <AiEditor v-model="item[field.prop]" />
@@ -161,12 +175,35 @@ const handleDeleteModel = () => {
                       </a-select-option>
                     </a-select>
                   </template>
-                  <template v-else>
+                  <template v-else-if="field.type === 'input'">
                     <a-input
                       v-model:value="item[field.prop]"
                       :style="field.style || 'width: 200px'"
                       :placeholder="field.placeholder || `请输入${field.label}`"
                     />
+                  </template>
+                  <template v-else-if="field.type === 'img'">
+                    <div class="img-input-group">
+                      <a-input
+                        v-model:value="item[field.prop]"
+                        class="img-url-input"
+                        :style="field.style || 'width: 100%'"
+                        :placeholder="
+                          field.placeholder || `请输入${field.label}url`
+                        "
+                      />
+                      <a-button @click="handleChangeImg">调节</a-button>
+                      <a-button
+                        :icon="
+                          h(
+                            items?.[0].photoConfig.visible !== false
+                              ? EyeInvisibleOutlined
+                              : EyeOutlined,
+                          )
+                        "
+                        @click="handleHideImg"
+                      ></a-button>
+                    </div>
                   </template>
                 </a-form-item>
               </a-col>
@@ -307,6 +344,48 @@ const handleDeleteModel = () => {
     .form-actions {
       display: flex;
       gap: 1rem;
+    }
+
+    .img-input-group {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .img-url-input {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .img-preview {
+      width: 120px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid;
+      border-radius: 0.6rem;
+      background: #fafafa;
+      overflow: hidden;
+      @include themify(
+        (
+          border-color: $border-color-mode,
+        )
+      );
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .img-placeholder {
+        color: #999;
+        font-size: 0.95rem;
+        text-align: center;
+        padding: 0.5rem;
+      }
     }
   }
 }
