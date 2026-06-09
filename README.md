@@ -40,6 +40,15 @@ Vite 的在线简历编辑器。它专注于简历创建、实时编辑、模板
 - SCSS
 - ESLint + Prettier
 
+## 项目截图
+
+我的简历： ![alt text](/public/image.png)
+简历编辑：![alt text](/public/editResume.png)
+模板中心：![alt text](/public/template.png)
+预览模板：![alt text](/public/viewTemplate.png)
+模拟面试：![alt text](/public/interview.png)
+通用设置：![alt text](/public/setting.png)
+
 ## 快速运行
 
 ### 环境要求
