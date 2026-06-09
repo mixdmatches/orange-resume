@@ -1,4 +1,4 @@
-const i={baseFontSize:14,basePagePadding:20,baseLineHeight:1.5,baseModuleSpacing:10,paragraphSpacing:10,titleFontSize:16,subTitleFontSize:14,themeColor:"#111827",autoOnePage:!1},e={templateId:"classic",title:"未命名简历",createdAt:Date.now(),updatedAt:null,basic:{name:"陈下饭",position:"前端开发工程师",age:20,phone:"17311002299",address:"南京",email:"zhangsan@example.com",photo:""},educations:[{id:"1",school:"清华大学",major:"软件工程",degree:"本科",dateRange:"2023-09-01 - 2027-06-30",visible:!0,gpa:"",description:`<ul>
+const i={baseFontSize:14,basePagePadding:20,baseLineHeight:1.5,baseModuleSpacing:10,paragraphSpacing:10,titleFontSize:16,subTitleFontSize:14,themeColor:"#111827",autoOnePage:!1},e={templateId:"classic",title:"未命名简历",createdAt:Date.now(),updatedAt:null,basic:{name:"陈下饭",position:"前端开发工程师",age:20,phone:"17311002299",address:"南京",email:"zhangsan@example.com",photo:"",photoConfig:{aspectRatio:"",width:90,height:120,visible:!0,borderRadius:5,customBorderRadius:0}},educations:[{id:"1",school:"清华大学",major:"软件工程",degree:"本科",dateRange:"2023-09-01 - 2027-06-30",visible:!0,gpa:"",description:`<ul>
   <li>
     <p>综合绩点：3.8/4.0，专业前15%</p>
   </li>
