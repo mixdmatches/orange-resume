@@ -5,11 +5,7 @@ import { message } from 'ant-design-vue'
 import { generateInterviewQuestions, hasApiKey } from '@/utils/aiAPIConnect'
 import { ReloadOutlined } from '@ant-design/icons-vue'
 import type { Resume } from '@/types/resume'
-import {
-  createDefaultQuestionList,
-  parseQuestions,
-  resumeToText,
-} from '../composables/useAiInterview'
+import { parseQuestions, resumeToText } from '../composables/useAiInterview'
 import type { InterviewQuestion } from '../composables/useAiInterview'
 
 const props = defineProps({
@@ -50,11 +46,9 @@ const generateQuestions = async () => {
     const rawResult = await generateInterviewQuestions(content, 5)
     const parsed = parseQuestions(rawResult)
 
-    questions.value =
-      parsed.length > 0 ? parsed : createDefaultQuestionList(props.resume)
+    questions.value = parsed
   } catch (error) {
     message.error((error as Error).message || '生成面试问题失败，请稍后重试')
-    questions.value = createDefaultQuestionList(props.resume)
   } finally {
     isLoading.value = false
   }

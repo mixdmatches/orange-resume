@@ -105,25 +105,3 @@ export const parseQuestions = (content: string): InterviewQuestion[] => {
 
   return result
 }
-
-export const createDefaultQuestionList = (
-  _resume: Resume,
-): InterviewQuestion[] => {
-  return [
-    {
-      id: 1,
-      question: '请介绍一下你最近参与的项目以及你在其中承担的角色。',
-      answer: `根据简历信息，请说明你在项目中的具体职责、技术选型和关键成果。`,
-    },
-    {
-      id: 2,
-      question: '你在当前岗位中掌握了哪些核心技能？',
-      answer: `请结合你的技能和项目经历说明你最擅长的技术栈，以及你如何在实际场景中应用它们。`,
-    },
-    {
-      id: 3,
-      question: '你面临过的最大技术挑战是什么？你是如何解决的？',
-      answer: `请结合实际经历描述问题定位、解决方案和最终结果。`,
-    },
-  ]
-}
