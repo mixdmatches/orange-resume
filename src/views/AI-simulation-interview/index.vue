@@ -105,7 +105,7 @@ onMounted(() => {
     </a-modal>
 
     <a-card>
-      <a-tabs v-model:active-key="activeTab" destroy-on-close>
+      <a-tabs v-model:active-key="activeTab" destroy-on-close type="card">
         <a-tab-pane key="ai" tab="AI 模拟面试">
           <interview-question-panel :resume="selectedResume" />
         </a-tab-pane>
