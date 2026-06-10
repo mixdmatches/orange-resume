@@ -26,7 +26,6 @@ https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety
 1. 技术能力和技能验证
 2. 项目经验和深度
 3. 解决问题的能力
-4. 职业规划和个人发展
 
 每个问题后请提供一个参考回答，用"回答："开头。
 输出格式要求：
