@@ -6,7 +6,7 @@ import {
   generateInterviewQuestions,
   generateAnswer,
   hasApiKey,
-} from '@/utils/deepseek'
+} from '@/utils/aiAPIConnect'
 import type { Resume } from '@/types/resume'
 
 /**

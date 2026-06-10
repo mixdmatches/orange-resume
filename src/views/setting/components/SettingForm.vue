@@ -3,6 +3,7 @@ import type { APIManufacturer } from '@/types/APISetting'
 import { message } from 'ant-design-vue'
 import { ReloadOutlined } from '@ant-design/icons-vue'
 import { computed, ref } from 'vue'
+import { testApiConnection } from '@/utils/aiAPIConnect'
 
 const apiForm = defineModel<APIManufacturer>('apiForm', {
   required: true,
@@ -15,10 +16,14 @@ const polishPrompt = defineModel<string>('polishPrompt', {
 const isTesting = ref(false)
 const handleTestConnection = async () => {
   isTesting.value = true
-  setTimeout(() => {
-    isTesting.value = false
+  try {
+    await testApiConnection(apiForm.value)
     message.success('连接测试成功')
-  }, 1500)
+  } catch (error) {
+    message.error((error as Error).message || '连接测试失败，请检查配置')
+  } finally {
+    isTesting.value = false
+  }
 }
 
 const resetPrompt = () => {
@@ -74,13 +79,12 @@ const apiLink = computed(() => {
       v-model:value="apiForm.apiKey"
       style="width: 400px"
       placeholder="API Key"
-      :visibility-toggle="false"
       class="setting-input"
     />
   </div>
 
   <!-- 模型 ID -->
-  <div v-if="apiForm.id !== 'deepseek'" class="setting-item">
+  <div class="setting-item">
     <label class="setting-label">模型 ID</label>
     <a-input
       v-model:value="apiForm.modelId"
@@ -90,13 +94,12 @@ const apiLink = computed(() => {
   </div>
 
   <!-- API端点 -->
-  <div
-    v-if="apiForm.id !== 'deepseek' && apiForm.id !== 'doubao'"
-    class="setting-item"
-  >
+  <div class="setting-item">
     <label class="setting-label">API端点</label>
     <a-input
       v-model:value="apiForm.apiEndpoint"
+      :bordered="apiForm.id === 'custom'"
+      :disabled="apiForm.id !== 'custom'"
       class="setting-input"
       placeholder="API端点"
     />
@@ -168,26 +171,6 @@ const apiLink = computed(() => {
   .setting-input {
     width: 100%;
     max-width: 400px;
-
-    input,
-    textarea {
-      @include themify(
-        (
-          background: (
-            light: #fff,
-            dark: #111827,
-          ),
-          color: (
-            light: #000,
-            dark: #f8faff,
-          ),
-          border-color: (
-            light: #d9d9d9,
-            dark: rgba(255, 255, 255, 0.12),
-          ),
-        )
-      );
-    }
   }
 }
 </style>

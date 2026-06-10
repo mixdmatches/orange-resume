@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { h } from 'vue'
 import { message } from 'ant-design-vue'
-import { generateAnswer, hasApiKey } from '@/utils/deepseek'
+import { generateAnswer, hasApiKey } from '@/utils/aiAPIConnect'
 import {
   CopyOutlined,
   SendOutlined,

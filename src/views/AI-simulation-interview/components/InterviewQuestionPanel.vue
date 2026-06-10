@@ -2,15 +2,15 @@
 import { computed, ref, watch } from 'vue'
 import { h } from 'vue'
 import { message } from 'ant-design-vue'
-import { generateInterviewQuestions, hasApiKey } from '@/utils/deepseek'
+import { generateInterviewQuestions, hasApiKey } from '@/utils/aiAPIConnect'
 import { ReloadOutlined } from '@ant-design/icons-vue'
 import type { Resume } from '@/types/resume'
 import {
   createDefaultQuestionList,
-  InterviewQuestion,
   parseQuestions,
   resumeToText,
 } from '../composables/useAiInterview'
+import type { InterviewQuestion } from '../composables/useAiInterview'
 
 const props = defineProps({
   resume: {

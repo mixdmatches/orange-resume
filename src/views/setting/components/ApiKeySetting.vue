@@ -13,7 +13,7 @@ const defaultApiState = [
     hint: '在DeepSeek获取 API 密钥',
     modelId: '',
     apiKey: '',
-    apiEndpoint: '',
+    apiEndpoint: 'https://api.deepseek.com',
   },
   {
     id: 'doubao',
@@ -21,7 +21,7 @@ const defaultApiState = [
     icon: '🧉',
     hint: '在火山引擎获取 API 密钥',
     apiKey: '',
-    apiEndpoint: '',
+    apiEndpoint: 'https://ark.cn-beijing.volces.com/api/v3',
     modelId: '',
   },
   {
@@ -30,7 +30,7 @@ const defaultApiState = [
     icon: '🔮',
     hint: '在 OpenAI 平台获取 API 密钥',
     apiKey: '',
-    apiEndpoint: '',
+    apiEndpoint: 'https://api.openai.com/v1',
     modelId: '',
   },
   {

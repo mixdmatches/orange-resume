@@ -27,6 +27,58 @@ const createOpenAIClient = (apiKey: string, baseURL: string): OpenAI => {
 }
 
 /**
+ * 格式化 API 错误信息
+ */
+function formatError(error: unknown) {
+  const err = error as { message?: string; status?: number }
+  if (err?.message) {
+    return err.message
+  }
+  return '连接测试失败，请检查 API Key 和 API 端点是否正确。'
+}
+
+/**
+ * 测试 API 连接
+ */
+export async function testApiConnection(apiConfig: APIManufacturer) {
+  if (!apiConfig) {
+    throw new Error('请先选择 API 提供商')
+  }
+
+  if (!apiConfig.apiKey) {
+    throw new Error('请先填写 API Key')
+  }
+
+  if (!apiConfig.modelId) {
+    throw new Error('请先填写模型 ID')
+  }
+
+  if (apiConfig.id === 'custom' && !apiConfig.apiEndpoint) {
+    throw new Error('自定义提供商需要填写 API 端点')
+  }
+
+  const openai = createOpenAIClient(apiConfig.apiKey, apiConfig.apiEndpoint)
+
+  try {
+    const res = await openai.chat.completions.create({
+      model: apiConfig.modelId,
+      messages: [
+        {
+          role: 'system',
+          content: '你正在进行连接测试，请忽略此内容。只需回复一个字',
+        },
+        { role: 'user', content: 'ping' },
+      ],
+      max_tokens: 1,
+      temperature: 0,
+    })
+    console.log(res)
+  } catch (error) {
+    throw new Error(formatError(error))
+  }
+}
+
+/**
  * 调用 API 生成面试问题
  * @param resumeContent - 简历内容（字符串格式）
  * @param questionCount - 生成的问题数量
@@ -37,7 +89,11 @@ export const generateInterviewQuestions = async (
 ): Promise<string> => {
   const apiConfig = getApiConfig()
   if (!apiConfig || !apiConfig.apiKey) {
-    throw new Error('未配置 DeepSeek API Key，请在设置中配置')
+    throw new Error('未配置 API Key，请在设置中配置')
+  }
+
+  if (!apiConfig.modelId) {
+    throw new Error('请先选择模型')
   }
 
   const openai = createOpenAIClient(apiConfig.apiKey, apiConfig.apiEndpoint)
@@ -68,7 +124,7 @@ Q2: [问题2]
         content: `根据以下简历生成面试问题：\n\n${resumeContent}`,
       },
     ],
-    model: 'qwen-plus',
+    model: apiConfig.modelId,
     reasoning_effort: 'high',
     temperature: 0.7,
     max_tokens: 2000,
@@ -88,6 +144,10 @@ export const generateAnswer = async (question: string): Promise<string> => {
     throw new Error('未配置 API Key，请在设置中配置')
   }
 
+  if (!apiConfig.modelId) {
+    throw new Error('请先选择模型')
+  }
+
   const openai = createOpenAIClient(apiConfig.apiKey, apiConfig.apiEndpoint)
 
   const completion = await openai.chat.completions.create({
@@ -98,7 +158,7 @@ export const generateAnswer = async (question: string): Promise<string> => {
       },
       { role: 'user', content: question },
     ],
-    model: 'qwen-plus',
+    model: apiConfig.modelId,
     reasoning_effort: 'high',
     temperature: 0.7,
     max_tokens: 1000,
