@@ -1,0 +1,1 @@
+import{N as c,h as n}from"./index-JhVULeg_.js";const o=c("sync",()=>{const e=n(null),s=n(!1);return{syncResult:e,isSyncing:s,updateSyncResult:t=>{e.value=t},clearSyncResult:()=>{e.value=null}}});export{o as u};
