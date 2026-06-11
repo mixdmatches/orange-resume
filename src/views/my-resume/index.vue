@@ -14,6 +14,8 @@ import {
   CheckCircleOutlined,
   ExclamationCircleOutlined,
   CloseCircleOutlined,
+  FileTextOutlined,
+  FilePdfOutlined,
 } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 import { h, onMounted, ref } from 'vue'
@@ -21,6 +23,7 @@ import { useRouter } from 'vue-router'
 import { message, notification } from 'ant-design-vue'
 import { getConfigIDB, getFileHandleIDB } from '@/service/fileIDB'
 import { useSyncStore } from '@/stores/sync'
+import { importPDF } from '@/utils/importPDF'
 
 const router = useRouter()
 
@@ -28,11 +31,15 @@ const activeResumeId = ref<string>('')
 
 const resumes = ref<Resume[]>([])
 
+/**
+ * 获取所有简历
+ */
 const getAllResume = async () => {
   const res = await getAllResumesIDB()
   res.sort((a, b) => b.createdAt - a.createdAt)
   resumes.value = res
 }
+
 onMounted(() => {
   getAllResume()
 })
@@ -63,18 +70,31 @@ const handleDeleteResume = async (id: string) => {
 const open = ref(false)
 const confirmLoading = ref(false)
 
+/**
+ * 确认删除简历
+ */
 const handleOk = async () => {
   confirmLoading.value = true
-  await deleteResumeIDB(activeResumeId.value)
-  confirmLoading.value = false
-  open.value = false
-  await getAllResume()
+  try {
+    await deleteResumeIDB(activeResumeId.value)
+    await getAllResume()
+    message.success('删除成功')
+  } catch (error) {
+    message.error(error instanceof Error ? error.message : '删除失败')
+  } finally {
+    confirmLoading.value = false
+    open.value = false
+  }
 }
 
+// 导入配置弹窗开关
+const openConfigModal = ref(false)
+const importLoading = ref(false)
+
 /**
- * 导入配置
+ * 导入JSON配置
  */
-const handleImportConfig = async () => {
+const handleImportJSON = async () => {
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = '.json'
@@ -84,7 +104,7 @@ const handleImportConfig = async () => {
   const handleChange = async (e: Event) => {
     const file = (e.target as HTMLInputElement)?.files?.[0]
     if (!file) return
-
+    importLoading.value = true
     try {
       const text = await file.text()
       const resume = JSON.parse(text)
@@ -104,6 +124,44 @@ const handleImportConfig = async () => {
       // 清理 input 元素
       input.removeEventListener('change', handleChange)
       document.body.removeChild(input)
+      importLoading.value = false
+      openConfigModal.value = false
+    }
+  }
+
+  input.addEventListener('change', handleChange)
+  input.click()
+}
+
+/**
+ * 导入PDF配置
+ */
+const handleImportPDF = async () => {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.pdf'
+  input.style.display = 'none'
+  document.body.appendChild(input)
+
+  const handleChange = async (e: Event) => {
+    const file = (e.target as HTMLInputElement)?.files?.[0]
+    if (!file) return
+    importLoading.value = true
+    try {
+      const resume = await importPDF(file)
+      message.success('PDF 解析成功，正在处理...')
+      console.log('PDF 解析文本内容：', resume)
+      await addResumeIDB(resume)
+      await getAllResume()
+      message.success('PDF 导入成功')
+    } catch (error) {
+      console.error('PDF 导入失败', error)
+      message.error(error instanceof Error ? error.message : 'PDF 导入失败')
+    } finally {
+      input.removeEventListener('change', handleChange)
+      document.body.removeChild(input)
+      importLoading.value = false
+      openConfigModal.value = false
     }
   }
 
@@ -141,6 +199,7 @@ onMounted(async () => {
 
 <template>
   <div class="my-resume">
+    <!-- 删除简历弹窗 -->
     <a-modal
       v-model:open="open"
       title="删除简历"
@@ -149,6 +208,44 @@ onMounted(async () => {
     >
       <p>确定删除该简历吗？删除后不可恢复</p>
     </a-modal>
+
+    <!-- 导入配置弹窗 -->
+    <a-modal
+      v-model:open="openConfigModal"
+      title="选择导入文件类型"
+      :footer="null"
+      :closable="false"
+      @cancel="() => (openConfigModal = false)"
+    >
+      <a-spin :spinning="importLoading">
+        <div class="import-options">
+          <a-card hoverable class="import-card" @click="handleImportJSON">
+            <template #cover>
+              <div class="import-icon json-icon">
+                <FileTextOutlined />
+              </div>
+            </template>
+            <a-card-meta
+              title="JSON 导入"
+              description="从本地 JSON 文件导入简历配置"
+            />
+          </a-card>
+
+          <a-card hoverable class="import-card" @click="handleImportPDF">
+            <template #cover>
+              <div class="import-icon pdf-icon">
+                <FilePdfOutlined />
+              </div>
+            </template>
+            <a-card-meta
+              title="PDF 导入(AI解析)"
+              description="从本地 PDF 文件中提取简历内容，AI解析后导入，用时较长但解析精准"
+            />
+          </a-card>
+        </div>
+      </a-spin>
+    </a-modal>
+
     <div class="work">
       <a-space>
         <a-button
@@ -161,7 +258,7 @@ onMounted(async () => {
         <a-button
           size="large"
           :icon="h(VerticalAlignTopOutlined)"
-          @click="handleImportConfig"
+          @click="() => (openConfigModal = true)"
           >导入配置</a-button
         >
       </a-space>
@@ -194,6 +291,8 @@ onMounted(async () => {
         </template>
       </a-alert>
     </div>
+
+    <!-- 简历卡片展示 -->
     <div v-if="resumes.length > 0" class="resumes">
       <a-card
         v-for="item in resumes"
@@ -295,5 +394,41 @@ onMounted(async () => {
       }
     }
   }
+}
+
+.import-options {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  padding-top: 12px;
+}
+
+.import-card {
+  width: calc(50% - 8px);
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.import-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  font-size: 36px;
+  color: #fff;
+  border-radius: 8px;
+}
+
+.json-icon {
+  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+}
+
+.pdf-icon {
+  background: linear-gradient(135deg, #f04864 0%, #ff7a45 100%);
+}
+
+.import-card:hover {
+  transform: translateY(-4px);
 }
 </style>

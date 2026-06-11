@@ -1,3 +1,7 @@
+import {
+  DEFAULT_RESUME,
+  initialGlobalConfiguration,
+} from '@/config/init-resume-data'
 import { storage } from './storage'
 import type { APIManufacturer, APIState } from '@/types/APISetting'
 import OpenAI from 'openai'
@@ -165,6 +169,71 @@ export const generateAnswer = async (question: string): Promise<string> => {
   })
 
   return completion.choices[0]?.message?.content || ''
+}
+
+/**
+ * 调用 API 将 PDF 文本解析为结构化 JSON 数据
+ */
+export const pdfToJsonWithAI = async (pdfText: string) => {
+  const apiConfig = getApiConfig()
+
+  if (!apiConfig || !apiConfig.apiKey) {
+    throw new Error('未配置 API Key，请在设置中配置')
+  }
+
+  if (!apiConfig.modelId) {
+    throw new Error('请先选择模型')
+  }
+
+  const prompt = `
+    请将以下简历内容解析为JSON格式，包含以下字段：
+    - templateId:'classic'
+    - createdAt: 此时此刻的时间Date.now()格式,
+    - updatedAt: null,
+    - basic: { name, phone, email, address, position, photo ,photoConfig:{aspectRatio: string
+      width: number
+      height: number
+      visible: false
+      borderRadius: number
+      customBorderRadius: number} }
+    - educations: [{id, school, major, degree, dateRange, description,visible:true }]
+    - internships: [{id, companyName, position, dateRange, description,visible:true }]
+    - projects: [{id, name, role, gitAddress, dateRange, description,visible:true }]
+    - skills: string
+    - initialGlobalConfiguration：{}
+    id必须给一个唯一的字符串
+    整体JSON格式如下：
+  ${DEFAULT_RESUME}
+  其中的initialGlobalConfiguration字段设置为：${initialGlobalConfiguration}
+    简历内容：
+    ${pdfText}
+  `
+
+  const openai = createOpenAIClient(apiConfig.apiKey, apiConfig.apiEndpoint)
+
+  const completion = await openai.chat.completions.create({
+    messages: [
+      {
+        role: 'system',
+        content: prompt,
+      },
+      { role: 'user', content: pdfText },
+    ],
+    model: apiConfig.modelId,
+    reasoning_effort: 'medium',
+    response_format: { type: 'json_object' },
+    temperature: 0.7,
+    stream: false,
+  })
+
+  const resume = JSON.parse(completion.choices[0]?.message?.content || '{}')
+  resume.id = crypto.randomUUID().substring(0, 5)
+  resume.title = `PDF导入的简历${resume.id}`
+  resume.globalConfiguration = DEFAULT_RESUME.globalConfiguration
+  resume.menuSections = DEFAULT_RESUME.menuSections
+  resume.customData = {}
+
+  return resume
 }
 
 /**
