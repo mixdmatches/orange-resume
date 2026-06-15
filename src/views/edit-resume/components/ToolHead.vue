@@ -9,6 +9,7 @@ import { inject, ref } from 'vue'
 import type { Resume } from '@/types/resume'
 import templates from '@/template'
 import previewImage from '@/assets/images/classic.fcafadcb.svg'
+import { resumeToMarkdown } from '@/utils/markdownConverter'
 
 // const resumeMode = defineModel('resumeMode', {
 //   type: String,
@@ -32,6 +33,16 @@ const handleDownloadPDF = async () => {
     document.querySelector('.preview-wrapper')!,
     resume.globalConfiguration.basePagePadding,
   )
+}
+
+const handleDownloadMarkdown = () => {
+  const markdown = resumeToMarkdown(resume)
+  const blob = new Blob([markdown], { type: 'text/markdown' })
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = `${resume.title}.md`
+  a.click()
+  URL.revokeObjectURL(a.href)
 }
 
 const drawerOpen = ref(false)
@@ -78,6 +89,9 @@ const afterOpenChange = (open: boolean) => {
           <a-menu>
             <a-menu-item @click="handleDownloadPDF"> PDF </a-menu-item>
             <a-menu-item @click="handleDownloadJson"> JSON配置 </a-menu-item>
+            <a-menu-item @click="handleDownloadMarkdown">
+              Markdown
+            </a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
