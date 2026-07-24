@@ -22,11 +22,11 @@ function htmlToMd(html: string): string {
 export function resumeToMarkdown(resume: Resume): string {
   const lines: string[] = []
 
-  // 基本信息
-  lines.push('## 基本信息')
+  lines.push(`# ${resume.basic.name || '姓名'}`)
   lines.push('')
 
-  lines.push(`### ${resume.basic.name}`)
+  // 基本信息
+  lines.push('## 基本信息')
   lines.push('')
 
   // 联系方式
@@ -139,6 +139,13 @@ export function markdownToResume(markdown: string, baseResume: Resume): Resume {
   let currentSection: string | null = null
   let currentDescription: string[] = []
 
+  const normalizeDescriptionLine = (line: string) => {
+    const trimmed = line.trim()
+    if (!trimmed) return ''
+
+    return trimmed.replace(/^([-*+]|\d+\.)\s+/, '').trim()
+  }
+
   /**
    * 保存当前描述内容到对应模块
    */
@@ -182,10 +189,10 @@ export function markdownToResume(markdown: string, baseResume: Resume): Resume {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim()
 
-    // 跳过空行
+    // 跳过空行：保留描述块内的段落分隔，但不提前结束当前描述
     if (!line) {
-      if (currentDescription.length > 0) {
-        flushDescription()
+      if (currentDescription.length > 0 && currentSection) {
+        currentDescription.push('')
       }
       continue
     }
@@ -204,17 +211,23 @@ export function markdownToResume(markdown: string, baseResume: Resume): Resume {
       flushDescription()
       const title = line.replace('## ', '').trim()
 
-      // 判断是职位还是模块标题
-      if (!currentSection) {
+      if (title === '基本信息') {
+        currentSection = null
+        continue
+      }
+
+      const section = resume.menuSections.find(s => s.title === title)
+      if (section) {
+        currentSection = section.id
+        continue
+      }
+
+      if (!currentSection && !resume.basic.position && title) {
         resume.basic.position = title
         continue
       }
 
-      // 查找对应的菜单区块
-      const section = resume.menuSections.find(s => s.title === title)
-      if (section) {
-        currentSection = section.id
-      }
+      currentSection = null
       continue
     }
 
@@ -285,35 +298,33 @@ export function markdownToResume(markdown: string, baseResume: Resume): Resume {
       continue
     }
 
-    // 解析列表项（描述内容）
-    if (line.startsWith('- ')) {
-      const content = line.replace('- ', '').trim()
-
-      // 检查是否是联系方式
-      if (!currentSection) {
-        if (content.startsWith('电话：')) {
-          resume.basic.phone = content.replace('电话：', '').trim()
-        } else if (content.startsWith('邮箱：')) {
-          resume.basic.email = content.replace('邮箱：', '').trim()
-        } else if (content.startsWith('地址：')) {
-          resume.basic.address = content.replace('地址：', '').trim()
-        }
-        continue
+    // 解析描述内容（支持列表项、段落和多行描述）
+    if (!currentSection) {
+      if (line.startsWith('电话：')) {
+        resume.basic.phone = line.replace('电话：', '').trim()
+      } else if (line.startsWith('邮箱：')) {
+        resume.basic.email = line.replace('邮箱：', '').trim()
+      } else if (line.startsWith('地址：')) {
+        resume.basic.address = line.replace('地址：', '').trim()
       }
-
-      // 技能模块特殊处理
-      if (currentSection === 'skills') {
-        if (resume.skills) {
-          resume.skills += '\n' + content
-        } else {
-          resume.skills = content
-        }
-        continue
-      }
-
-      // 其他模块的描述内容
-      currentDescription.push(content)
       continue
+    }
+
+    if (currentSection === 'skills') {
+      const content = normalizeDescriptionLine(line)
+      if (!content) continue
+
+      if (resume.skills) {
+        resume.skills += '\n' + content
+      } else {
+        resume.skills = content
+      }
+      continue
+    }
+
+    const content = normalizeDescriptionLine(line)
+    if (content) {
+      currentDescription.push(content)
     }
   }
 

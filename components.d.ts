@@ -14,12 +14,9 @@ declare module 'vue' {
     AiEditor: typeof import('./src/components/AiEditor.vue')['default']
     DataCard: typeof import('./src/components/DataCard.vue')['default']
     ImgDrawer: typeof import('./src/components/ImgDrawer.vue')['default']
-    Motion: typeof import('motion-v')['Motion']
     PhotoImg: typeof import('./src/components/PhotoImg.vue')['default']
-    ResumeSection: typeof import('./src/components/ResumeSection.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    ShowCard: typeof import('./src/components/ShowCard.vue')['default']
     ThemeIcon: typeof import('./src/components/ThemeIcon.vue')['default']
   }
 }

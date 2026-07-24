@@ -11,11 +11,6 @@ import templates from '@/template'
 import previewImage from '@/assets/images/classic.fcafadcb.svg'
 import { resumeToMarkdown } from '@/utils/markdownConverter'
 
-// const resumeMode = defineModel('resumeMode', {
-//   type: String,
-//   default: 'edit',
-// })
-
 const resume: Resume = inject('resume') as Resume
 
 const handleDownloadJson = () => {
@@ -147,6 +142,15 @@ const afterOpenChange = (open: boolean) => {
     display: flex;
     align-items: center;
     gap: 1rem;
+    .update-time {
+      font-size: 1.2rem;
+      white-space: nowrap;
+      @include themify(
+        (
+          color: $text-color,
+        )
+      );
+    }
     .tool-mode {
       display: flex;
       gap: 1rem;
