@@ -8,7 +8,7 @@ import AiInterview from '@/views/edit-resume/components/AiInterview.vue'
 import dayjs from 'dayjs'
 import { useRoute } from 'vue-router'
 import { getResumeByIdIDB, updateResumeIDB } from '@/service/resumeIDB'
-import { useResumeHistory } from '@/composables/useResumeHistory'
+import { useResumeHistory } from '@/hooks/useResumeHistory'
 
 const route = useRoute()
 const resumeHistory = useResumeHistory()
