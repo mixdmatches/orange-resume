@@ -2,14 +2,24 @@
 import LineMdArrowSmallLeft from '~icons/line-md/arrow-small-left'
 import LineMdArrowCloseDown from '~icons/line-md/arrow-close-down'
 import LineMdArrowsHorizontal from '~icons/line-md/arrows-horizontal'
-import { DownOutlined } from '@ant-design/icons-vue'
+import { DownOutlined, UndoOutlined, RedoOutlined } from '@ant-design/icons-vue'
 import { exportResumeToBrowserPrint } from '@/utils/print'
 import ThemeIcon from '@/components/ThemeIcon.vue'
-import { inject, ref } from 'vue'
+import { defineProps, defineEmits, inject, ref } from 'vue'
 import type { Resume } from '@/types/resume'
 import templates from '@/template'
 import previewImage from '@/assets/images/classic.fcafadcb.svg'
 import { resumeToMarkdown } from '@/utils/markdownConverter'
+
+const props = defineProps<{
+  canUndo: boolean
+  canRedo: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'undo'): void
+  (e: 'redo'): void
+}>()
 
 const resume: Resume = inject('resume') as Resume
 
@@ -56,18 +66,28 @@ const afterOpenChange = (open: boolean) => {
     <div class="tool-head-left">
       <line-md-arrow-small-left @click="$router.back()" />
       <a-input v-model:value="resume.title" class="title"></a-input>
-      <!-- <div class="tool-mode">
-        <span
-          :class="{ active: resumeMode === 'edit' }"
-          @click="resumeMode = 'edit'"
-          >编辑简历</span
-        >
-        <span
-          :class="{ active: resumeMode === 'interview' }"
-          @click="resumeMode = 'interview'"
-          >模拟面试</span
-        >
-      </div> -->
+      <div class="undo-redo-group">
+        <a-tooltip title="撤销 (Ctrl+Z)">
+          <a-button
+            size="small"
+            :disabled="!props.canUndo"
+            class="icon-button"
+            @click="emit('undo')"
+          >
+            <UndoOutlined />
+          </a-button>
+        </a-tooltip>
+        <a-tooltip title="还原 (Ctrl+Shift+Z)">
+          <a-button
+            size="small"
+            :disabled="!props.canRedo"
+            class="icon-button"
+            @click="emit('redo')"
+          >
+            <RedoOutlined />
+          </a-button>
+        </a-tooltip>
+      </div>
     </div>
     <div class="tools">
       <a-tooltip title="切换模板">
@@ -142,6 +162,11 @@ const afterOpenChange = (open: boolean) => {
     display: flex;
     align-items: center;
     gap: 1rem;
+    .undo-redo-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
     .update-time {
       font-size: 1.2rem;
       white-space: nowrap;
@@ -178,6 +203,21 @@ const afterOpenChange = (open: boolean) => {
       display: flex;
       align-items: center;
     }
+  }
+
+  .undo-redo-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .icon-button {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 .template-container {

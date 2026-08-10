@@ -8,8 +8,14 @@ import AiInterview from '@/views/edit-resume/components/AiInterview.vue'
 import dayjs from 'dayjs'
 import { useRoute } from 'vue-router'
 import { getResumeByIdIDB, updateResumeIDB } from '@/service/resumeIDB'
+import { useResumeHistory } from '@/composables/useResumeHistory'
 
 const route = useRoute()
+const resumeHistory = useResumeHistory()
+const isApplyingHistory = ref(false)
+const hasInitializedHistory = ref(false)
+let historyTimer: ReturnType<typeof setTimeout> | null = null
+let lastSavedHistorySnapshot = ''
 
 const resume = reactive<Resume>({
   id: '',
@@ -59,21 +65,95 @@ const getResume = async () => {
   if (resumeData) {
     Object.assign(resume, resumeData)
   }
+  resumeHistory.initialize(id, resume)
+  lastSavedHistorySnapshot = JSON.stringify(resume)
+  hasInitializedHistory.value = true
 }
 onMounted(() => {
   getResume()
+  window.addEventListener('keydown', handleKeydown)
 })
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
+  if (historyTimer) {
+    clearTimeout(historyTimer)
+    historyTimer = null
+  }
+})
+
+const pushHistoryState = (newValue: Resume) => {
+  if (!hasInitializedHistory.value || isApplyingHistory.value) return
+  const nextSnapshot = JSON.stringify(newValue)
+  if (nextSnapshot === lastSavedHistorySnapshot) {
+    return
+  }
+
+  resumeHistory.pushState(newValue)
+  lastSavedHistorySnapshot = nextSnapshot
+}
+
+const scheduleHistoryPush = () => {
+  if (historyTimer) {
+    window.clearTimeout(historyTimer)
+  }
+  historyTimer = window.setTimeout(() => {
+    pushHistoryState(resume)
+  }, 300)
+}
+
+const applyHistorySnapshot = (snapshot: Resume | null) => {
+  if (!snapshot) return
+  isApplyingHistory.value = true
+  Object.assign(resume, JSON.parse(JSON.stringify(snapshot)))
+  lastSavedHistorySnapshot = JSON.stringify(resume)
+  isApplyingHistory.value = false
+}
+
+const handleUndo = () => {
+  const snapshot = resumeHistory.undo()
+  if (snapshot) {
+    applyHistorySnapshot(snapshot)
+  }
+}
+
+const handleRedo = () => {
+  const snapshot = resumeHistory.redo()
+  if (snapshot) {
+    applyHistorySnapshot(snapshot)
+  }
+}
+
+const handleKeydown = (event: KeyboardEvent) => {
+  const isMac = navigator.platform.toUpperCase().includes('MAC')
+  const isMeta = isMac ? event.metaKey : event.ctrlKey
+  if (!isMeta || event.key.toLowerCase() !== 'z') {
+    return
+  }
+
+  event.preventDefault()
+  if (event.shiftKey) {
+    handleRedo()
+  } else {
+    handleUndo()
+  }
+}
 
 watch(
   () => resume,
   async (newValue: Resume) => {
-    const plainResume = JSON.parse(JSON.stringify(newValue))
+    if (!hasInitializedHistory.value || isApplyingHistory.value) return
 
-    // const plainResume = toRaw(newValue)
+    scheduleHistoryPush()
+
+    const plainResume = JSON.parse(JSON.stringify(newValue))
     await updateResumeIDB(newValue.id, plainResume)
   },
   { deep: true },
 )
+
+const canUndo = resumeHistory.canUndo
+const canRedo = resumeHistory.canRedo
 
 provide('resume', resume)
 
@@ -109,16 +189,17 @@ const handleDividerMouseUp = () => {
   window.removeEventListener('mousemove', handleDividerMouseMove)
   window.removeEventListener('mouseup', handleDividerMouseUp)
 }
-
-onUnmounted(() => {
-  window.removeEventListener('mousemove', handleDividerMouseMove)
-  window.removeEventListener('mouseup', handleDividerMouseUp)
-})
 </script>
 
 <template>
   <div class="edit-container">
-    <tool-head v-model:resume-mode="resumeMode"></tool-head>
+    <tool-head
+      v-model:resume-mode="resumeMode"
+      :can-undo="canUndo"
+      :can-redo="canRedo"
+      @undo="handleUndo"
+      @redo="handleRedo"
+    ></tool-head>
     <div ref="splitterContainer" class="edit-resume">
       <edit-content
         v-if="resumeMode === 'edit'"
