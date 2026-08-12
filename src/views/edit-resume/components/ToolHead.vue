@@ -2,10 +2,16 @@
 import LineMdArrowSmallLeft from '~icons/line-md/arrow-small-left'
 import LineMdArrowCloseDown from '~icons/line-md/arrow-close-down'
 import LineMdArrowsHorizontal from '~icons/line-md/arrows-horizontal'
-import { DownOutlined, UndoOutlined, RedoOutlined } from '@ant-design/icons-vue'
+import {
+  DownOutlined,
+  UndoOutlined,
+  RedoOutlined,
+  BarChartOutlined,
+} from '@ant-design/icons-vue'
 import { exportResumeToBrowserPrint } from '@/utils/print'
 import ThemeIcon from '@/components/ThemeIcon.vue'
-import { defineProps, defineEmits, inject, ref } from 'vue'
+import ResumeAnalysis from './ResumeAnalysis.vue'
+import { inject, ref } from 'vue'
 import type { Resume } from '@/types/resume'
 import templates from '@/template'
 import previewImage from '@/assets/images/classic.fcafadcb.svg'
@@ -59,6 +65,19 @@ const handleChangeTemplate = () => {
 const afterOpenChange = (open: boolean) => {
   drawerOpen.value = open
 }
+
+/** 数据分析抽屉开关 */
+const analysisDrawerOpen = ref(false)
+
+/** 打开简历数据分析抽屉 */
+const handleOpenAnalysis = () => {
+  analysisDrawerOpen.value = true
+}
+
+/** 数据分析抽屉关闭回调 */
+const handleAnalysisAfterOpenChange = (open: boolean) => {
+  analysisDrawerOpen.value = open
+}
 </script>
 
 <template>
@@ -94,6 +113,11 @@ const afterOpenChange = (open: boolean) => {
         <a-button @click="handleChangeTemplate"
           ><line-md-arrows-horizontal
         /></a-button>
+      </a-tooltip>
+      <a-tooltip title="数据分析">
+        <a-button @click="handleOpenAnalysis">
+          <BarChartOutlined />
+        </a-button>
       </a-tooltip>
       <a-dropdown>
         <a-button type="primary" class="tool-download">
@@ -138,6 +162,17 @@ const afterOpenChange = (open: boolean) => {
         </div>
       </div>
     </a-radio-group>
+  </a-drawer>
+
+  <!-- 数据分析抽屉 -->
+  <a-drawer
+    v-model:open="analysisDrawerOpen"
+    title="简历数据分析"
+    placement="right"
+    width="480px"
+    @after-open-change="handleAnalysisAfterOpenChange"
+  >
+    <ResumeAnalysis />
   </a-drawer>
 </template>
 
@@ -232,7 +267,7 @@ const afterOpenChange = (open: boolean) => {
     align-items: center;
     gap: 10px;
     border-radius: 10px;
-    border: 1px solid $border-color;
+    border: 1px solid transparent;
     padding: 10px;
     img {
       width: 100%;
