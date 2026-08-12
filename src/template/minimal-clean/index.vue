@@ -61,8 +61,6 @@ const sortedSections = computed(() => {
   font-size: v-bind('styles.baseFontSize');
   color: #2c3e50;
   line-height: 1.6;
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   .resume-header {
     display: flex;

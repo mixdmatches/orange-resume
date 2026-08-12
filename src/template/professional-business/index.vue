@@ -79,7 +79,6 @@ const sortedSections = computed(() => {
   font-size: v-bind('styles.baseFontSize');
   color: #333;
   line-height: 1.6;
-  font-family: 'Times New Roman', Times, serif;
 
   .resume-header {
     padding: 10px 0;
