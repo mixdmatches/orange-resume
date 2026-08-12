@@ -59,7 +59,8 @@ export const exportResumeToBrowserPrint = async (
       selectedFontFamily,
       'important',
     )
-    const fontFaceStyles = await getFontFaceCss(selectedFontFamily)
+    // 使用 inline=true 将字体转 base64 内联，确保 PDF 导出时字体不丢失
+    const fontFaceStyles = await getFontFaceCss(selectedFontFamily, true)
 
     const htmlContent = `
       <!DOCTYPE html>

@@ -12,6 +12,7 @@ import type { Resume } from '@/types/resume'
 import { PlusOutlined, DownOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { type UseDraggableReturn, VueDraggable } from 'vue-draggable-plus'
+import { getFontOptions } from '@/utils/fonts'
 
 const themeColors = ref([
   '#111827',
@@ -21,6 +22,8 @@ const themeColors = ref([
   '#059669',
   '#0f172a',
 ])
+
+const fontFamilyOptions = getFontOptions()
 
 // 字号选择
 const fontOptions = [12, 14, 16, 18, 20, 22, 24]
@@ -251,6 +254,21 @@ const disabledToggle = () => {
           />
         </div>
         <div class="layout-settings-row">
+          <div class="layout-settings-item">
+            <span>字体</span>
+            <a-select
+              v-model:value="resume.globalConfiguration.fontFamily"
+              style="width: 160px"
+            >
+              <a-select-option
+                v-for="fontF in fontFamilyOptions"
+                :key="fontF.value"
+                :value="fontF.value"
+                :style="{ fontFamily: fontF.value }"
+                >{{ fontF.label }}</a-select-option
+              >
+            </a-select>
+          </div>
           <div class="layout-settings-item">
             <span>基础字号</span>
             <a-select

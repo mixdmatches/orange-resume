@@ -1,8 +1,17 @@
 <script setup lang="ts">
 import type { Resume } from '@/types/resume'
-import { computed, inject, ref, onMounted, watch, onUnmounted } from 'vue'
+import {
+  computed,
+  inject,
+  ref,
+  onMounted,
+  watch,
+  onUnmounted,
+  normalizeClass,
+} from 'vue'
 import { getTemplateById } from '@/template'
 import { useAutoOnePage } from '@/hooks/useAutoOnePage'
+import { useFontFace } from '@/hooks/useFontFace'
 import { message } from 'ant-design-vue'
 
 const resume: Resume = inject('resume') as Resume
@@ -78,6 +87,9 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateContentHeight)
 })
 
+// 动态注入 @font-face 规则，加载字体文件
+useFontFace()
+
 const currentTemplate = computed(() => {
   const template = getTemplateById(resume.templateId)
   return template?.component || getTemplateById('classic')?.component
@@ -93,6 +105,7 @@ const currentTemplate = computed(() => {
         :style="{
           gap: `${styles.baseModuleSpacing}px`,
           padding: `${styles.basePagePadding}px`,
+          fontFamily: normalizeClass(styles.fontFamily),
           ...(isScaled
             ? {
                 transform: `scale(${scaleFactor})`,

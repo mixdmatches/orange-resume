@@ -43,6 +43,7 @@ const handleDownloadPDF = async () => {
   await exportResumeToBrowserPrint(
     document.querySelector('.preview-wrapper')!,
     resume.globalConfiguration.basePagePadding,
+    resume.globalConfiguration.fontFamily,
   )
 }
 

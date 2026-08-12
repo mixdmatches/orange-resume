@@ -1,4 +1,5 @@
 import type { Resume } from '@/types/resume'
+import { DEFAULT_FONT_FAMILY } from '@/utils/fonts'
 
 // 初始全局设置
 export const initialGlobalConfiguration = {
@@ -10,6 +11,7 @@ export const initialGlobalConfiguration = {
   titleFontSize: 16, // 标题字体大小
   subTitleFontSize: 14, // 子标题字体大小
   themeColor: '#111827', // 主题颜色
+  fontFamily: DEFAULT_FONT_FAMILY, // 字体系列
   autoOnePage: false, // 自动适配一页纸
 }
 

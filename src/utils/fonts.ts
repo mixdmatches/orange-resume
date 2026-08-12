@@ -8,6 +8,7 @@ type FontSource = {
 
 type FontDefinition = {
   labelKey: string
+  label: string
   value: string
   aliases: string[]
   sources: FontSource[]
@@ -15,9 +16,10 @@ type FontDefinition = {
 
 export const DEFAULT_FONT_FAMILY = '"Alibaba PuHuiTi", sans-serif'
 
-const FONT_DEFINITIONS: FontDefinition[] = [
+export const FONT_DEFINITIONS: FontDefinition[] = [
   {
     labelKey: 'alibaba',
+    label: '阿里巴巴普惠体',
     value: DEFAULT_FONT_FAMILY,
     aliases: ['Alibaba PuHuiTi, sans-serif', '"Alibaba PuHuiTi", sans-serif'],
     sources: [
@@ -39,6 +41,7 @@ const FONT_DEFINITIONS: FontDefinition[] = [
   },
   {
     labelKey: 'misans',
+    label: '小米 MiSans',
     value: '"MiSans", sans-serif',
     aliases: [
       '"MiSans", "Microsoft YaHei", "微软雅黑", sans-serif',
@@ -58,7 +61,7 @@ const FONT_DEFINITIONS: FontDefinition[] = [
       },
       {
         family: 'MiSans',
-        url: '/fonts/MiSans-Bold.ttf',
+        url: '/fonts/MiSans-Medium.ttf',
         format: 'truetype',
         weight: '700',
         style: 'normal',
@@ -67,6 +70,7 @@ const FONT_DEFINITIONS: FontDefinition[] = [
   },
   {
     labelKey: 'notosanssc',
+    label: '思源黑体',
     value: '"Noto Sans SC", "Noto Sans CJK SC", sans-serif',
     aliases: [
       '"Noto Sans SC", "Noto Sans CJK SC", sans-serif',
@@ -98,6 +102,7 @@ const FONT_DEFINITIONS: FontDefinition[] = [
   },
   {
     labelKey: 'sourcehanserifsc',
+    label: '思源宋体',
     value: '"Source Han Serif SC", "Noto Serif SC", serif',
     aliases: [
       '"Source Han Serif SC", "Noto Serif SC", serif',
@@ -133,11 +138,19 @@ const FONT_DEFINITIONS: FontDefinition[] = [
 
 const fontDataUrlCache = new Map<string, Promise<string>>()
 
+/** 根据 Vite base 配置解析字体文件的完整 URL */
+const resolveFontUrl = (url: string) => {
+  const base = import.meta.env.BASE_URL
+  return base + url.replace(/^\//, '')
+}
+
 const toDataUrl = async (url: string) => {
+  const resolvedUrl = resolveFontUrl(url)
+
   if (!fontDataUrlCache.has(url)) {
     fontDataUrlCache.set(
       url,
-      fetch(url)
+      fetch(resolvedUrl)
         .then(response => {
           if (!response.ok) {
             throw new Error(`Failed to load font: ${url}`)
@@ -192,10 +205,10 @@ const buildFontFaceRule = (
 export const normalizeFontFamily = (fontFamily?: string) =>
   findFontDefinition(fontFamily).value
 
-export const getFontOptions = (t: (key: string) => string) =>
+export const getFontOptions = (t?: (key: string) => string) =>
   FONT_DEFINITIONS.map(definition => ({
     value: definition.value,
-    label: t(definition.labelKey),
+    label: t ? t(definition.labelKey) : definition.label,
   }))
 
 export const getFontFaceCss = async (fontFamily?: string, inline = false) => {
@@ -203,7 +216,9 @@ export const getFontFaceCss = async (fontFamily?: string, inline = false) => {
 
   const rules = await Promise.all(
     definition.sources.map(async source => {
-      const resolvedUrl = inline ? await toDataUrl(source.url) : source.url
+      const resolvedUrl = inline
+        ? await toDataUrl(source.url)
+        : resolveFontUrl(source.url)
       return buildFontFaceRule(source, resolvedUrl)
     }),
   )
