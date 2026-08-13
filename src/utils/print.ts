@@ -1,10 +1,18 @@
+/* eslint-disable no-console */
 import { getFontFaceCss, normalizeFontFamily } from '@/utils/fonts'
 
 export const exportResumeToBrowserPrint = async (
-  resumeContent: HTMLElement,
+  resumeContent: HTMLElement | null,
   pagePadding: number,
   fontFamily?: string,
 ) => {
+  // 参数校验：确保传入的 DOM 元素有效
+  if (!resumeContent) {
+    console.error('[print] resumeContent 为空，无法导出')
+    throw new Error('预览区域未加载完成')
+  }
+
+  console.log('[print] 开始导出 PDF，fontFamily =', fontFamily)
   const printFrame = document.createElement('iframe')
   printFrame.style.position = 'absolute'
   printFrame.style.width = '1px'
@@ -35,6 +43,7 @@ export const exportResumeToBrowserPrint = async (
     ) as HTMLElement | null
     const scaleTarget = clonedPreviewCard || clonedContent
 
+    // 获取 transform 值：优先使用内联样式，回退到计算样式
     let transformValue = scaleTarget.style.transform || ''
     if (!transformValue && originalPreviewCard) {
       const computedTransform =
@@ -42,16 +51,26 @@ export const exportResumeToBrowserPrint = async (
       transformValue = computedTransform === 'none' ? '' : computedTransform
     }
 
-    const match = transformValue.match(/scale\(([-\d.]+)\)/)
-    if (match) {
-      const scale = Number(match[1])
-      if (Number.isFinite(scale) && scale > 0 && scale < 1) {
-        // 打印时使用 zoom 参与分页布局计算，比 transform 更接近最终分页效果
-        scaleTarget.style.removeProperty('transform')
-        scaleTarget.style.removeProperty('transform-origin')
-        scaleTarget.style.setProperty('width', '100%')
-        scaleTarget.style.setProperty('zoom', String(scale))
-      }
+    // 解析缩放值：支持 scale(x) 和 matrix(a,0,0,d,0,0) 两种格式
+    // getComputedStyle 返回的是 matrix 格式，纯 scale(x) 正则无法匹配
+    let scale = 1
+    const scaleMatch = transformValue.match(/scale\(([\d.]+)\)/)
+    const matrixMatch = transformValue.match(
+      /matrix\(([\d.]+),\s*[-\d.]+,\s*[-\d.]+,\s*([\d.]+),\s*[-\d.]+,\s*[-\d.]+\)/,
+    )
+
+    if (scaleMatch) {
+      scale = Number(scaleMatch[1])
+    } else if (matrixMatch) {
+      scale = Number(matrixMatch[1])
+    }
+
+    if (Number.isFinite(scale) && scale > 0 && scale < 1) {
+      // 打印时使用 zoom 参与分页布局计算，比 transform 更接近最终分页效果
+      scaleTarget.style.removeProperty('transform')
+      scaleTarget.style.removeProperty('transform-origin')
+      scaleTarget.style.setProperty('width', '100%')
+      scaleTarget.style.setProperty('zoom', String(scale))
     }
 
     clonedContent.style.setProperty(
@@ -60,7 +79,15 @@ export const exportResumeToBrowserPrint = async (
       'important',
     )
     // 使用 inline=true 将字体转 base64 内联，确保 PDF 导出时字体不丢失
-    const fontFaceStyles = await getFontFaceCss(selectedFontFamily, true)
+    // fonts.ts 已做降级保护：inline 失败会自动回退到 URL 引用，不会中断流程
+    let fontFaceStyles: string
+    try {
+      fontFaceStyles = await getFontFaceCss(selectedFontFamily, true)
+      console.log('[print] 字体样式加载成功')
+    } catch (fontError) {
+      console.error('[print] 字体样式加载失败，使用空样式继续：', fontError)
+      fontFaceStyles = ''
+    }
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -150,25 +177,42 @@ export const exportResumeToBrowserPrint = async (
     const printWhenReady = async () => {
       try {
         const doc = iframeWindow.document
+        console.log('[print] 等待 iframe 资源就绪')
 
-        // 等待字体加载
-        if (doc.fonts?.ready) {
-          await doc.fonts.ready
-        }
-
-        // 等待所有图片加载完成
-        const images = Array.from(doc.images)
-        await Promise.all(
-          images
-            .filter(img => !img.complete)
-            .map(
-              img =>
-                new Promise<void>(resolve => {
-                  img.onload = () => resolve()
-                  img.onerror = () => resolve()
-                }),
-            ),
+        // 等待字体加载，设置 5 秒超时防止线上字体加载失败导致无限挂起
+        const fontReadyPromise = doc.fonts?.ready
+          ? doc.fonts.ready
+          : Promise.resolve()
+        const fontTimeoutPromise = new Promise<void>(resolve =>
+          setTimeout(() => {
+            console.warn('[print] 字体加载超时（5s），继续执行打印')
+            resolve()
+          }, 5000),
         )
+        await Promise.race([fontReadyPromise, fontTimeoutPromise])
+
+        // 等待所有图片加载完成，设置 3 秒超时
+        const images = Array.from(doc.images)
+        const imageLoadPromises = images
+          .filter(img => !img.complete)
+          .map(
+            img =>
+              new Promise<void>(resolve => {
+                img.onload = () => resolve()
+                img.onerror = () => resolve()
+              }),
+          )
+        if (imageLoadPromises.length > 0) {
+          await Promise.race([
+            Promise.all(imageLoadPromises),
+            new Promise<void>(resolve =>
+              setTimeout(() => {
+                console.warn('[print] 图片加载超时（3s），继续执行打印')
+                resolve()
+              }, 3000),
+            ),
+          ])
+        }
 
         // 给予额外的渲染帧缓冲
         await new Promise<void>(resolve => {
@@ -177,8 +221,16 @@ export const exportResumeToBrowserPrint = async (
           })
         })
 
+        console.log('[print] 资源就绪，调用 window.print()')
         iframeWindow.focus()
-        iframeWindow.print()
+        // 使用 try-catch 保护 print 调用，某些浏览器扩展（如沉浸式翻译）可能干扰
+        try {
+          iframeWindow.print()
+          console.log('[print] print() 调用完成')
+        } catch (printError) {
+          console.error('[print] iframe.print() 抛出异常：', printError)
+          throw printError
+        }
 
         // 打印完成后清理iframe
         setTimeout(() => {
@@ -187,18 +239,24 @@ export const exportResumeToBrowserPrint = async (
           }
         }, 1000)
       } catch (error) {
-        console.error('Error print:', error)
+        console.error('[print] 打印流程出错：', error)
         if (document.body.contains(printFrame)) {
           document.body.removeChild(printFrame)
         }
+        // 重新抛出，让上层 handleDownloadPDF 的 catch 能捕获并提示用户
+        throw error
       }
     }
 
-    void printWhenReady()
+    // 使用 await 而非 void，确保 printWhenReady 内部的错误能被外层 catch 捕获
+    // 进而传播到 handleDownloadPDF 的 try-catch，给用户可见的错误提示
+    await printWhenReady()
   } catch (error) {
-    console.error('Error setting up print:', error)
+    console.error('[print] 导出流程出错：', error)
     if (document.body.contains(printFrame)) {
       document.body.removeChild(printFrame)
     }
+    // 重新抛出，让上层 handleDownloadPDF 能捕获并提示用户
+    throw error
   }
 }

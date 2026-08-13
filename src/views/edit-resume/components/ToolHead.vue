@@ -11,6 +11,7 @@ import {
 import { exportResumeToBrowserPrint } from '@/utils/print'
 import ThemeIcon from '@/components/ThemeIcon.vue'
 import ResumeAnalysis from './ResumeAnalysis.vue'
+import { message } from 'ant-design-vue'
 import { inject, ref } from 'vue'
 import type { Resume } from '@/types/resume'
 import templates from '@/template'
@@ -40,11 +41,21 @@ const handleDownloadJson = () => {
 }
 
 const handleDownloadPDF = async () => {
-  await exportResumeToBrowserPrint(
-    document.querySelector('.preview-wrapper')!,
-    resume.globalConfiguration.basePagePadding,
-    resume.globalConfiguration.fontFamily,
-  )
+  const previewWrapper = document.querySelector(
+    '.preview-wrapper',
+  ) as HTMLElement
+  if (!previewWrapper) {
+    message.error('预览区域未加载完成，请稍候再试')
+    return
+  }
+  try {
+    const pagePadding = resume.globalConfiguration.basePagePadding
+    const fontFamily = resume.globalConfiguration.fontFamily
+    await exportResumeToBrowserPrint(previewWrapper, pagePadding, fontFamily)
+  } catch (error) {
+    console.error('导出 PDF 失败：', error)
+    message.error('导出 PDF 失败，请查看控制台或重试')
+  }
 }
 
 const handleDownloadMarkdown = () => {

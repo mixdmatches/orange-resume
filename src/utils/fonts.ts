@@ -144,7 +144,7 @@ const resolveFontUrl = (url: string) => {
   return base + url.replace(/^\//, '')
 }
 
-const toDataUrl = async (url: string) => {
+const toDataUrl = async (url: string): Promise<string | null> => {
   const resolvedUrl = resolveFontUrl(url)
 
   if (!fontDataUrlCache.has(url)) {
@@ -153,20 +153,34 @@ const toDataUrl = async (url: string) => {
       fetch(resolvedUrl)
         .then(response => {
           if (!response.ok) {
-            throw new Error(`Failed to load font: ${url}`)
+            console.warn(
+              `[fonts] 字体加载失败: ${url} (status=${response.status})`,
+            )
+            return null
           }
           return response.blob()
         })
         .then(
           blob =>
-            new Promise<string>((resolve, reject) => {
+            new Promise<string | null>((resolve, reject) => {
+              if (blob === null) {
+                resolve(null)
+                return
+              }
               const reader = new FileReader()
               reader.onloadend = () => resolve(reader.result as string)
               reader.onerror = () =>
                 reject(new Error(`Failed to read font: ${url}`))
               reader.readAsDataURL(blob)
             }),
-        ),
+        )
+        .catch(error => {
+          console.warn(
+            `[fonts] 字体转 base64 失败，将降级使用 URL: ${url}`,
+            error,
+          )
+          return null
+        }),
     )
   }
 
@@ -216,10 +230,16 @@ export const getFontFaceCss = async (fontFamily?: string, inline = false) => {
 
   const rules = await Promise.all(
     definition.sources.map(async source => {
-      const resolvedUrl = inline
-        ? await toDataUrl(source.url)
-        : resolveFontUrl(source.url)
-      return buildFontFaceRule(source, resolvedUrl)
+      if (inline) {
+        // 尝试 base64 内联，失败则降级为 URL 引用，保证打印流程不中断
+        const dataUrl = await toDataUrl(source.url)
+        if (dataUrl) {
+          return buildFontFaceRule(source, dataUrl)
+        }
+        console.warn(`[fonts] inline 失败，降级为 URL 引用: ${source.url}`)
+        return buildFontFaceRule(source, resolveFontUrl(source.url))
+      }
+      return buildFontFaceRule(source, resolveFontUrl(source.url))
     }),
   )
 
