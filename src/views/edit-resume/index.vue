@@ -55,6 +55,7 @@ const resume = reactive<Resume>({
     titleFontSize: 24,
     subTitleFontSize: 20,
     themeColor: '#007bff',
+    fontFamily: 'sans-serif',
     autoOnePage: false,
   },
 })

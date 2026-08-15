@@ -7,10 +7,15 @@ import {
   UndoOutlined,
   RedoOutlined,
   BarChartOutlined,
+  RobotOutlined,
 } from '@ant-design/icons-vue'
 import { exportResumeToBrowserPrint } from '@/utils/print'
 import ThemeIcon from '@/components/ThemeIcon.vue'
 import ResumeAnalysis from './ResumeAnalysis.vue'
+import AiAssistant from './AiAssistant.vue'
+import GrammarCheck from './GrammarCheck.vue'
+import SelfIntro from './SelfIntro.vue'
+import JobMatch from './JobMatch.vue'
 import { message } from 'ant-design-vue'
 import { inject, ref } from 'vue'
 import type { Resume } from '@/types/resume'
@@ -90,6 +95,37 @@ const handleOpenAnalysis = () => {
 const handleAnalysisAfterOpenChange = (open: boolean) => {
   analysisDrawerOpen.value = open
 }
+
+/** AI 工具子功能枚举（不含 assistant，assistant 走独立对话框） */
+type AiToolKey = 'jobMatch' | 'selfIntro' | 'grammar'
+
+/** AI 工具抽屉开关 */
+const aiDrawerOpen = ref(false)
+
+/** 当前激活的 AI 工具子功能 */
+const activeAiTool = ref<AiToolKey>('jobMatch')
+
+/** 智能助手对话框开关 */
+const aiAssistantOpen = ref(false)
+
+/**
+ * 打开 AI 工具抽屉并切换到指定子功能
+ * @param tool - 子功能 key
+ */
+const handleOpenAiTool = (tool: AiToolKey) => {
+  activeAiTool.value = tool
+  aiDrawerOpen.value = true
+}
+
+/** 打开智能助手对话框 */
+const handleOpenAssistant = () => {
+  aiAssistantOpen.value = true
+}
+
+/** AI 工具抽屉关闭回调 */
+const handleAiDrawerAfterOpenChange = (open: boolean) => {
+  aiDrawerOpen.value = open
+}
 </script>
 
 <template>
@@ -131,6 +167,27 @@ const handleAnalysisAfterOpenChange = (open: boolean) => {
           <BarChartOutlined />
         </a-button>
       </a-tooltip>
+      <a-dropdown>
+        <a-button>
+          <RobotOutlined style="margin-right: 0.2rem" />
+          AI 工具
+          <DownOutlined style="margin-left: 0.2rem" />
+        </a-button>
+        <template #overlay>
+          <a-menu>
+            <a-menu-item @click="handleOpenAssistant"> 智能助手 </a-menu-item>
+            <a-menu-item @click="handleOpenAiTool('jobMatch')">
+              岗位匹配
+            </a-menu-item>
+            <a-menu-item @click="handleOpenAiTool('selfIntro')">
+              自我介绍
+            </a-menu-item>
+            <a-menu-item @click="handleOpenAiTool('grammar')">
+              语法纠错
+            </a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
       <a-dropdown>
         <a-button type="primary" class="tool-download">
           <line-md-arrow-close-down style="margin-right: 0.2rem" />
@@ -186,6 +243,35 @@ const handleAnalysisAfterOpenChange = (open: boolean) => {
   >
     <ResumeAnalysis />
   </a-drawer>
+
+  <!-- AI 工具抽屉 -->
+  <a-drawer
+    v-model:open="aiDrawerOpen"
+    title="AI 工具"
+    placement="right"
+    width="480px"
+    @after-open-change="handleAiDrawerAfterOpenChange"
+  >
+    <a-tabs
+      v-model:active-key="activeAiTool"
+      size="middle"
+      tab-position="top"
+      class="ai-tool-tabs"
+    >
+      <a-tab-pane key="jobMatch" tab="岗位匹配">
+        <JobMatch />
+      </a-tab-pane>
+      <a-tab-pane key="selfIntro" tab="自我介绍">
+        <SelfIntro />
+      </a-tab-pane>
+      <a-tab-pane key="grammar" tab="语法纠错">
+        <GrammarCheck />
+      </a-tab-pane>
+    </a-tabs>
+  </a-drawer>
+
+  <!-- 智能助手可拖拽对话框 -->
+  <AiAssistant v-model:open="aiAssistantOpen" />
 </template>
 
 <style scoped lang="scss">
