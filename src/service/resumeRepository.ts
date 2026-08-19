@@ -33,6 +33,7 @@ import {
   dequeueSync,
   enqueueSync,
   getPendingCount,
+  getPendingOps,
   incrementRetry,
   type SyncOp,
 } from './syncQueue'
@@ -164,8 +165,26 @@ export async function listResumes(): Promise<Resume[]> {
   if (navigator.onLine) {
     void (async () => {
       try {
+        // 读取同步队列，避免重复拉取删除中的简历，也避免误删创建中的简历
+        const pendingOps = await getPendingOps()
+        const pendingDeleteIds = new Set(
+          pendingOps.filter(op => op.type === 'delete').map(op => op.resumeId),
+        )
+        const pendingCreateIds = new Set(
+          pendingOps.filter(op => op.type === 'create').map(op => op.resumeId),
+        )
+
         const remote = await getResumeListApi()
+        const remoteIds = new Set(remote.list.map(r => r.id))
+
         for (const summary of remote.list) {
+          // 防竞态：跳过有 pending delete 的简历，避免删除中的简历被复活
+          if (pendingDeleteIds.has(summary.id)) {
+            console.log(
+              `[listResumes] 跳过 ${summary.id}：本地有待执行的删除操作`,
+            )
+            continue
+          }
           const existed = local.find(r => r.id === summary.id)
           if (!existed) {
             // 本地没有 → 拉详情后存本地
@@ -186,6 +205,20 @@ export async function listResumes(): Promise<Resume[]> {
             } catch (e) {
               console.warn('更新简历详情失败', e)
             }
+          }
+        }
+
+        // 对账：删除本地有但云端已不存在的简历（排除正在创建中的）
+        // 场景：用户在另一台设备删除了某份简历，本机需要同步删除
+        for (const localResume of local) {
+          if (
+            !remoteIds.has(localResume.id) &&
+            !pendingCreateIds.has(localResume.id)
+          ) {
+            console.log(
+              `[listResumes] 对账删除 ${localResume.id}：云端已不存在`,
+            )
+            await deleteResumeIDB(localResume.id)
           }
         }
       } catch (e) {
