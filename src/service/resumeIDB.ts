@@ -39,9 +39,7 @@ export const openDB = (): Promise<IDBDatabase> => {
  * @param resume 简历数据
  * @returns Promise<string> 新创建的简历ID
  */
-export const addResumeIDB = async (
-  resume: Omit<Resume, 'createdAt' | 'updatedAt'>,
-): Promise<string> => {
+export const addResumeIDB = async (resume: Resume): Promise<string> => {
   const db = await openDB()
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(STORE_NAME, 'readwrite')
@@ -167,6 +165,7 @@ export const deleteResumeIDB = async (id: string): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(STORE_NAME, 'readwrite')
     const store = transaction.objectStore(STORE_NAME)
+    console.log(id, '要删除的简历id')
     const request = store.delete(id)
 
     request.onsuccess = () => {

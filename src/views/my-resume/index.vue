@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { DEFAULT_RESUME } from '@/config/init-resume-data'
 import {
-  addResumeIDB,
-  deleteResumeIDB,
-  getAllResumesIDB,
-} from '@/service/resumeIDB'
+  createResume,
+  deleteResume,
+  listResumes,
+} from '@/service/resumeRepository'
 import type { Resume } from '@/types/resume'
 import {
   PlusOutlined,
@@ -32,11 +32,14 @@ const activeResumeId = ref<string>('')
 const resumes = ref<Resume[]>([])
 
 /**
- * 获取所有简历
+ * 获取所有简历（走 Repository 调度层，本地优先 + 后台云同步）
  */
 const getAllResume = async () => {
-  const res = await getAllResumesIDB()
-  res.sort((a, b) => b.createdAt - a.createdAt)
+  const res = await listResumes()
+  // Repository 已按 updatedAt 倒序返回，这里兜底一次
+  res.sort(
+    (a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt),
+  )
   resumes.value = res
 }
 
@@ -45,16 +48,16 @@ onMounted(() => {
 })
 
 /**
- * 创建简历
+ * 创建简历（Repository 先写本地再入同步队列）
  */
 const handleAddResume = async () => {
+  const id = crypto.randomUUID().substring(0, 8)
   const newResume: Omit<Resume, 'createdAt' | 'updatedAt'> = {
     ...DEFAULT_RESUME,
-    id: crypto.randomUUID().substring(0, 5),
+    id,
   }
-  newResume.title = `新建简历${crypto.randomUUID().substring(0, 5)}`
-
-  await addResumeIDB(newResume)
+  newResume.title = `新建简历${id}`
+  await createResume(newResume as Resume)
   await getAllResume()
 }
 
@@ -76,7 +79,7 @@ const confirmLoading = ref(false)
 const handleOk = async () => {
   confirmLoading.value = true
   try {
-    await deleteResumeIDB(activeResumeId.value)
+    await deleteResume(activeResumeId.value)
     await getAllResume()
     message.success('删除成功')
   } catch (error) {
@@ -114,7 +117,7 @@ const handleImportJSON = async () => {
         throw new Error('无效的简历配置文件')
       }
 
-      await addResumeIDB(resume)
+      await createResume(resume)
       await getAllResume()
       message.success('导入配置成功')
     } catch (error) {
@@ -151,7 +154,7 @@ const handleImportPDF = async () => {
       const resume = await importPDF(file)
       message.success('PDF 解析成功，正在处理...')
       console.log('PDF 解析文本内容：', resume)
-      await addResumeIDB(resume)
+      await createResume(resume)
       await getAllResume()
       message.success('PDF 导入成功')
     } catch (error) {
