@@ -254,6 +254,7 @@ export async function getResumeById(id: string): Promise<Resume | null> {
             (!local.updatedAt || remote.updatedAt > local.updatedAt)
           ) {
             await updateResumeIDB(id, remote)
+            return remote // 返回最新版本
           }
         } catch {
           // 静默失败

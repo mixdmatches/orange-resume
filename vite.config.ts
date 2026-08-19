@@ -37,7 +37,7 @@ export default defineConfig({
     proxy: {
       // 将 /api 前缀的请求代理到 NestJS 后端，避免联调时跨域
       '/api': {
-        target: import.meta.env.VITE_API_BASE_URL,
+        target: 'http://localhost:3000',
         changeOrigin: true,
         rewrite: path => path.replace(/^\/api/, '/api'),
       },

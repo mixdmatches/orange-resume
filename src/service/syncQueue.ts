@@ -111,16 +111,21 @@ export async function getPendingOps(): Promise<SyncOp[]> {
  *   - 同一份简历只保留最后一次操作
  *   - 若最后是 delete，丢弃这条简历所有之前的操作（反正要删）
  *   - 若最后是 update，覆盖之前的 create/update（update 已含完整内容）
- * @returns 合并后按时间升序的操作列表
+ *
+ *  本函数不仅返回「合并后的内存列表」，还会把被合并覆盖的无效 op 一次性
+ *  从 IndexedDB 删除（writeback），避免无效记录永久堆积。
+ *
+ * @returns 合并后按时间升序的操作列表（这些 op 已在 IDB 中保留）
  */
 export async function compactOps(): Promise<SyncOp[]> {
-  const ops = await getPendingOps()
-  console.log(ops, '等待同步的操作栈')
+  const allOps = await getPendingOps()
+  console.log(allOps, '等待同步的操作队列')
 
-  if (ops.length === 0) return []
+  if (allOps.length === 0) return []
 
+  // 第 1 步：分组选出每条 resumeId 要保留的最后一条 op
   const grouped = new Map<string, SyncOp>()
-  for (const op of ops) {
+  for (const op of allOps) {
     const prev = grouped.get(op.resumeId)
     if (!prev) {
       grouped.set(op.resumeId, op)
@@ -131,6 +136,25 @@ export async function compactOps(): Promise<SyncOp[]> {
       grouped.set(op.resumeId, op)
     }
   }
+
+  const keptOps = new Set<string>()
+  for (const kept of grouped.values()) {
+    keptOps.add(kept.opId)
+  }
+
+  // 第 2 步：找出所有被合并覆盖的无效 op，从 IDB 删除 writeback
+  const droppedOpIds: string[] = []
+  for (const op of allOps) {
+    if (!keptOps.has(op.opId)) {
+      droppedOpIds.push(op.opId)
+    }
+  }
+
+  if (droppedOpIds.length > 0) {
+    await deleteUnableOps(droppedOpIds)
+  }
+
+  // 第 3 步：返回保留下来的 op（按时间升序，保证回放顺序）
   return Array.from(grouped.values()).sort((a, b) => a.createdAt - b.createdAt)
 }
 
@@ -147,6 +171,27 @@ export async function dequeueSync(opId: string): Promise<void> {
     req.onsuccess = () => resolve()
     req.onerror = () => reject(req.error)
   })
+}
+
+/**
+ * 删除无效操作（被合并覆盖的 op）
+ * @param droppedOpIds 需要删除的无效操作 ID 数组
+ */
+export async function deleteUnableOps(droppedOpIds: string[]): Promise<void> {
+  const db = await openQueueDB()
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite')
+    const store = tx.objectStore(STORE_NAME)
+    for (const opId of droppedOpIds) {
+      store.delete(opId)
+    }
+    tx.oncomplete = () => resolve()
+    tx.onerror = () => reject(tx.error)
+  })
+  console.log(
+    `[syncQueue] compactOps 清理了 ${droppedOpIds.length} 条被合并的无效 op`,
+    droppedOpIds,
+  )
 }
 
 /**
