@@ -85,6 +85,16 @@ export function deleteResumeApi(id: string): Promise<{ success: true }> {
 }
 
 /**
+ * 删除多份简历
+ * @param ids - 简历 ID 数组
+ */
+export function deleteBatchResumeApi(
+  ids: string[],
+): Promise<{ success: true }> {
+  return del<{ success: true }>(`/resumes/batch`, { data: ids })
+}
+
+/**
  * 复制简历
  * @param id - 简历 ID
  * @returns 新的简历 ID

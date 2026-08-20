@@ -179,6 +179,34 @@ export const deleteResumeIDB = async (id: string): Promise<boolean> => {
 }
 
 /**
+ * 批量删除简历
+ * @param ids 简历ID数组
+ * @returns Promise<boolean> 删除是否成功
+ */
+export const deleteBatchResumeIDB = async (ids: string[]): Promise<boolean> => {
+  if (ids.length === 0) return true
+  const db = await openDB()
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE_NAME, 'readwrite')
+    const store = transaction.objectStore(STORE_NAME)
+    console.log(ids, '要批量删除的简历ids')
+
+    // 使用同一个事务删除所有简历
+    ids.forEach((id) => {
+      store.delete(id)
+    })
+
+    transaction.oncomplete = () => {
+      resolve(true)
+    }
+
+    transaction.onerror = () => {
+      reject(new Error('批量删除简历失败'))
+    }
+  })
+}
+
+/**
  * 清空所有简历数据
  * @returns Promise<boolean> 清空是否成功
  */

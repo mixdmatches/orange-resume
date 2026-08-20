@@ -111,9 +111,7 @@ export async function getPendingOps(): Promise<SyncOp[]> {
  *   - 同一份简历只保留最后一次操作
  *   - 若最后是 delete，丢弃这条简历所有之前的操作（反正要删）
  *   - 若最后是 update，覆盖之前的 create/update（update 已含完整内容）
- *
- *  本函数不仅返回「合并后的内存列表」，还会把被合并覆盖的无效 op 一次性
- *  从 IndexedDB 删除（writeback），避免无效记录永久堆积。
+ *   - 删除被合并覆盖的无效 op（writeback）
  *
  * @returns 合并后按时间升序的操作列表（这些 op 已在 IDB 中保留）
  */

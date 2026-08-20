@@ -16,6 +16,7 @@
 import type { Resume } from '@/types/resume'
 import {
   addResumeIDB,
+  deleteBatchResumeIDB,
   deleteResumeIDB,
   getAllResumesIDB,
   getResumeByIdIDB,
@@ -23,6 +24,7 @@ import {
 } from './resumeIDB'
 import {
   createResumeApi,
+  deleteBatchResumeApi,
   deleteResumeApi,
   getResumeByIdApi,
   getResumeListApi,
@@ -323,6 +325,26 @@ export async function deleteResume(id: string): Promise<void> {
     type: 'delete',
     resumeId: id,
   })
+  flushQueue()
+}
+
+/**
+ * 批量删除简历
+ * 先批量删 IDB，再分别入队每个删除操作
+ * @param ids 简历 ID 数组
+ */
+export async function deleteBatchResume(ids: string[]): Promise<void> {
+  if (ids.length === 0) return
+  ensureNetworkListener()
+  // 先批量删本地 IDB（单个事务，效率更高）
+  await deleteBatchResumeIDB(ids)
+  // 为每个简历 ID 单独入队（保证回放时可逐条重试、失败隔离）
+  for (const id of ids) {
+    await enqueueSync({
+      type: 'delete',
+      resumeId: id,
+    })
+  }
   flushQueue()
 }
 
