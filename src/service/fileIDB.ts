@@ -127,6 +127,12 @@ export const getConfigIDB = async (key: string): Promise<string | null> => {
   })
 }
 
+/**
+ * 验证文件句柄权限
+ * @param handle 文件句柄
+ * @param mode 权限模式
+ * @returns Promise<boolean> 权限是否已授予
+ */
 export const verifyPermission = async (
   handle: FileSystemDirectoryHandle,
   mode: FileSystemPermissionMode = 'readwrite',

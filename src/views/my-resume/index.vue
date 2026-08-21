@@ -38,8 +38,6 @@ const resumes = ref<Resume[]>([])
  */
 const getAllResume = async () => {
   const res = await listResumes()
-  console.log(res)
-
   // Repository 已按 updatedAt 倒序返回，这里兜底一次
   res.sort(
     (a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt),
@@ -264,28 +262,6 @@ const handleImportPDF = async () => {
   input.addEventListener('change', handleChange)
   input.click()
 }
-
-// ========== 同步目录相关状态 ==========
-const syncStore = useSyncStore()
-
-const hasDirConfig = ref(false)
-const folderPath = ref<string>('')
-
-onMounted(async () => {
-  const dirHandle = await getFileHandleIDB('syncDirectory')
-  const path = await getConfigIDB('syncDirectoryPath')
-  if (dirHandle && path) {
-    folderPath.value = path
-    hasDirConfig.value = true
-  } else {
-    hasDirConfig.value = false
-    if (!document.querySelector('.ant-notification-notice'))
-      notification.error({
-        message: '同步目录未配置',
-        description: '同步目录未配置，将无法自动备份您的简历数据',
-      })
-  }
-})
 </script>
 
 <template>
@@ -411,34 +387,6 @@ onMounted(async () => {
       </a-space>
     </div>
 
-    <!-- 同步结果显示 -->
-    <div v-if="syncStore.syncResult" class="sync-result">
-      <a-alert
-        message="同步完成"
-        type="info"
-        show-icon
-        closable
-        @close="syncStore.clearSyncResult()"
-      >
-        <template #description>
-          <div class="sync-stats">
-            <span class="sync-stat">
-              <CheckCircleOutlined class="stat-icon synced" />
-              同步: <strong>{{ syncStore.syncResult.synced }}</strong>
-            </span>
-            <span class="sync-stat">
-              <ExclamationCircleOutlined class="stat-icon skipped" />
-              跳过: <strong>{{ syncStore.syncResult.skipped }}</strong>
-            </span>
-            <span class="sync-stat">
-              <CloseCircleOutlined class="stat-icon failed" />
-              失败: <strong>{{ syncStore.syncResult.failed }}</strong>
-            </span>
-          </div>
-        </template>
-      </a-alert>
-    </div>
-
     <!-- 简历卡片展示 -->
     <div v-if="resumes.length > 0" class="resumes">
       <a-card
@@ -523,43 +471,6 @@ onMounted(async () => {
 }
 .work {
   margin-bottom: 2rem;
-}
-
-.sync-result {
-  margin-bottom: 2rem;
-
-  .sync-stats {
-    display: flex;
-    gap: 24px;
-    margin-top: 8px;
-
-    .sync-stat {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 14px;
-
-      .stat-icon {
-        font-size: 16px;
-
-        &.synced {
-          color: #52c41a;
-        }
-
-        &.skipped {
-          color: #faad14;
-        }
-
-        &.failed {
-          color: #ff4d4f;
-        }
-      }
-
-      strong {
-        font-weight: 600;
-      }
-    }
-  }
 }
 
 .import-options {

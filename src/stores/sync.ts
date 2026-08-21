@@ -33,12 +33,6 @@ export const useSyncStore = defineStore('sync', () => {
   // 是否正在同步（本地目录）
   const isSyncing = ref(false)
 
-  // 云端同步状态（Local-First 架构）
-  const cloudStatus = ref<CloudSyncStatus>('synced')
-
-  // 云端待同步条数
-  const cloudPending = ref<number>(0)
-
   /**
    * 更新本地目录同步结果
    */
@@ -52,6 +46,12 @@ export const useSyncStore = defineStore('sync', () => {
   const clearSyncResult = () => {
     syncResult.value = null
   }
+
+  // 云端同步状态（Local-First 架构）
+  const cloudStatus = ref<CloudSyncStatus>('synced')
+
+  // 云端待同步条数
+  const cloudPending = ref<number>(0)
 
   /**
    * 设置云端同步状态

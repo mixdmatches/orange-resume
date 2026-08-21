@@ -1,6 +1,4 @@
 import type { Resume } from '@/types/resume'
-import { debounceSyncToFile } from '@/utils/resumeSync'
-
 const DB_NAME = 'resumeDB'
 const DB_VERSION = 2
 const STORE_NAME = 'resumes'
@@ -136,8 +134,6 @@ export const updateResumeIDB = async (
         updatedAt: Date.now(),
       }
 
-      debounceSyncToFile(updatedResume, existingResume)
-
       const putRequest = store.put(updatedResume)
 
       putRequest.onsuccess = () => {
@@ -192,7 +188,7 @@ export const deleteBatchResumeIDB = async (ids: string[]): Promise<boolean> => {
     console.log(ids, '要批量删除的简历ids')
 
     // 使用同一个事务删除所有简历
-    ids.forEach((id) => {
+    ids.forEach(id => {
       store.delete(id)
     })
 
