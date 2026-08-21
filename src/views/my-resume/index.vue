@@ -12,9 +12,6 @@ import {
   EditOutlined,
   DeleteOutlined,
   VerticalAlignTopOutlined,
-  CheckCircleOutlined,
-  ExclamationCircleOutlined,
-  CloseCircleOutlined,
   FileTextOutlined,
   FilePdfOutlined,
   CheckSquareOutlined,
@@ -22,9 +19,7 @@ import {
 import dayjs from 'dayjs'
 import { computed, h, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { message, notification } from 'ant-design-vue'
-import { getConfigIDB, getFileHandleIDB } from '@/service/fileIDB'
-import { useSyncStore } from '@/stores/sync'
+import { message } from 'ant-design-vue'
 import { importPDF } from '@/utils/importPDF'
 
 const router = useRouter()
@@ -57,8 +52,8 @@ const handleAddResume = async () => {
   const newResume: Omit<Resume, 'createdAt' | 'updatedAt'> = {
     ...DEFAULT_RESUME,
     id,
+    title: `新建简历${id}`,
   }
-  newResume.title = `新建简历${id}`
   await createResume(newResume as Resume)
   await getAllResume()
 }

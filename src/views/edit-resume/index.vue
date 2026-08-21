@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   computed,
+  nextTick,
   onMounted,
   onUnmounted,
   provide,
@@ -13,7 +14,6 @@ import ToolHead from './components/ToolHead.vue'
 import EditContent from '@/views/edit-resume/components/EditContent.vue'
 import ResumePreview from '@/views/edit-resume/components/ResumePreview.vue'
 import AiInterview from '@/views/edit-resume/components/AiInterview.vue'
-import dayjs from 'dayjs'
 import { useRoute } from 'vue-router'
 import { getResumeById, updateResume } from '@/service/resumeRepository'
 import { useResumeHistory } from '@/hooks/useResumeHistory'
@@ -24,6 +24,7 @@ import {
   CloudUploadOutlined,
   DisconnectOutlined,
 } from '@ant-design/icons-vue'
+import { DEFAULT_RESUME } from '@/config/init-resume-data.ts'
 
 const route = useRoute()
 const resumeHistory = useResumeHistory()
@@ -32,48 +33,7 @@ const hasInitializedHistory = ref(false)
 let historyTimer: ReturnType<typeof setTimeout> | null = null
 let lastSavedHistorySnapshot = ''
 
-const resume = reactive<Resume>({
-  id: '',
-  title: '',
-  templateId: '',
-  createdAt: dayjs().unix(),
-  updatedAt: null,
-  basic: {
-    name: '',
-    position: '',
-    age: 0,
-    phone: '',
-    address: '',
-    email: '',
-    photo: '',
-    photoConfig: {
-      aspectRatio: 'square',
-      width: 0,
-      height: 0,
-      borderRadius: 0,
-      customBorderRadius: 0,
-      visible: true,
-    },
-  },
-  educations: [],
-  internships: [],
-  projects: [],
-  skills: '',
-  customData: {},
-  menuSections: [],
-  globalConfiguration: {
-    baseFontSize: 16,
-    basePagePadding: 20,
-    baseLineHeight: 1.5,
-    baseModuleSpacing: 20,
-    paragraphSpacing: 20,
-    titleFontSize: 24,
-    subTitleFontSize: 20,
-    themeColor: '#007bff',
-    fontFamily: 'sans-serif',
-    autoOnePage: false,
-  },
-})
+const resume = reactive<Resume>({ ...DEFAULT_RESUME, id: '' })
 
 /**
  * 加载简历：走 Repository 调度层
@@ -87,6 +47,9 @@ const getResume = async () => {
   }
   resumeHistory.initialize(id, resume)
   lastSavedHistorySnapshot = JSON.stringify(resume)
+
+  // 等待初始赋值触发的 watcher 执行完毕，再允许后续用户编辑进入保存流程
+  await nextTick()
   hasInitializedHistory.value = true
 }
 onMounted(() => {
