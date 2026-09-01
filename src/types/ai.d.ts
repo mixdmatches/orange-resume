@@ -18,17 +18,16 @@ export interface ChatResult {
 
 /** 语法检查请求参数 */
 export interface GrammarCheckParams {
-  text: string
+  resumeText: string
 }
 
 /** 单个语法问题 */
 export interface GrammarIssue {
-  /** 原文片段 */
+  section: string
   original: string
-  /** 修改建议 */
   suggestion: string
-  /** 问题说明 */
-  message: string
+  reason: string
+  severity: GrammarSeverity
 }
 
 /** 语法检查响应数据 */
@@ -73,4 +72,49 @@ export interface ResumeScoreResult {
   top3Issues: string[]
   /** TOP3 亮点 */
   top3Highlights: string[]
+}
+
+/** 岗位匹配分析 DTO */
+export class JobMatchDto {
+  resumeText!: string
+  jobDescription!: string
+}
+
+/** 岗位匹配分析结果 */
+export interface JobMatchResult {
+  /** 匹配度 0-100 */
+  matchScore: number
+  /** 已匹配的核心技能 */
+  matchedSkills: string[]
+  /** 缺失但岗位要求的技能 */
+  missingSkills: string[]
+  /** 简历中的亮点 */
+  highlights: JobMatchPoint[]
+  /** 简历中的薄弱点 */
+  weaknesses: JobMatchPoint[]
+  /** 具体改进建议 */
+  suggestions: string[]
+}
+
+/** 自我介绍场景 */
+export type SelfIntroScene = '校招' | '社招' | '实习'
+
+/** 自我介绍语气 */
+export type SelfIntroTone = '正式' | '轻松'
+
+/** 自我介绍生成选项 */
+export interface SelfIntroOptions {
+  /** 求职场景 */
+  scene: SelfIntroScene
+  /** 时长（分钟），决定篇幅 */
+  duration: 1 | 3 | 5
+  /** 语气风格 */
+  tone: SelfIntroTone
+}
+export class SelfIntroDto {
+  /** 简历纯文本内容 */
+  resumeText!: string
+
+  /** 生成选项 */
+  options!: SelfIntroOptions
 }

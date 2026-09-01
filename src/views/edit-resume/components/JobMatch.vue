@@ -11,11 +11,9 @@ import {
 import { motion } from 'motion-v'
 import type { Resume } from '@/types/resume'
 import { resumeToText } from '@/views/AI-simulation-interview/composables/useAiInterview'
-import {
-  analyzeJobMatch,
-  hasApiKey,
-  type JobMatchResult,
-} from '@/utils/aiAPIConnect'
+import { hasApiKey } from '@/utils/aiAPIConnect'
+import { jobMatchApi } from '@/api'
+import type { JobMatchResult } from '@/types/ai'
 
 /** 简历数据 */
 const resume = inject<Resume>('resume') as Resume
@@ -72,7 +70,10 @@ const handleAnalyze = async () => {
 
   try {
     const resumeText = resumeToText(resume)
-    result.value = await analyzeJobMatch(resumeText, jobDescription.value)
+    result.value = await jobMatchApi({
+      resumeText,
+      jobDescription: jobDescription.value,
+    })
     message.success('分析完成')
   } catch (error) {
     message.error((error as Error).message || '分析失败，请重试')

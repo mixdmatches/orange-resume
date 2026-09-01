@@ -5,7 +5,11 @@ import {
 import { storage } from './storage'
 import type { APIManufacturer, APIState } from '@/types/APISetting'
 import OpenAI from 'openai'
-import type { ResumeScoreResult } from '@/types/ai'
+import type {
+  JobMatchResult,
+  ResumeScoreResult,
+  SelfIntroOptions,
+} from '@/types/ai'
 
 /**
  * 获取 API 配置
@@ -433,22 +437,6 @@ export const scoreResumeWithAI = async (
   return parsed
 }
 
-/** 自我介绍场景 */
-export type SelfIntroScene = '校招' | '社招' | '实习'
-
-/** 自我介绍语气 */
-export type SelfIntroTone = '正式' | '轻松'
-
-/** 自我介绍生成选项 */
-export interface SelfIntroOptions {
-  /** 求职场景 */
-  scene: SelfIntroScene
-  /** 时长（分钟），决定篇幅 */
-  duration: 1 | 3 | 5
-  /** 语气风格 */
-  tone: SelfIntroTone
-}
-
 /**
  * 流式生成自我介绍文案
  * @param resumeText - 简历纯文本内容
@@ -489,22 +477,6 @@ export interface JobMatchPoint {
   section: string
   /** 具体描述 */
   point: string
-}
-
-/** 岗位匹配分析结果 */
-export interface JobMatchResult {
-  /** 匹配度 0-100 */
-  matchScore: number
-  /** 已匹配的核心技能 */
-  matchedSkills: string[]
-  /** 缺失但岗位要求的技能 */
-  missingSkills: string[]
-  /** 简历中的亮点 */
-  highlights: JobMatchPoint[]
-  /** 简历中的薄弱点 */
-  weaknesses: JobMatchPoint[]
-  /** 具体改进建议 */
-  suggestions: string[]
 }
 
 /**

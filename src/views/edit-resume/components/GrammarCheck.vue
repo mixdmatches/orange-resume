@@ -12,6 +12,8 @@ import {
   hasApiKey,
   type GrammarIssue,
 } from '@/utils/aiAPIConnect'
+import { grammarCheckApi } from '@/api'
+import { resumeToText } from '@/views/AI-simulation-interview/composables/useAiInterview'
 
 /** 简历数据 */
 const resume = inject<Resume>('resume') as Resume
@@ -50,11 +52,14 @@ const handleCheck = async () => {
   hasChecked.value = true
 
   try {
-    issues.value = await checkResumeGrammar(JSON.stringify(resume))
-    if (issues.value.length === 0) {
+    const { issues: resultIssues } = await grammarCheckApi({
+      resumeText: resumeToText(resume),
+    })
+    if (resultIssues.length === 0) {
       message.success('未发现语法问题，简历文本很规范')
     } else {
-      message.info(`共发现 ${issues.value.length} 处问题`)
+      issues.value = resultIssues
+      message.info(`共发现 ${resultIssues.length} 处问题`)
     }
   } catch (error) {
     message.error((error as Error).message || '检查失败，请重试')

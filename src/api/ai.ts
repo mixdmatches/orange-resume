@@ -10,8 +10,11 @@ import type {
   ChatResult,
   GrammarCheckParams,
   GrammarCheckResult,
+  JobMatchDto,
+  JobMatchResult,
   ResumeScoreResult,
   ScoreParams,
+  SelfIntroDto,
 } from '@/types/ai'
 import { getApiConfig } from '@/utils/aiAPIConnect'
 import { AI_TIMEOUT, post, TOKEN_KEY } from '@/utils/request'
@@ -25,7 +28,7 @@ const HEADER_MODEL_ID = 'x-user-model-id'
  * 获取请求基础地址与鉴权头（供 fetch 流式请求使用）
  */
 function getRequestBase(): { url: string; headers: Record<string, string> } {
-  const baseURL = import.meta.env.VITE_API_BASE_URL || '/api'
+  const baseURL = import.meta.env.VITE_API_BASE_URL
   const token = storage.get<string>(TOKEN_KEY)
   return {
     url: baseURL,
@@ -126,9 +129,13 @@ export async function* chatStreamApi(
 export function grammarCheckApi(
   params: GrammarCheckParams,
 ): Promise<GrammarCheckResult> {
-  // 语法检查需等待大模型分析全文并输出 JSON，使用 AI 专用超时
   return post<GrammarCheckResult>('/ai/grammar-check', params, {
     timeout: AI_TIMEOUT,
+    headers: {
+      [HEADER_API_KEY]: getApiConfig()?.apiKey || '',
+      [HEADER_BASE_URL]: getApiConfig()?.apiEndpoint || '',
+      [HEADER_MODEL_ID]: getApiConfig()?.modelId || '',
+    },
   })
 }
 
@@ -150,9 +157,104 @@ export function scoreResumeApi(
   })
 }
 
+/**
+ * 岗位匹配分析
+ * @param params
+ * @returns
+ */
+export function jobMatchApi(params: JobMatchDto): Promise<JobMatchResult> {
+  return post<JobMatchResult>('/ai/job-match', params, {
+    timeout: AI_TIMEOUT,
+    headers: {
+      [HEADER_API_KEY]: getApiConfig()?.apiKey || '',
+      [HEADER_BASE_URL]: getApiConfig()?.apiEndpoint || '',
+      [HEADER_MODEL_ID]: getApiConfig()?.modelId || '',
+    },
+  })
+}
+
+/**
+ * AI 自我介绍流式生成（SSE，走后端转发）
+ * 后端每条事件的 data 为 JSON 字符串：
+ * - 增量：{"content":"..."}
+ * - 结束：{"done":true}
+ * @param params - 简历纯文本与生成选项（场景/时长/语气）
+ * @yields 文本增量片段
+ */
+export async function* selfIntroStreamApi(
+  params: SelfIntroDto,
+): AsyncGenerator<string, void, unknown> {
+  const { url, headers } = getRequestBase()
+
+  const response = await fetch(`${url}/ai/self-intro/stream`, {
+    method: 'POST',
+    headers: {
+      ...headers,
+      [HEADER_API_KEY]: getApiConfig()?.apiKey || '',
+      [HEADER_BASE_URL]: getApiConfig()?.apiEndpoint || '',
+      [HEADER_MODEL_ID]: getApiConfig()?.modelId || '',
+    },
+    body: JSON.stringify(params),
+  })
+
+  if (!response.ok) {
+    // 尝试读取后端返回的错误详情（如 API Key 未配置的具体原因）
+    let errMsg = `自我介绍生成请求失败（${response.status}）`
+    try {
+      const err = await response.json()
+      errMsg = err?.message || errMsg
+    } catch {
+      // 响应体非 JSON 时保留默认错误信息
+    }
+    throw new Error(errMsg)
+  }
+
+  const reader = response.body?.getReader()
+  if (!reader) {
+    throw new Error('浏览器不支持流式读取')
+  }
+
+  const decoder = new TextDecoder('utf-8')
+  let buffer = ''
+
+  // 逐块读取并解析 SSE 数据
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    buffer += decoder.decode(value, { stream: true })
+
+    // SSE 以双换行分隔事件，按行解析
+    const lines = buffer.split('\n')
+    // 保留最后可能不完整的一行到 buffer
+    buffer = lines.pop() || ''
+
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (!trimmed || !trimmed.startsWith('data:')) continue
+
+      const data = trimmed.slice(5).trim()
+
+      try {
+        const parsed = JSON.parse(data)
+        // 结束事件 {"done":true}
+        if (parsed?.done) return
+        // 增量事件 {"content":"..."}
+        if (parsed?.content) {
+          yield parsed.content as string
+        }
+      } catch {
+        // 非 JSON 数据（如心跳/注释），跳过
+      }
+    }
+  }
+}
+
 export default {
   chatApi,
   chatStreamApi,
   grammarCheckApi,
   scoreResumeApi,
+  jobMatchApi,
+  selfIntroStreamApi,
 }

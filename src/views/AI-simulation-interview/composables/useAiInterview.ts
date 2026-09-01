@@ -11,7 +11,14 @@ const createSection = (title: string, value?: string) =>
 
 export const resumeToText = (resume: Resume): string => {
   const lines: string[] = []
-  const { basic, educations, internships, projects, skills } = resume
+  // 各模块字段若为 undefined（新建空白简历/PDF 导入缺字段）时兜底，避免读取 .length 报错
+  const {
+    basic = {} as Resume['basic'],
+    educations = [],
+    internships = [],
+    projects = [],
+    skills = '',
+  } = resume
 
   lines.push('候选人简历信息如下：')
   lines.push(createSection('姓名', basic.name))

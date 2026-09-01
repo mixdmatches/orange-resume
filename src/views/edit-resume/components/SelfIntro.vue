@@ -5,11 +5,9 @@ import { CopyOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import MarkdownIt from 'markdown-it'
 import type { Resume } from '@/types/resume'
 import { resumeToText } from '@/views/AI-simulation-interview/composables/useAiInterview'
-import {
-  generateSelfIntro,
-  hasApiKey,
-  type SelfIntroOptions,
-} from '@/utils/aiAPIConnect'
+import { hasApiKey } from '@/utils/aiAPIConnect'
+import { selfIntroStreamApi } from '@/api'
+import type { SelfIntroOptions } from '@/types/ai'
 
 /** 简历数据 */
 const resume = inject<Resume>('resume') as Resume
@@ -58,7 +56,10 @@ const handleGenerate = async () => {
       duration: duration.value,
       tone: tone.value,
     }
-    for await (const delta of generateSelfIntro(resumeText, options)) {
+    for await (const delta of selfIntroStreamApi({
+      resumeText,
+      options,
+    })) {
       content.value += delta
     }
   } catch (error) {

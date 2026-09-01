@@ -50,7 +50,7 @@ export const AI_TIMEOUT = 120000
  * - timeout 使用默认 15s 兜底；AI 等长耗时接口可在调用处单独覆盖
  */
 const service: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL_PREFIX || '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   timeout: DEFAULT_TIMEOUT,
   headers: {
     'Content-Type': 'application/json;charset=utf-8',
