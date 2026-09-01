@@ -5,11 +5,12 @@ import {
 import { storage } from './storage'
 import type { APIManufacturer, APIState } from '@/types/APISetting'
 import OpenAI from 'openai'
+import type { ResumeScoreResult } from '@/types/ai'
 
 /**
  * 获取 API 配置
  */
-const getApiConfig = (): APIManufacturer | null => {
+export const getApiConfig = (): APIManufacturer | null => {
   const apiState = storage.get<APIState>('apiState')?.states || []
   const selectedModel = storage.get<APIState>('apiState')?.selectedModel || null
   if (!apiState.length) {
@@ -352,32 +353,6 @@ export const checkResumeGrammar = async (
   const raw = completion.choices[0]?.message?.content || '{"issues":[]}'
   const parsed = JSON.parse(raw)
   return parsed.issues || []
-}
-
-/** 单个评分维度 */
-export interface ResumeScoreDimension {
-  /** 维度名称，如「内容详实度」 */
-  name: string
-  /** 分数 0-100 */
-  score: number
-  /** 该维度的一句话评语 */
-  comment: string
-}
-
-/** AI 简历评分结果 */
-export interface ResumeScoreResult {
-  /** 总分 0-100 */
-  totalScore: number
-  /** 等级 S/A/B/C/D */
-  grade: 'S' | 'A' | 'B' | 'C' | 'D'
-  /** 各维度评分 */
-  dimensions: ResumeScoreDimension[]
-  /** 总体评价（较长的 Markdown 文本） */
-  overallComment: string
-  /** TOP3 最需要改进的问题 */
-  top3Issues: string[]
-  /** TOP3 亮点 */
-  top3Highlights: string[]
 }
 
 /**

@@ -17,12 +17,10 @@ import {
   RocketFilled,
   BulbFilled,
 } from '@ant-design/icons-vue'
-import {
-  hasApiKey,
-  scoreResumeWithAI,
-  type ResumeScoreResult,
-} from '@/utils/aiAPIConnect'
+import { hasApiKey } from '@/utils/aiAPIConnect'
+import type { ResumeScoreResult } from '@/types/ai'
 import { resumeToText } from '@/views/AI-simulation-interview/composables/useAiInterview'
+import { scoreResumeApi } from '@/api'
 
 /**
  * 接收简历数据（优先用 inject，便于复用）
@@ -176,16 +174,12 @@ const handleStartAiScore = async () => {
   aiScoreLoading.value = true
   aiScoreResult.value = null
 
-  try {
-    const resumeText = resumeToText(resume)
-    aiScoreResult.value = await scoreResumeWithAI(resumeText)
-    hasAiScored.value = true
-    message.success('评分完成')
-  } catch (error) {
-    message.error((error as Error).message || '评分失败，请重试')
-  } finally {
-    aiScoreLoading.value = false
-  }
+  const resumeText = resumeToText(resume)
+  aiScoreResult.value = await scoreResumeApi({ resumeText })
+  hasAiScored.value = true
+  message.success('评分完成')
+
+  aiScoreLoading.value = false
 }
 </script>
 

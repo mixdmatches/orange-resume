@@ -38,7 +38,7 @@ export interface GrammarCheckResult {
 
 /** 简历评分请求参数 */
 export interface ScoreParams {
-  resume: Resume
+  resumeText: string
 }
 
 /** 评分维度 */
@@ -48,12 +48,29 @@ export interface ScoreDimension {
   comment: string
 }
 
-/** 简历评分响应数据 */
-export interface ScoreResult {
-  /** 总分 */
+/** 单个评分维度 */
+export interface ResumeScoreDimension {
+  /** 维度名称，如「内容详实度」 */
+  name: string
+  /** 分数 0-100 */
   score: number
-  /** 分维度评分 */
-  dimensions: ScoreDimension[]
-  /** 优化建议 */
-  suggestions: string[]
+  /** 该维度的一句话评语 */
+  comment: string
+}
+
+/** 简历评分响应数据 */
+/** AI 简历评分结果 */
+export interface ResumeScoreResult {
+  /** 总分 0-100 */
+  totalScore: number
+  /** 等级 S/A/B/C/D */
+  grade: 'S' | 'A' | 'B' | 'C' | 'D'
+  /** 各维度评分 */
+  dimensions: ResumeScoreDimension[]
+  /** 总体评价（较长的 Markdown 文本） */
+  overallComment: string
+  /** TOP3 最需要改进的问题 */
+  top3Issues: string[]
+  /** TOP3 亮点 */
+  top3Highlights: string[]
 }

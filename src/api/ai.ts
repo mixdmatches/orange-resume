@@ -10,11 +10,16 @@ import type {
   ChatResult,
   GrammarCheckParams,
   GrammarCheckResult,
+  ResumeScoreResult,
   ScoreParams,
-  ScoreResult,
 } from '@/types/ai'
-import { post, TOKEN_KEY } from '@/utils/request'
+import { getApiConfig } from '@/utils/aiAPIConnect'
+import { AI_TIMEOUT, post, TOKEN_KEY } from '@/utils/request'
 import { storage } from '@/utils/storage'
+
+const HEADER_API_KEY = 'x-user-api-key'
+const HEADER_BASE_URL = 'x-user-base-url'
+const HEADER_MODEL_ID = 'x-user-model-id'
 
 /**
  * 获取请求基础地址与鉴权头（供 fetch 流式请求使用）
@@ -37,8 +42,9 @@ function getRequestBase(): { url: string; headers: Record<string, string> } {
  * @param params - 对话消息列表与模型参数
  * @returns AI 回复内容
  */
-export function chat(params: ChatParams): Promise<ChatResult> {
-  return post<ChatResult>('/ai/chat', params)
+export function chatApi(params: ChatParams): Promise<ChatResult> {
+  // 非流式对话需等待大模型完整生成回复，使用 AI 专用超时
+  return post<ChatResult>('/ai/chat', params, { timeout: AI_TIMEOUT })
 }
 
 /**
@@ -55,7 +61,7 @@ export function chat(params: ChatParams): Promise<ChatResult> {
  * @param params - 对话消息列表与模型参数
  * @yields 文本增量片段
  */
-export async function* chatStream(
+export async function* chatStreamApi(
   params: ChatParams,
 ): AsyncGenerator<string, void, unknown> {
   const { url, headers } = getRequestBase()
@@ -117,10 +123,13 @@ export async function* chatStream(
  * @param params - 待检查的文本
  * @returns 语法问题列表，每项包含原文、建议与说明
  */
-export function grammarCheck(
+export function grammarCheckApi(
   params: GrammarCheckParams,
 ): Promise<GrammarCheckResult> {
-  return post<GrammarCheckResult>('/ai/grammar-check', params)
+  // 语法检查需等待大模型分析全文并输出 JSON，使用 AI 专用超时
+  return post<GrammarCheckResult>('/ai/grammar-check', params, {
+    timeout: AI_TIMEOUT,
+  })
 }
 
 /**
@@ -128,13 +137,22 @@ export function grammarCheck(
  * @param params - 完整简历数据
  * @returns 总分、分维度评分与优化建议
  */
-export function scoreResume(params: ScoreParams): Promise<ScoreResult> {
-  return post<ScoreResult>('/ai/score', params)
+export function scoreResumeApi(
+  params: ScoreParams,
+): Promise<ResumeScoreResult> {
+  return post<ResumeScoreResult>('/ai/resume-score', params, {
+    timeout: AI_TIMEOUT,
+    headers: {
+      [HEADER_API_KEY]: getApiConfig()?.apiKey || '',
+      [HEADER_BASE_URL]: getApiConfig()?.apiEndpoint || '',
+      [HEADER_MODEL_ID]: getApiConfig()?.modelId || '',
+    },
+  })
 }
 
 export default {
-  chat,
-  chatStream,
-  grammarCheck,
-  scoreResume,
+  chatApi,
+  chatStreamApi,
+  grammarCheckApi,
+  scoreResumeApi,
 }

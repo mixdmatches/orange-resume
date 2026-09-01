@@ -11,6 +11,7 @@ import axios, {
 } from 'axios'
 import { message } from 'ant-design-vue'
 import { storage } from './storage'
+import { ErrorCode } from '@/types/code'
 
 /** Token 在本地存储中的键名 */
 export const TOKEN_KEY = 'token'
@@ -37,14 +38,20 @@ function redirectToLogin() {
   }
 }
 
+/** 普通业务接口默认超时时间（毫秒） */
+export const DEFAULT_TIMEOUT = 15000
+
+/** AI 类接口超时时间（毫秒）*/
+export const AI_TIMEOUT = 120000
+
 /**
  * 创建 axios 实例
  * - baseURL 读取环境变量 VITE_API_BASE_URL_PREFIX，未配置时回退到 /api（配合 vite 代理）
- * - timeout 统一设置为 15s，避免请求长时间挂起
+ * - timeout 使用默认 15s 兜底；AI 等长耗时接口可在调用处单独覆盖
  */
 const service: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL_PREFIX || '/api',
-  timeout: 15000,
+  timeout: DEFAULT_TIMEOUT,
   headers: {
     'Content-Type': 'application/json;charset=utf-8',
   },
@@ -82,7 +89,7 @@ service.interceptors.response.use(
 
     const res = response.data
     // 业务成功：code 为 200 或 0 均视为成功
-    if (res.code === 200 || res.code === 0) {
+    if (res.code === ErrorCode.SUCCESS) {
       return res
     }
 
@@ -90,7 +97,7 @@ service.interceptors.response.use(
     message.error(res.message || '请求失败')
 
     // 401：Token 失效，清除本地 Token 并跳转登录页
-    if (res.code === 401) {
+    if (res.code === ErrorCode.UNAUTHORIZED) {
       storage.remove(TOKEN_KEY)
       redirectToLogin()
     }
@@ -108,16 +115,16 @@ service.interceptors.response.use(
     if (error.code === 'ECONNABORTED') {
       // 请求超时
       tip = '请求超时，请稍后重试'
-    } else if (status === 401) {
+    } else if (status === ErrorCode.UNAUTHORIZED) {
       // 未授权：清 Token 并跳转登录页
       tip = '登录已过期，请重新登录'
       storage.remove(TOKEN_KEY)
       redirectToLogin()
-    } else if (status === 403) {
+    } else if (status === ErrorCode.FORBIDDEN) {
       tip = '没有权限访问'
-    } else if (status === 404) {
+    } else if (status === ErrorCode.NOT_FOUND) {
       tip = '请求的资源不存在'
-    } else if (status && status >= 500) {
+    } else if (status && status >= ErrorCode.INTERNAL_ERROR) {
       tip = '服务器开小差了，请稍后重试'
     } else if (error?.response?.data?.message) {
       // 后端返回了具体错误信息
