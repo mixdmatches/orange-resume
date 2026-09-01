@@ -24,6 +24,7 @@ import {
   hasApiKey,
   type ChatMessage,
 } from '@/utils/aiAPIConnect'
+import { chatStreamApi } from '@/api'
 
 /** 控制对话框显示/隐藏 */
 const props = defineProps<{ open: boolean }>()
@@ -208,7 +209,7 @@ const handleSend = async () => {
     const builtMessages = buildAssistantMessages(resumeText, history, input)
 
     // 4. 流式接收并填充到最后一条 assistant 消息
-    for await (const delta of chatWithStream(builtMessages)) {
+    for await (const delta of chatStreamApi({ messages: builtMessages })) {
       messages.value[messages.value.length - 1].content += delta
       scrollToBottom()
     }
@@ -341,8 +342,8 @@ const hasMessages = computed(() => messages.value.length > 0)
 <style scoped lang="scss">
 .ai-assistant {
   position: fixed;
-  width: 420px;
-  height: 560px;
+  width: 450px;
+  height: 760px;
   max-height: 80vh;
   border-radius: 0.8rem;
   overflow: hidden;

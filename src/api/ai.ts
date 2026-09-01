@@ -71,7 +71,12 @@ export async function* chatStreamApi(
 
   const response = await fetch(`${url}/ai/chat/stream`, {
     method: 'POST',
-    headers,
+    headers: {
+      ...headers,
+      [HEADER_API_KEY]: getApiConfig()?.apiKey || '',
+      [HEADER_BASE_URL]: getApiConfig()?.apiEndpoint || '',
+      [HEADER_MODEL_ID]: getApiConfig()?.modelId || '',
+    },
     body: JSON.stringify(params),
   })
 
@@ -109,10 +114,11 @@ export async function* chatStreamApi(
 
       try {
         const parsed = JSON.parse(data)
-        // 兼容 OpenAI 格式：choices[0].delta.content
-        const delta = parsed?.choices?.[0]?.delta?.content
-        if (delta) {
-          yield delta
+        // 结束事件 {"done":true}
+        if (parsed?.done) return
+        // 增量事件 {"content":"..."}
+        if (parsed?.content) {
+          yield parsed.content as string
         }
       } catch {
         // 非 JSON 数据（如心跳/注释），跳过
