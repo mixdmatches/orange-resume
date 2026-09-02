@@ -7,7 +7,6 @@
  */
 import type {
   ChatParams,
-  ChatResult,
   GrammarCheckParams,
   GrammarCheckResult,
   JobMatchDto,
@@ -23,6 +22,14 @@ import { storage } from '@/utils/storage'
 const HEADER_API_KEY = 'x-user-api-key'
 const HEADER_BASE_URL = 'x-user-base-url'
 const HEADER_MODEL_ID = 'x-user-model-id'
+const AI_API_CONFIG = {
+  timeout: AI_TIMEOUT,
+  headers: {
+    [HEADER_API_KEY]: getApiConfig()?.apiKey || '',
+    [HEADER_BASE_URL]: getApiConfig()?.apiEndpoint || '',
+    [HEADER_MODEL_ID]: getApiConfig()?.modelId || '',
+  },
+}
 
 /**
  * 获取请求基础地址与鉴权头（供 fetch 流式请求使用）
@@ -40,159 +47,27 @@ function getRequestBase(): { url: string; headers: Record<string, string> } {
 }
 
 /**
- * AI 对话（非流式）
- * 适用于一次性返回结果的场景，如简历评分、数据分析等
- * @param params - 对话消息列表与模型参数
- * @returns AI 回复内容
- */
-export function chatApi(params: ChatParams): Promise<ChatResult> {
-  // 非流式对话需等待大模型完整生成回复，使用 AI 专用超时
-  return post<ChatResult>('/ai/chat', params, { timeout: AI_TIMEOUT })
-}
-
-/**
- * AI 流式对话（SSE）
- * 逐字返回 AI 回复，适用于实时交互的聊天场景。
+ * SSE 流式请求共享逻辑
  *
- * 用法示例：
- * ```ts
- * for await (const chunk of chatStream({ messages })) {
- *   console.log(chunk) // 每个 chunk 是一段文本增量
- * }
- * ```
- *
- * @param params - 对话消息列表与模型参数
- * @yields 文本增量片段
- */
-export async function* chatStreamApi(
-  params: ChatParams,
-): AsyncGenerator<string, void, unknown> {
-  const { url, headers } = getRequestBase()
-
-  const response = await fetch(`${url}/ai/chat/stream`, {
-    method: 'POST',
-    headers: {
-      ...headers,
-      [HEADER_API_KEY]: getApiConfig()?.apiKey || '',
-      [HEADER_BASE_URL]: getApiConfig()?.apiEndpoint || '',
-      [HEADER_MODEL_ID]: getApiConfig()?.modelId || '',
-    },
-    body: JSON.stringify(params),
-  })
-
-  if (!response.ok) {
-    throw new Error(`AI 流式请求失败：${response.status}`)
-  }
-
-  const reader = response.body?.getReader()
-  if (!reader) {
-    throw new Error('浏览器不支持流式读取')
-  }
-
-  const decoder = new TextDecoder('utf-8')
-  let buffer = ''
-
-  // 逐块读取并解析 SSE 数据
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-
-    buffer += decoder.decode(value, { stream: true })
-
-    // SSE 以双换行分隔事件，按行解析
-    const lines = buffer.split('\n')
-    // 保留最后可能不完整的一行到 buffer
-    buffer = lines.pop() || ''
-
-    for (const line of lines) {
-      const trimmed = line.trim()
-      if (!trimmed || !trimmed.startsWith('data:')) continue
-
-      const data = trimmed.slice(5).trim()
-      // 结束标记
-      if (data === '[DONE]') return
-
-      try {
-        const parsed = JSON.parse(data)
-        // 结束事件 {"done":true}
-        if (parsed?.done) return
-        // 增量事件 {"content":"..."}
-        if (parsed?.content) {
-          yield parsed.content as string
-        }
-      } catch {
-        // 非 JSON 数据（如心跳/注释），跳过
-      }
-    }
-  }
-}
-
-/**
- * 语法检查
- * @param params - 待检查的文本
- * @returns 语法问题列表，每项包含原文、建议与说明
- */
-export function grammarCheckApi(
-  params: GrammarCheckParams,
-): Promise<GrammarCheckResult> {
-  return post<GrammarCheckResult>('/ai/grammar-check', params, {
-    timeout: AI_TIMEOUT,
-    headers: {
-      [HEADER_API_KEY]: getApiConfig()?.apiKey || '',
-      [HEADER_BASE_URL]: getApiConfig()?.apiEndpoint || '',
-      [HEADER_MODEL_ID]: getApiConfig()?.modelId || '',
-    },
-  })
-}
-
-/**
- * 简历评分
- * @param params - 完整简历数据
- * @returns 总分、分维度评分与优化建议
- */
-export function scoreResumeApi(
-  params: ScoreParams,
-): Promise<ResumeScoreResult> {
-  return post<ResumeScoreResult>('/ai/resume-score', params, {
-    timeout: AI_TIMEOUT,
-    headers: {
-      [HEADER_API_KEY]: getApiConfig()?.apiKey || '',
-      [HEADER_BASE_URL]: getApiConfig()?.apiEndpoint || '',
-      [HEADER_MODEL_ID]: getApiConfig()?.modelId || '',
-    },
-  })
-}
-
-/**
- * 岗位匹配分析
- * @param params
- * @returns
- */
-export function jobMatchApi(params: JobMatchDto): Promise<JobMatchResult> {
-  return post<JobMatchResult>('/ai/job-match', params, {
-    timeout: AI_TIMEOUT,
-    headers: {
-      [HEADER_API_KEY]: getApiConfig()?.apiKey || '',
-      [HEADER_BASE_URL]: getApiConfig()?.apiEndpoint || '',
-      [HEADER_MODEL_ID]: getApiConfig()?.modelId || '',
-    },
-  })
-}
-
-/**
- * AI 自我介绍流式生成（SSE，走后端转发）
- * 后端每条事件的 data 为 JSON 字符串：
+ * 后端两个流式接口（chat/stream、self-intro/stream）的事件格式已统一为：
  * - 增量：{"content":"..."}
  * - 结束：{"done":true}
- * @param params - 简历纯文本与生成选项（场景/时长/语气）
+ * - 出错：{"error":"..."}
+ *
+ * 本函数封装 fetch 请求、鉴权头注入、HTTP 错误详情读取、ReadableStream 读取、
+ * TCP 粘包/半包处理与事件 JSON 解析，各业务接口只需传入路径与 body 即可复用。
+ *
+ * @param path - 接口路径（如 /ai/chat/stream）
+ * @param body - 请求体，内部会 JSON.stringify
  * @yields 文本增量片段
  */
-export async function* selfIntroStreamApi(
-  params: SelfIntroDto,
+async function* streamSse(
+  path: string,
+  body: unknown,
 ): AsyncGenerator<string, void, unknown> {
   const { url, headers } = getRequestBase()
 
-  const response = await fetch(`${url}/ai/self-intro/stream`, {
+  const response = await fetch(`${url}${path}`, {
     method: 'POST',
     headers: {
       ...headers,
@@ -200,12 +75,12 @@ export async function* selfIntroStreamApi(
       [HEADER_BASE_URL]: getApiConfig()?.apiEndpoint || '',
       [HEADER_MODEL_ID]: getApiConfig()?.modelId || '',
     },
-    body: JSON.stringify(params),
+    body: JSON.stringify(body),
   })
 
   if (!response.ok) {
     // 尝试读取后端返回的错误详情（如 API Key 未配置的具体原因）
-    let errMsg = `自我介绍生成请求失败（${response.status}）`
+    let errMsg = `AI 流式请求失败（${response.status}）`
     try {
       const err = await response.json()
       errMsg = err?.message || errMsg
@@ -223,16 +98,15 @@ export async function* selfIntroStreamApi(
   const decoder = new TextDecoder('utf-8')
   let buffer = ''
 
-  // 逐块读取并解析 SSE 数据
+  // 逐块读取并解析 SSE 数据（后端统一包装事件格式）
   while (true) {
     const { done, value } = await reader.read()
     if (done) break
 
     buffer += decoder.decode(value, { stream: true })
 
-    // SSE 以双换行分隔事件，按行解析
+    // SSE 以 \n 分隔事件帧，按行切分；最后一段可能不完整，留回 buffer
     const lines = buffer.split('\n')
-    // 保留最后可能不完整的一行到 buffer
     buffer = lines.pop() || ''
 
     for (const line of lines) {
@@ -241,23 +115,81 @@ export async function* selfIntroStreamApi(
 
       const data = trimmed.slice(5).trim()
 
+      let parsed: { content?: string; done?: boolean; error?: string }
+
       try {
-        const parsed = JSON.parse(data)
-        // 结束事件 {"done":true}
-        if (parsed?.done) return
-        // 增量事件 {"content":"..."}
-        if (parsed?.content) {
-          yield parsed.content as string
-        }
+        parsed = JSON.parse(data)
       } catch {
         // 非 JSON 数据（如心跳/注释），跳过
+        continue
       }
+
+      // 后端中途出错（以 200 响应写入 error 事件）
+      if (parsed.error) throw new Error(parsed.error)
+      // 结束事件 {"done":true}
+      if (parsed.done) return
+      // 增量事件 {"content":"..."}
+      if (parsed.content) yield parsed.content
     }
   }
 }
 
+/**
+ * AI 流式对话（SSE）
+ * 逐字返回 AI 回复，适用于实时交互的聊天场景。
+ *
+ * @param params - 对话消息列表与模型参数
+ * @yields 文本增量片段
+ */
+export async function* chatStreamApi(
+  params: ChatParams,
+): AsyncGenerator<string, void, unknown> {
+  yield* streamSse('/ai/chat/stream', params)
+}
+
+/**
+ * AI 自我介绍流式生成
+ * @param params - 简历纯文本与生成选项（场景/时长/语气）
+ * @yields 文本增量片段
+ */
+export async function* selfIntroStreamApi(
+  params: SelfIntroDto,
+): AsyncGenerator<string, void, unknown> {
+  yield* streamSse('/ai/self-intro/stream', params)
+}
+
+/**
+ * 语法检查
+ * @param params - 待检查的文本
+ * @returns 语法问题列表，每项包含原文、建议与说明
+ */
+export function grammarCheckApi(
+  params: GrammarCheckParams,
+): Promise<GrammarCheckResult> {
+  return post<GrammarCheckResult>('/ai/grammar-check', params, AI_API_CONFIG)
+}
+
+/**
+ * 简历评分
+ * @param params - 完整简历数据
+ * @returns 总分、分维度评分与优化建议
+ */
+export function scoreResumeApi(
+  params: ScoreParams,
+): Promise<ResumeScoreResult> {
+  return post<ResumeScoreResult>('/ai/resume-score', params, AI_API_CONFIG)
+}
+
+/**
+ * 岗位匹配分析
+ * @param params
+ * @returns
+ */
+export function jobMatchApi(params: JobMatchDto): Promise<JobMatchResult> {
+  return post<JobMatchResult>('/ai/job-match', params, AI_API_CONFIG)
+}
+
 export default {
-  chatApi,
   chatStreamApi,
   grammarCheckApi,
   scoreResumeApi,
