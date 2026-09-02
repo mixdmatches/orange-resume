@@ -3,7 +3,7 @@ import type { APIManufacturer } from '@/types/APISetting'
 import { message } from 'ant-design-vue'
 import { ReloadOutlined } from '@ant-design/icons-vue'
 import { computed, ref } from 'vue'
-import { testApiConnection } from '@/utils/aiAPIConnect'
+import { testConnectionApi } from '@/api'
 
 const apiForm = defineModel<APIManufacturer>('apiForm', {
   required: true,
@@ -16,14 +16,11 @@ const polishPrompt = defineModel<string>('polishPrompt', {
 const isTesting = ref(false)
 const handleTestConnection = async () => {
   isTesting.value = true
-  try {
-    await testApiConnection(apiForm.value)
-    message.success('连接测试成功')
-  } catch (error) {
-    message.error((error as Error).message || '连接测试失败，请检查配置')
-  } finally {
+
+  await testConnectionApi(apiForm.value).finally(() => {
     isTesting.value = false
-  }
+  })
+  message.success('连接测试成功')
 }
 
 const resetPrompt = () => {

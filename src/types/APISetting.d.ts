@@ -10,6 +10,7 @@ export interface APIManufacturer {
 }
 
 export interface APIState {
+  polishPrompt?: string
   selectedModel?: string | null
   states: APIManufacturer[]
 }

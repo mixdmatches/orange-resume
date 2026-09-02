@@ -1,4 +1,4 @@
-import { pdfToJsonWithAI } from '@/utils/aiAPIConnect'
+import { pdfToJsonApi } from '@/api/ai'
 import {
   getDocument,
   GlobalWorkerOptions,
@@ -9,7 +9,7 @@ GlobalWorkerOptions.workerSrc = pdfjsWorker
 
 export async function importPDF(file: File) {
   const pdfText = await pdfToText(file)
-  const pdfJson = await pdfToJsonWithAI(pdfText)
+  const pdfJson = await pdfToJsonApi({ pdfText })
   return pdfJson
 }
 

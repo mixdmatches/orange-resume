@@ -15,6 +15,8 @@ import type {
   ScoreParams,
   SelfIntroDto,
 } from '@/types/ai'
+import type { APIManufacturer } from '@/types/APISetting'
+import type { Resume } from '@/types/resume'
 import { getApiConfig } from '@/utils/aiAPIConnect'
 import { AI_TIMEOUT, post, TOKEN_KEY } from '@/utils/request'
 import { storage } from '@/utils/storage'
@@ -189,10 +191,35 @@ export function jobMatchApi(params: JobMatchDto): Promise<JobMatchResult> {
   return post<JobMatchResult>('/ai/job-match', params, AI_API_CONFIG)
 }
 
+/**
+ * pdf转json（AI转）
+ * @param params
+ * @returns
+ */
+export function pdfToJsonApi(params: { pdfText: string }): Promise<Resume> {
+  return post<Resume>('/ai/pdf-to-json', params, AI_API_CONFIG)
+}
+
+/**
+ * 测试连接
+ * @returns
+ */
+export function testConnectionApi(params: APIManufacturer) {
+  return post('/ai/test-connection', params, {
+    timeout: AI_TIMEOUT,
+    headers: {
+      [HEADER_API_KEY]: params.apiKey,
+      [HEADER_BASE_URL]: params.apiEndpoint,
+      [HEADER_MODEL_ID]: params.modelId || '',
+    },
+  })
+}
+
 export default {
   chatStreamApi,
   grammarCheckApi,
   scoreResumeApi,
   jobMatchApi,
   selfIntroStreamApi,
+  pdfToJsonApi,
 }

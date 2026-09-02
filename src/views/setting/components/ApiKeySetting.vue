@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeMount, onMounted, ref, watch } from 'vue'
 import { KeyOutlined } from '@ant-design/icons-vue'
 import SettingForm from './SettingForm.vue'
-import type { APIManufacturer } from '@/types/APISetting'
+import type { APIManufacturer, APIState } from '@/types/APISetting'
 import { storage } from '@/utils/storage'
 
 const defaultApiState = [
@@ -46,12 +46,14 @@ const defaultApiState = [
 ]
 
 const apiState = ref<APIManufacturer[]>(
-  storage.get('apiState')?.states || defaultApiState,
+  storage.get<APIState>('apiState')?.states || defaultApiState,
 )
 
 const currenModel = ref('deepseek') // 界面选择的模型
 
-const selectedModel = ref(storage.get('apiState')?.selectedModel || 'deepseek') // 使用的模型
+const selectedModel = ref(
+  storage.get<APIState>('apiState')?.selectedModel || 'deepseek',
+) // 使用的模型
 
 // AI 润色提示词
 const polishPrompt = ref(
@@ -123,10 +125,12 @@ watch(
 )
 
 onMounted(() => {
-  const state = storage.get('apiState')
+  const state = storage.get<APIState>('apiState')
+  console.log(state, 'state')
+
   if (!state) return
-  if (state.apiState) {
-    apiState.value = state.apiState as APIManufacturer[]
+  if (state.states) {
+    apiState.value = state.states as APIManufacturer[]
     if (state.selectedModel) {
       selectedModel.value = state.selectedModel
     }
