@@ -10,8 +10,8 @@ import {
 } from '@ant-design/icons-vue'
 import { motion } from 'motion-v'
 import type { Resume } from '@/types/resume'
-import { resumeToText } from '@/views/AI-simulation-interview/composables/useAiInterview'
-import { hasApiKey } from '@/utils/aiAPIConnect'
+import { resumeToText } from '@/utils/resumeToText'
+import { hasApiKey } from '@/api'
 import { jobMatchApi } from '@/api'
 import type { JobMatchResult } from '@/types/ai'
 

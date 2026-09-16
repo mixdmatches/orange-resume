@@ -77,6 +77,16 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/edit-resume/index.vue'),
     props: true,
   },
+  {
+    // 面试间：独立于 header 布局的专注式页面
+    path: '/interview-room',
+    name: 'interview-room',
+    meta: {
+      title: '面试间',
+      requiresAuth: true,
+    },
+    component: () => import('@/views/interview-room/index.vue'),
+  },
 ]
 
 const router = createRouter({

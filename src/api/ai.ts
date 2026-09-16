@@ -15,11 +15,31 @@ import type {
   ScoreParams,
   SelfIntroDto,
 } from '@/types/ai'
-import type { APIManufacturer } from '@/types/APISetting'
+import type { APIManufacturer, APIState } from '@/types/APISetting'
 import type { Resume } from '@/types/resume'
-import { getApiConfig } from '@/utils/aiAPIConnect'
 import { AI_TIMEOUT, post, TOKEN_KEY } from '@/utils/request'
 import { storage } from '@/utils/storage'
+
+/**
+ * 获取 API 配置
+ */
+export const getApiConfig = (): APIManufacturer | null => {
+  const apiState = storage.get<APIState>('apiState')?.states || []
+  const selectedModel = storage.get<APIState>('apiState')?.selectedModel || null
+  if (!apiState.length) {
+    return null
+  } else {
+    return apiState.find(item => item.id === selectedModel) || null
+  }
+}
+
+/**
+ * 检查 API Key 是否配置
+ */
+export const hasApiKey = (): boolean => {
+  const apiConfig = getApiConfig()
+  return !!apiConfig?.apiKey
+}
 
 const HEADER_API_KEY = 'x-user-api-key'
 const HEADER_BASE_URL = 'x-user-base-url'

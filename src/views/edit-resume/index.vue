@@ -13,7 +13,6 @@ import type { Resume } from '@/types/resume'
 import ToolHead from './components/ToolHead.vue'
 import EditContent from '@/views/edit-resume/components/EditContent.vue'
 import ResumePreview from '@/views/edit-resume/components/ResumePreview.vue'
-import AiInterview from '@/views/edit-resume/components/AiInterview.vue'
 import { useRoute } from 'vue-router'
 import { getResumeById, updateResume } from '@/service/resumeRepository'
 import { useResumeHistory } from '@/hooks/useResumeHistory'
@@ -224,11 +223,7 @@ const syncText = computed(() => {
       @redo="handleRedo"
     ></tool-head>
     <div ref="splitterContainer" class="edit-resume">
-      <edit-content
-        v-if="resumeMode === 'edit'"
-        :style="{ width: `${leftWidth}%` }"
-      />
-      <ai-interview v-else :style="{ width: `${leftWidth}%` }" />
+      <edit-content :style="{ width: `${leftWidth}%` }" />
       <span class="line" @mousedown="handleDividerMouseDown"></span>
       <resume-preview :style="{ width: `${100 - leftWidth}%` }" />
     </div>

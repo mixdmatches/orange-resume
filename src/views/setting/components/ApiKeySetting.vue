@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeMount, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { KeyOutlined } from '@ant-design/icons-vue'
 import SettingForm from './SettingForm.vue'
 import type { APIManufacturer, APIState } from '@/types/APISetting'

@@ -7,13 +7,10 @@ import {
   WarningFilled,
 } from '@ant-design/icons-vue'
 import type { Resume } from '@/types/resume'
-import {
-  checkResumeGrammar,
-  hasApiKey,
-  type GrammarIssue,
-} from '@/utils/aiAPIConnect'
+import { hasApiKey } from '@/api'
 import { grammarCheckApi } from '@/api'
-import { resumeToText } from '@/views/AI-simulation-interview/composables/useAiInterview'
+import { resumeToText } from '@/utils/resumeToText'
+import type { GrammarIssue } from '@/types/ai'
 
 /** 简历数据 */
 const resume = inject<Resume>('resume') as Resume

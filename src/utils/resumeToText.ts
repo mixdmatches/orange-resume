@@ -1,11 +1,5 @@
 import type { Resume } from '@/types/resume'
 
-export interface InterviewQuestion {
-  id: number
-  question: string
-  answer: string
-}
-
 const createSection = (title: string, value?: string) =>
   `${title}: ${value?.trim() || '未填写'}`
 
@@ -60,55 +54,4 @@ export const resumeToText = (resume: Resume): string => {
   lines.push(createSection('技能专长', skills))
 
   return lines.join('\n')
-}
-
-export const parseQuestions = (content: string): InterviewQuestion[] => {
-  const result: InterviewQuestion[] = []
-  const lines = content.split(/\r?\n/)
-  let currentQuestion = ''
-  let currentAnswer = ''
-  let answerMode = false
-
-  for (const line of lines) {
-    const trimmed = line.trim()
-    if (!trimmed) continue
-
-    const questionMatch = trimmed.match(
-      /^(Q\d+|\d+\.|问题\d*:?|Question\d*:?)[\s:]*([^\n]+)/i,
-    )
-    if (questionMatch) {
-      if (currentQuestion) {
-        result.push({
-          id: result.length + 1,
-          question: currentQuestion.trim(),
-          answer: currentAnswer.trim() || '暂无参考回答',
-        })
-      }
-      currentQuestion = questionMatch[2].trim()
-      currentAnswer = ''
-      answerMode = false
-      continue
-    }
-
-    if (/^(回答|参考答案|答|Answer)[:：]\s*/i.test(trimmed)) {
-      answerMode = true
-      currentAnswer +=
-        trimmed.replace(/^(回答|参考答案|答|Answer)[:：]\s*/i, '') + '\n'
-      continue
-    }
-
-    if (answerMode) {
-      currentAnswer += trimmed + '\n'
-    }
-  }
-
-  if (currentQuestion) {
-    result.push({
-      id: result.length + 1,
-      question: currentQuestion.trim(),
-      answer: currentAnswer.trim() || '暂无参考回答',
-    })
-  }
-
-  return result
 }

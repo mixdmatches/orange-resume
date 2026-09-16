@@ -1,30 +1,45 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { h } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { SettingOutlined, FileTextOutlined } from '@ant-design/icons-vue'
 import ResumeSelectCard from './components/ResumeSelectCard.vue'
 import ResumePreviewCard from './components/ResumePreviewCard.vue'
-import InterviewQuestionPanel from './components/InterviewQuestionPanel.vue'
-import CustomQuestionPanel from './components/CustomQuestionPanel.vue'
 import { getAllResumesIDB } from '@/service/resumeIDB'
+import { useInterviewStore, DEFAULT_QUESTION_COUNT } from '@/stores/interview'
 import type { Resume } from '@/types/resume'
 
 const router = useRouter()
+const interviewStore = useInterviewStore()
 const resumes = ref<Resume[]>([])
 const selectedResumeId = ref('')
 const resumePreviewVisible = ref(false)
-const activeTab = ref('ai')
+
+/** 目标岗位方向（选填，可从常用岗位中选择或自行输入） */
+const jobType = ref('')
+/** 目标岗位 JD 原文（选填） */
+const jd = ref('')
+/** 面试题目数量（1-10 题） */
+const questionCount = ref(DEFAULT_QUESTION_COUNT)
+
+/** 常用岗位方向预置项，也支持用户自由输入 */
+const jobTypeOptions = [
+  '前端开发工程师',
+  '后端开发工程师',
+  '全栈工程师',
+  '测试工程师',
+  '算法工程师',
+  '数据分析师',
+  '产品经理',
+  '项目经理',
+  'UI 设计师',
+  '运维工程师',
+].map(value => ({ value }))
 
 const selectedResume = computed(
   () => resumes.value.find(item => item.id === selectedResumeId.value) ?? null,
 )
-
-watch(selectedResume, val => {
-  if (val) activeTab.value = 'ai'
-  else activeTab.value = ''
-})
 
 const loadResumes = async () => {
   try {
@@ -53,6 +68,25 @@ const handleOpenPreview = () => {
     return
   }
   resumePreviewVisible.value = true
+}
+
+/**
+ * 进入面试间
+ * 校验已选简历后，将简历 ID 与选填的岗位方向/JD 写入面试会话 store，
+ * 再跳转到独立的面试间页面。
+ */
+const handleEnterRoom = () => {
+  if (!selectedResume.value) {
+    message.warning('请先选择一份简历')
+    return
+  }
+  interviewStore.startInterview({
+    resumeId: selectedResume.value.id,
+    jobType: jobType.value.trim(),
+    jd: jd.value.trim(),
+    questionCount: questionCount.value,
+  })
+  router.push('/interview-room')
 }
 
 onMounted(() => {
@@ -104,15 +138,64 @@ onMounted(() => {
       <resume-preview-card :resume="selectedResume" />
     </a-modal>
 
-    <a-card>
-      <a-tabs v-model:active-key="activeTab" destroy-on-close type="card">
-        <a-tab-pane key="ai" tab="AI 模拟面试">
-          <interview-question-panel :resume="selectedResume" />
-        </a-tab-pane>
-        <a-tab-pane key="custom" tab="自定义问答">
-          <custom-question-panel :resume-title="selectedResume?.title || ''" />
-        </a-tab-pane>
-      </a-tabs>
+    <a-card class="interview-config-card">
+      <div class="config-header">
+        <h3>面试配置</h3>
+        <p>
+          选择目标岗位或粘贴岗位 JD（均为选填），AI
+          将结合简历内容让面试更贴近真实求职场景。
+        </p>
+      </div>
+
+      <div class="config-form">
+        <div class="form-item">
+          <label class="form-label">题目数量</label>
+          <div class="question-count-row">
+            <a-input-number
+              v-model:value="questionCount"
+              :min="5"
+              :max="20"
+              :precision="0"
+            />
+            <span class="form-hint">本次面试的提问数量（1-10 题）</span>
+          </div>
+        </div>
+
+        <div class="form-item">
+          <label class="form-label">目标岗位</label>
+          <a-auto-complete
+            v-model:value="jobType"
+            :options="jobTypeOptions"
+            allow-clear
+            placeholder="选择或输入岗位方向，如：前端开发工程师（选填）"
+          />
+        </div>
+
+        <div class="form-item">
+          <label class="form-label">岗位 JD</label>
+          <a-textarea
+            v-model:value="jd"
+            :rows="6"
+            :maxlength="5000"
+            show-count
+            allow-clear
+            placeholder="粘贴招聘 JD（岗位职责、任职要求等），AI 将结合简历与 JD 定制面试内容（选填）"
+          />
+        </div>
+      </div>
+
+      <div class="config-footer">
+        <a-button
+          type="primary"
+          size="large"
+          :disabled="!selectedResume"
+          @click="handleEnterRoom"
+          >进入面试间</a-button
+        >
+        <span v-if="!selectedResume" class="footer-hint"
+          >请先在上方选择一份简历</span
+        >
+      </div>
     </a-card>
   </div>
 </template>
@@ -173,47 +256,101 @@ onMounted(() => {
   align-items: start;
 }
 
-.tab-panel {
+.interview-config-card {
+  border-radius: 1rem;
+  @include themify(
+    (
+      background: (
+        light: #fff,
+        dark: #111827,
+      ),
+      border-color: (
+        light: #f0f0f0,
+        dark: rgba(255, 255, 255, 0.12),
+      ),
+    )
+  );
+}
+
+.config-header h3 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.config-header p {
+  margin: 0.5rem 0 0;
+  color: rgba(0, 0, 0, 0.65);
+  @include themify(
+    (
+      color: (
+        light: rgba(0, 0, 0, 0.65),
+        dark: rgba(255, 255, 255, 0.65),
+      ),
+    )
+  );
+}
+
+.config-form {
   display: grid;
-  gap: 1rem;
+  gap: 1.2rem;
+  margin-top: 1.4rem;
 }
 
-.action-footer {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.tab-panel .ant-tabs-content-holder {
-  min-height: 420px;
-}
-
-.action-card-grid {
+.form-item {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
-.action-card {
-  min-height: 180px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.card-title {
-  font-size: 1.2rem;
+.form-label {
   font-weight: 600;
+}
+
+.question-count-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.question-count-row .ant-input-number {
+  width: 120px;
+}
+
+.form-hint {
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.45);
+  @include themify(
+    (
+      color: (
+        light: rgba(0, 0, 0, 0.45),
+        dark: rgba(255, 255, 255, 0.45),
+      ),
+    )
+  );
+}
+
+.config-footer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.6rem;
+}
+
+.footer-hint {
+  color: rgba(0, 0, 0, 0.45);
+  @include themify(
+    (
+      color: (
+        light: rgba(0, 0, 0, 0.45),
+        dark: rgba(255, 255, 255, 0.45),
+      ),
+    )
+  );
 }
 
 @media screen and (max-width: 900px) {
   .page-header,
-  .selection-panel,
-  .action-card-grid {
+  .selection-panel {
     flex-direction: column;
-  }
-
-  .action-card-grid {
-    grid-template-columns: 1fr;
   }
 }
 </style>

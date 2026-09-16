@@ -9,6 +9,8 @@ export interface ChatParams {
   messages: ChatMessage[]
   model?: string
   temperature?: number
+  /** 单次回复最大 token 数（透传给后端，可选） */
+  maxTokens?: number
 }
 
 /** 对话响应数据 */
@@ -21,12 +23,19 @@ export interface GrammarCheckParams {
   resumeText: string
 }
 
+/** 语法纠错问题等级 */
+export type GrammarSeverity = 'error' | 'warning'
 /** 单个语法问题 */
 export interface GrammarIssue {
+  /** 所属模块，如「项目经历-XX项目」 */
   section: string
+  /** 原文片段 */
   original: string
+  /** 修改建议 */
   suggestion: string
+  /** 问题原因 */
   reason: string
+  /** 严重等级 */
   severity: GrammarSeverity
 }
 

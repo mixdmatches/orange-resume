@@ -17,9 +17,9 @@ import {
   RocketFilled,
   BulbFilled,
 } from '@ant-design/icons-vue'
-import { hasApiKey } from '@/utils/aiAPIConnect'
+import { hasApiKey } from '@/api'
 import type { ResumeScoreResult } from '@/types/ai'
-import { resumeToText } from '@/views/AI-simulation-interview/composables/useAiInterview'
+import { resumeToText } from '@/utils/resumeToText'
 import { scoreResumeApi } from '@/api'
 
 /**

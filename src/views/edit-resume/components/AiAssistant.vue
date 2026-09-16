@@ -17,14 +17,9 @@ import {
 } from '@ant-design/icons-vue'
 import MarkdownIt from 'markdown-it'
 import type { Resume } from '@/types/resume'
-import { resumeToText } from '@/views/AI-simulation-interview/composables/useAiInterview'
-import {
-  buildAssistantMessages,
-  chatWithStream,
-  hasApiKey,
-  type ChatMessage,
-} from '@/utils/aiAPIConnect'
-import { chatStreamApi } from '@/api'
+import { resumeToText } from '@/utils/resumeToText'
+import { chatStreamApi, hasApiKey } from '@/api'
+import type { ChatMessage } from '@/types/ai'
 
 /** 控制对话框显示/隐藏 */
 const props = defineProps<{ open: boolean }>()
@@ -168,6 +163,46 @@ const messageListRef = ref<HTMLElement | null>(null)
  * 渲染 Markdown 为 HTML
  */
 const renderMd = (text: string) => md.render(text)
+
+const MAX_HISTORY_ROUNDS = 6
+
+/**
+ * 构造智能助手对话的消息列表
+ * - 注入简历上下文作为 system 消息
+ * - 截断历史对话，只保留最近 MAX_HISTORY_ROUNDS 轮
+ * @param resumeText - 简历纯文本
+ * @param history - 历史对话（不含当前这条）
+ * @param userInput - 当前用户输入
+ * @returns 可直接传给 chatWithStream 的消息列表
+ */
+const buildAssistantMessages = (
+  resumeText: string,
+  history: ChatMessage[],
+  userInput: string,
+): ChatMessage[] => {
+  const systemPrompt = `你是一位资深简历顾问和职业规划师，正在协助用户优化简历。
+以下是用户的简历内容，请基于此上下文回答问题：
+
+${resumeText}
+
+回答要求：
+1. 具体可执行，避免空话套话
+2. 如果用户问的是简历外的问题也可以回答，但要尽量结合简历情况
+3. 回答用 Markdown 格式，重点加粗，用空行分段`
+
+  // 只保留最近 MAX_HISTORY_ROUNDS 轮（每轮 2 条消息）
+  const maxHistoryMessages = MAX_HISTORY_ROUNDS * 2
+  const trimmedHistory =
+    history.length > maxHistoryMessages
+      ? history.slice(-maxHistoryMessages)
+      : history
+
+  return [
+    { role: 'system', content: systemPrompt },
+    ...trimmedHistory,
+    { role: 'user', content: userInput },
+  ]
+}
 
 /**
  * 自动滚动到消息列表底部
