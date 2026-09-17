@@ -62,10 +62,8 @@ export const useAuthStore = defineStore(
      * 3. 清空离线同步队列，防止残留数据污染新账户
      */
     async function logout() {
-      console.log('[auth] 开始退出登录')
       try {
         await logoutApi()
-        console.log('[auth] 后端登出成功')
       } catch (err) {
         console.warn('[auth] 后端登出接口异常，仍继续清理本地状态:', err)
       }
@@ -77,7 +75,6 @@ export const useAuthStore = defineStore(
       } catch (err) {
         console.warn('[auth] 清空同步队列失败:', err)
       }
-      console.log('[auth] 退出登录完成')
     }
 
     /**
@@ -86,7 +83,6 @@ export const useAuthStore = defineStore(
      * 此方法负责同步清空 store 内的响应式状态与离线队列，确保 isLoggedIn 变为 false。
      */
     async function clearAuth() {
-      console.log('[auth] 清空鉴权状态（401 场景）')
       token.value = null
       userInfo.value = null
       try {

@@ -7,7 +7,6 @@ import {
   WarningFilled,
 } from '@ant-design/icons-vue'
 import type { Resume } from '@/types/resume'
-import { hasApiKey } from '@/api'
 import { grammarCheckApi } from '@/api'
 import { resumeToText } from '@/utils/resumeToText'
 import type { GrammarIssue } from '@/types/ai'
@@ -38,10 +37,6 @@ const warningCount = computed(
  * 执行语法纠错检查
  */
 const handleCheck = async () => {
-  if (!hasApiKey()) {
-    message.warning('请先在设置中配置 API Key')
-    return
-  }
   if (loading.value) return
 
   loading.value = true

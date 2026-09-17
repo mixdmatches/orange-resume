@@ -8,7 +8,6 @@ import {
   ref,
   watch,
 } from 'vue'
-import { message } from 'ant-design-vue'
 import {
   RobotOutlined,
   CloseOutlined,
@@ -18,7 +17,7 @@ import {
 import MarkdownIt from 'markdown-it'
 import type { Resume } from '@/types/resume'
 import { resumeToText } from '@/utils/resumeToText'
-import { chatStreamApi, hasApiKey } from '@/api'
+import { chatStreamApi } from '@/api'
 import type { ChatMessage } from '@/types/ai'
 
 /** 控制对话框显示/隐藏 */
@@ -221,11 +220,6 @@ const scrollToBottom = () => {
 const handleSend = async () => {
   const input = userInput.value.trim()
   if (!input || loading.value) return
-
-  if (!hasApiKey()) {
-    message.warning('请先在设置中配置 API Key')
-    return
-  }
 
   // 1. 追加用户消息
   messages.value.push({ role: 'user', content: input })

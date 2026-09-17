@@ -15,42 +15,12 @@ import type {
   ScoreParams,
   SelfIntroDto,
 } from '@/types/ai'
-import type { APIManufacturer, APIState } from '@/types/APISetting'
 import type { Resume } from '@/types/resume'
 import { AI_TIMEOUT, post, TOKEN_KEY } from '@/utils/request'
 import { storage } from '@/utils/storage'
 
-/**
- * 获取 API 配置
- */
-export const getApiConfig = (): APIManufacturer | null => {
-  const apiState = storage.get<APIState>('apiState')?.states || []
-  const selectedModel = storage.get<APIState>('apiState')?.selectedModel || null
-  if (!apiState.length) {
-    return null
-  } else {
-    return apiState.find(item => item.id === selectedModel) || null
-  }
-}
-
-/**
- * 检查 API Key 是否配置
- */
-export const hasApiKey = (): boolean => {
-  const apiConfig = getApiConfig()
-  return !!apiConfig?.apiKey
-}
-
-const HEADER_API_KEY = 'x-user-api-key'
-const HEADER_BASE_URL = 'x-user-base-url'
-const HEADER_MODEL_ID = 'x-user-model-id'
 const AI_API_CONFIG = {
   timeout: AI_TIMEOUT,
-  headers: {
-    [HEADER_API_KEY]: getApiConfig()?.apiKey || '',
-    [HEADER_BASE_URL]: getApiConfig()?.apiEndpoint || '',
-    [HEADER_MODEL_ID]: getApiConfig()?.modelId || '',
-  },
 }
 
 /**
@@ -87,16 +57,10 @@ async function* streamSse(
   path: string,
   body: unknown,
 ): AsyncGenerator<string, void, unknown> {
-  const { url, headers } = getRequestBase()
+  const { url } = getRequestBase()
 
   const response = await fetch(`${url}${path}`, {
     method: 'POST',
-    headers: {
-      ...headers,
-      [HEADER_API_KEY]: getApiConfig()?.apiKey || '',
-      [HEADER_BASE_URL]: getApiConfig()?.apiEndpoint || '',
-      [HEADER_MODEL_ID]: getApiConfig()?.modelId || '',
-    },
     body: JSON.stringify(body),
   })
 
@@ -224,15 +188,14 @@ export function pdfToJsonApi(params: { pdfText: string }): Promise<Resume> {
  * 测试连接
  * @returns
  */
-export function testConnectionApi(params: APIManufacturer) {
-  return post('/ai/test-connection', params, {
-    timeout: AI_TIMEOUT,
-    headers: {
-      [HEADER_API_KEY]: params.apiKey,
-      [HEADER_BASE_URL]: params.apiEndpoint,
-      [HEADER_MODEL_ID]: params.modelId || '',
+export function testConnectionApi(providerId: string) {
+  return post(
+    '/ai/test-connection',
+    { providerId },
+    {
+      timeout: AI_TIMEOUT,
     },
-  })
+  )
 }
 
 export default {

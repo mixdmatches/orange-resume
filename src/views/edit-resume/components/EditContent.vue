@@ -145,12 +145,6 @@ const showDivider = computed(() =>
   ),
 )
 
-// 控制编辑模式
-const isMarkdownMode = ref(false)
-const toggleMarkdownMode = () => {
-  isMarkdownMode.value = !isMarkdownMode.value
-}
-
 const disabledToggle = () => {
   message.warn('功能开发中')
 }
@@ -165,10 +159,10 @@ const disabledToggle = () => {
     :transition="{ duration: 0.5, ease: 'easeOut' }"
   >
     <span class="toggleModeBtn" @click="disabledToggle">
-      {{ isMarkdownMode ? '退出' : '进入' }} markdown 模式
+      {{ '进入' }} markdown 模式
     </span>
     <!-- Markdown 模式 -->
-    <MarkdownEditor v-if="isMarkdownMode" />
+    <MarkdownEditor v-if="false" />
 
     <!-- 表单模式 -->
     <template v-else>

@@ -24,7 +24,6 @@ import {
 } from './resumeIDB'
 import {
   createResumeApi,
-  deleteBatchResumeApi,
   deleteResumeApi,
   getResumeByIdApi,
   getResumeListApi,

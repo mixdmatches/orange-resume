@@ -161,7 +161,6 @@ export const deleteResumeIDB = async (id: string): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(STORE_NAME, 'readwrite')
     const store = transaction.objectStore(STORE_NAME)
-    console.log(id, '要删除的简历id')
     const request = store.delete(id)
 
     request.onsuccess = () => {
@@ -185,7 +184,6 @@ export const deleteBatchResumeIDB = async (ids: string[]): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(STORE_NAME, 'readwrite')
     const store = transaction.objectStore(STORE_NAME)
-    console.log(ids, '要批量删除的简历ids')
 
     // 使用同一个事务删除所有简历
     ids.forEach(id => {

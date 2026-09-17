@@ -11,7 +11,6 @@ import {
 import { motion } from 'motion-v'
 import type { Resume } from '@/types/resume'
 import { resumeToText } from '@/utils/resumeToText'
-import { hasApiKey } from '@/api'
 import { jobMatchApi } from '@/api'
 import type { JobMatchResult } from '@/types/ai'
 
@@ -54,10 +53,6 @@ function getScoreText(score: number): string {
  * 执行岗位匹配分析
  */
 const handleAnalyze = async () => {
-  if (!hasApiKey()) {
-    message.warning('请先在设置中配置 API Key')
-    return
-  }
   if (!jobDescription.value.trim()) {
     message.warning('请先粘贴岗位描述（JD）')
     return

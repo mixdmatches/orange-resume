@@ -1,59 +1,66 @@
 <script setup lang="ts">
-import type { APIManufacturer } from '@/types/APISetting'
+import type { APIManufacturer } from '@/types/ai-config'
 import { message } from 'ant-design-vue'
-import { ReloadOutlined } from '@ant-design/icons-vue'
 import { computed, ref } from 'vue'
 import { testConnectionApi } from '@/api'
+import { BUILTIN_PROVIDER_IDS } from '@/constants/ai'
 
-const apiForm = defineModel<APIManufacturer>('apiForm', {
+// 厂商配置表单草稿：由父组件持有，点击保存后才提交后端
+const form = defineModel<APIManufacturer>('form', {
   required: true,
 })
 
-const polishPrompt = defineModel<string>('polishPrompt', {
-  required: true,
-})
+const emit = defineEmits<{
+  save: []
+  cancel: []
+}>()
 
 const isTesting = ref(false)
+
+/** 是否为尚未保存的新建草稿：无真实 providerId，后端无法按 id 查到配置 */
+const isUnsaved = computed(() => !form.value.providerId)
+
+/**
+ * 测试连接：后端按 providerId 查已保存配置发起真实请求
+ * 因此仅已保存的厂商可测试，未保存草稿禁用
+ */
 const handleTestConnection = async () => {
+  const { providerId } = form.value
+  // 未保存草稿（含掩码回显场景）后端无法发起真实请求
+  if (!providerId) return
   isTesting.value = true
-
-  await testConnectionApi(apiForm.value).finally(() => {
+  try {
+    await testConnectionApi(providerId)
+    message.success('连接测试成功')
+  } finally {
     isTesting.value = false
-  })
-  message.success('连接测试成功')
+  }
 }
 
-const resetPrompt = () => {
-  polishPrompt.value = `你是一个专业的简历优化助手。请帮助优化以下文本，使其更加专业和有吸引力。
-              优化原则：
-              1. 使用更专业的词汇和表达方式
-              2. 突出关键成就和技能
-              3. 保持简洁清晰
-              4. 使用主动语气
-              5. 保持原有信息的完整性
-              6. 保留我输入的格式
-              请直接返回优化后的文本，不要包含任何解释或其他内容。`
-  message.info('已重置提示词')
-}
-
+/** 获取 API Key 的跳转链接（自定义供应商无链接） */
 const apiLink = computed(() => {
-  if (apiForm.value.id === 'deepseek') {
+  if (form.value.providerId === 'deepseek') {
     return 'https://platform.deepseek.com/usage'
-  } else if (apiForm.value.id === 'doubao') {
+  } else if (form.value.providerId === 'doubao') {
     return 'https://console.volcengine.com/'
-  } else if (apiForm.value.id === 'openai') {
+  } else if (form.value.providerId === 'openai') {
     return 'https://platform.openai.com/api-keys'
   }
   return ''
 })
+
+/** 是否为内置固定厂商：API 端点不可编辑、无提供商名称输入 */
+const isBuiltin = computed(() =>
+  BUILTIN_PROVIDER_IDS.includes(form.value.providerId ?? ''),
+)
 </script>
 
 <template>
-  <!-- AI服务商名称 -->
-  <div v-if="apiForm.id === 'custom'" class="setting-item">
+  <!-- 提供商名称（仅自定义供应商） -->
+  <div v-if="!isBuiltin" class="setting-item">
     <label class="setting-label">提供商名称</label>
     <a-input
-      v-model:value="apiForm.providerName"
+      v-model:value="form.providerName"
       placeholder="提供商名称"
       class="setting-input"
     />
@@ -73,7 +80,7 @@ const apiLink = computed(() => {
       >
     </label>
     <a-input-password
-      v-model:value="apiForm.apiKey"
+      v-model:value="form.apiKeyEnc"
       style="width: 400px"
       placeholder="API Key"
       class="setting-input"
@@ -84,7 +91,7 @@ const apiLink = computed(() => {
   <div class="setting-item">
     <label class="setting-label">模型 ID</label>
     <a-input
-      v-model:value="apiForm.modelId"
+      v-model:value="form.modelId"
       placeholder="模型 ID"
       class="setting-input"
     />
@@ -94,34 +101,34 @@ const apiLink = computed(() => {
   <div class="setting-item">
     <label class="setting-label">API端点</label>
     <a-input
-      v-model:value="apiForm.apiEndpoint"
-      :bordered="apiForm.id === 'custom'"
-      :disabled="apiForm.id !== 'custom'"
+      v-model:value="form.apiEndpoint"
+      :bordered="!isBuiltin"
+      :disabled="isBuiltin"
       class="setting-input"
       placeholder="API端点"
     />
   </div>
 
-  <!-- 连接测试 -->
+  <!-- 连接测试（未保存草稿无真实 id，后端无法按 id 查配置发起请求，禁用） -->
   <div class="setting-item">
     <label class="setting-label">连接测试</label>
-    <a-button type="primary" :loading="isTesting" @click="handleTestConnection">
+    <a-tooltip v-if="isUnsaved" title="请先保存配置后再测试连接">
+      <a-button type="primary" disabled>测试连接</a-button>
+    </a-tooltip>
+    <a-button
+      v-else
+      type="primary"
+      :loading="isTesting"
+      @click="handleTestConnection"
+    >
       测试连接
     </a-button>
   </div>
 
-  <!-- AI 润色提示词 -->
-  <div class="setting-item">
-    <label class="setting-label">
-      AI 润色提示词
-      <a-button @click="resetPrompt"> <ReloadOutlined /> 重置 </a-button>
-    </label>
-    <a-textarea
-      v-model:value="polishPrompt"
-      placeholder="请输入提示词..."
-      :rows="10"
-    >
-    </a-textarea>
+  <!-- 操作按钮 -->
+  <div class="setting-item form-actions">
+    <a-button @click="emit('cancel')">取消</a-button>
+    <a-button type="primary" @click="emit('save')">保存</a-button>
   </div>
 </template>
 
@@ -169,5 +176,11 @@ const apiLink = computed(() => {
     width: 100%;
     max-width: 400px;
   }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 </style>

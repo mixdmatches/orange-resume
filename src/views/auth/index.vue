@@ -151,7 +151,7 @@ onMounted(() => {
     <!-- 右侧表单区 -->
     <div class="form-side">
       <div class="form-wrapper">
-        <a-tabs v-model:activeKey="activeTab" centered>
+        <a-tabs v-model:active-key="activeTab" centered>
           <!-- 登录 Tab -->
           <a-tab-pane key="login" tab="登录">
             <a-form

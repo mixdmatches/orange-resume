@@ -117,7 +117,6 @@ export async function getPendingOps(): Promise<SyncOp[]> {
  */
 export async function compactOps(): Promise<SyncOp[]> {
   const allOps = await getPendingOps()
-  console.log(allOps, '等待同步的操作队列')
 
   if (allOps.length === 0) return []
 
@@ -186,10 +185,6 @@ export async function deleteUnableOps(droppedOpIds: string[]): Promise<void> {
     tx.oncomplete = () => resolve()
     tx.onerror = () => reject(tx.error)
   })
-  console.log(
-    `[syncQueue] compactOps 清理了 ${droppedOpIds.length} 条被合并的无效 op`,
-    droppedOpIds,
-  )
 }
 
 /**
@@ -220,7 +215,6 @@ export async function incrementRetry(opId: string): Promise<void> {
  */
 export async function getPendingCount(): Promise<number> {
   const ops = await compactOps()
-  console.log(ops, '真正的队列长度')
   return ops.length
 }
 
@@ -236,11 +230,9 @@ export async function clearQueue(): Promise<void> {
       const store = tx.objectStore(STORE_NAME)
       const req = store.clear()
       req.onsuccess = () => {
-        console.log('[syncQueue] 同步队列已清空')
         resolve()
       }
       req.onerror = () => {
-        console.error('[syncQueue] 清空队列失败:', req.error)
         reject(req.error)
       }
     })

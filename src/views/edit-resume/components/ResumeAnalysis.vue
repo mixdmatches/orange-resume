@@ -17,7 +17,6 @@ import {
   RocketFilled,
   BulbFilled,
 } from '@ant-design/icons-vue'
-import { hasApiKey } from '@/api'
 import type { ResumeScoreResult } from '@/types/ai'
 import { resumeToText } from '@/utils/resumeToText'
 import { scoreResumeApi } from '@/api'
@@ -165,10 +164,6 @@ function getAiGradeColor(grade: string): string {
  * 调用 AI 开始评分
  */
 const handleStartAiScore = async () => {
-  if (!hasApiKey()) {
-    message.warning('请先在设置中配置 API Key')
-    return
-  }
   if (aiScoreLoading.value) return
 
   aiScoreLoading.value = true

@@ -88,7 +88,10 @@ export class JobMatchDto {
   resumeText!: string
   jobDescription!: string
 }
-
+export interface JobMatchPoint {
+  section: string
+  point: string
+}
 /** 岗位匹配分析结果 */
 export interface JobMatchResult {
   /** 匹配度 0-100 */

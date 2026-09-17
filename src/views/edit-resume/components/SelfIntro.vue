@@ -5,7 +5,6 @@ import { CopyOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import MarkdownIt from 'markdown-it'
 import type { Resume } from '@/types/resume'
 import { resumeToText } from '@/utils/resumeToText'
-import { hasApiKey } from '@/api'
 import { selfIntroStreamApi } from '@/api'
 import type { SelfIntroOptions } from '@/types/ai'
 
@@ -39,10 +38,6 @@ const renderedHtml = computed(() => md.render(content.value))
  * 开始生成自我介绍（流式）
  */
 const handleGenerate = async () => {
-  if (!hasApiKey()) {
-    message.warning('请先在设置中配置 API Key')
-    return
-  }
   if (loading.value) return
 
   loading.value = true

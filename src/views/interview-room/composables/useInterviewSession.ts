@@ -1,7 +1,6 @@
 import { computed, onUnmounted, ref, type Ref } from 'vue'
 import type { ChatMessage } from '@/types/ai'
 import type { Resume } from '@/types/resume'
-import { getApiConfig, hasApiKey } from '@/api'
 import { resumeToText } from '@/utils/resumeToText'
 
 /** 面试阶段：idle=欢迎页 / interviewing=面试进行中 / finished=面试已结束 */
@@ -107,14 +106,6 @@ export const useInterviewSession = (options: {
     extra: string,
     maxTokens = 800,
   ) => {
-    const apiConfig = getApiConfig()
-    if (!apiConfig || !apiConfig.apiKey) {
-      throw new Error('未配置 API Key，请在设置中配置')
-    }
-    if (!apiConfig.modelId) {
-      throw new Error('请先选择模型')
-    }
-
     const apiMessages: ChatMessage[] = [
       { role: 'system', content: buildSystemPrompt() },
       ...messages.value
@@ -130,14 +121,25 @@ export const useInterviewSession = (options: {
     ]
 
     const { chatStreamApi } = await import('@/api/ai')
-    const stream = chatStreamApi({ messages: apiMessages, maxTokens })
     // 标记为流式中：UI 会把空 content 的占位气泡显示为思考态
     target.streaming = true
-    for await (const chunk of stream) {
-      target.content += chunk
+    try {
+      const stream = chatStreamApi({ messages: apiMessages, maxTokens })
+      for await (const chunk of stream) {
+        target.content += chunk
+      }
+    } catch (error) {
+      // 异常中断（网络错误、后端 error 事件等）：若已无任何内容，
+      // 给占位消息填兑底文案，避免出现空气泡或一直停留在思考态；
+      // 若已收到部分内容则保留半截回复，对用户更友好
+      if (!target.content) {
+        target.content = '（回复失败，请稍后重试）'
+      }
+      throw error
+    } finally {
+      // 保险：无论成功、失败还是中途取消，都必清流式标记
+      target.streaming = false
     }
-    // 流式结束后清除标记
-    target.streaming = false
   }
 
   /** 启动计时器 */
@@ -167,9 +169,6 @@ export const useInterviewSession = (options: {
   const start = async () => {
     if (!resume.value) {
       throw new Error('简历数据缺失，请返回重新选择简历')
-    }
-    if (!hasApiKey()) {
-      throw new Error('请先在"设置"页面配置 API Key')
     }
     if (thinking.value) return
 
