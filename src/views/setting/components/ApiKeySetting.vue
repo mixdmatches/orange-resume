@@ -122,6 +122,9 @@ const isNewProvider = ref(false)
 /** 厂商配置表单草稿（编辑副本，保存成功后提交后端） */
 const formDraft = ref<APIManufacturer>()
 
+/** SettingForm 子组件实例引用，用于调用 clearValidate() 清除校验红框 */
+const settingFormRef = ref<InstanceType<typeof SettingForm>>()
+
 /** 润色提示词草稿（偏好表单编辑副本，保存偏好后写回 savedPolishPrompt） */
 const polishPromptDraft = ref<string>(DEFAULT_POLISH_PROMPT)
 
@@ -303,6 +306,8 @@ function doSelect(id: string) {
   activeTab.value = 'provider'
   currentEditId.value = id
   formDraft.value = cloneDraft()
+  // 切换厂商后清除上一份表单的校验红框 / 错误提示
+  settingFormRef.value?.clearValidate()
 }
 
 /** 新增自定义供应商：进入新建编辑状态，保存后才真正加入列表 */
@@ -319,20 +324,14 @@ function handleAddCustom() {
     modelId: '',
     providerName: '',
   }
+  // 进入新建状态，清除之前的校验红框
+  settingFormRef.value?.clearValidate()
 }
 
 /** 保存当前表单草稿到后端，成功后同步本地状态 */
 async function handleSave() {
   const draft = formDraft.value
   if (!draft) return
-  // 自定义供应商必须填写提供商名称（草稿 providerId 可能为空占位，兜底空串）
-  if (
-    !BUILTIN_PROVIDER_IDS.includes(draft.providerId ?? '') &&
-    !draft.providerName?.trim()
-  ) {
-    message.warning('请先填写提供商名称')
-    return
-  }
 
   // 新建自定义供应商不传 providerId（由后端生成）；其余按已有 id upsert
   const payload: AiConfigInput = isNewProvider.value
@@ -375,17 +374,21 @@ async function handleSave() {
   }
   // 草稿重置为已保存内容，掩码回显与后端对齐
   formDraft.value = cloneDraft()
+  // 保存成功，清除表单校验红框
+  settingFormRef.value?.clearValidate()
   message.success('保存成功')
 }
 
 /** 取消编辑：丢弃厂商草稿修改，恢复为已保存内容 */
 function handleCancel() {
   if (isNewProvider.value) {
-    // 新建中的供应商直接放弃，切回当前使用的模型
+    // 新建中的供应商直接放弃，切回当前使用的模型（doSelect 内部已 clearValidate）
     doSelect(selectedProviderId.value || 'deepseek')
     return
   }
   formDraft.value = cloneDraft()
+  // 取消编辑，恢复已保存内容后清除校验红框
+  settingFormRef.value?.clearValidate()
 }
 
 /**
@@ -555,8 +558,9 @@ onBeforeRouteLeave(to => {
 
           <!-- 厂商配置表单 -->
           <SettingForm
+            ref="settingFormRef"
             v-model:form="formDraft!"
-            @save="handleSave"
+            :on-save="handleSave"
             @cancel="handleCancel"
           />
         </template>
