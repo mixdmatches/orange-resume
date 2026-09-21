@@ -8,7 +8,7 @@ import { createPinia } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import { MotionPlugin } from 'motion-v'
 import { useAuthStore } from './stores/auth'
-import { TOKEN_KEY } from './utils/request'
+import { ACCESS_TOKEN_KEY } from './utils/request'
 import { storage } from './utils/storage'
 import { initRepository } from './service/resumeRepository'
 
@@ -46,7 +46,7 @@ app.use(MotionPlugin, {
  * 同时启动 Local-First 同步引擎：注册 online/offline 监听，
  * 并回放上次未同步完的离线操作队列（如果有的话）。
  */
-if (storage.get<string>(TOKEN_KEY)) {
+if (storage.get<string>(ACCESS_TOKEN_KEY)) {
   useAuthStore()
     .fetchProfile()
     .catch(() => {

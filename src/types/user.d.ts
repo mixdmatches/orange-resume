@@ -21,8 +21,17 @@ export interface UserInfo {
   updatedAt: string
 }
 
-/** 登录响应数据 */
+/**
+ * 登录 / 注册 / 刷新令牌的统一响应数据（双 Token 方案）
+ * - accessToken：短寿命（默认 2h），业务请求放 Authorization: Bearer <accessToken>
+ * - refreshToken：长寿命（默认 7d），仅用于 POST /auth/refresh 静默换新令牌对
+ * - 后端为轮换策略：refresh 一次一换，旧 refreshToken 立即作废，前端需整体覆盖保存
+ */
 export interface LoginResult {
-  token: string
-  user: UserInfo
+  /** 访问令牌：业务接口鉴权用 */
+  accessToken: string
+  /** 刷新令牌：静默续期用 */
+  refreshToken: string
+  /** 当前登录用户信息 */
+  userInfo: UserInfo
 }

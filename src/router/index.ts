@@ -10,7 +10,7 @@ import {
   ShopOutlined,
   HeatMapOutlined,
 } from '@ant-design/icons-vue'
-import { TOKEN_KEY } from '@/utils/request'
+import { ACCESS_TOKEN_KEY } from '@/utils/request'
 import { storage } from '@/utils/storage'
 
 export const header_routes: RouteRecordRaw[] = [
@@ -100,7 +100,7 @@ const router = createRouter({
  * - 已登录访问登录页 → 跳首页
  */
 router.beforeEach((to, _from) => {
-  const token = storage.get<string>(TOKEN_KEY)
+  const token = storage.get<string>(ACCESS_TOKEN_KEY)
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
 
   if (requiresAuth && !token) {

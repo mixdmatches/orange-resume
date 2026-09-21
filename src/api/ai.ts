@@ -16,7 +16,7 @@ import type {
   SelfIntroDto,
 } from '@/types/ai'
 import type { Resume } from '@/types/resume'
-import { AI_TIMEOUT, post, TOKEN_KEY } from '@/utils/request'
+import { AI_TIMEOUT, post, ACCESS_TOKEN_KEY } from '@/utils/request'
 import { storage } from '@/utils/storage'
 
 const AI_API_CONFIG = {
@@ -26,9 +26,12 @@ const AI_API_CONFIG = {
 /**
  * 获取请求基础地址与鉴权头（供 fetch 流式请求使用）
  */
-function getRequestBase(): { url: string; headers: Record<string, string> } {
+export function getRequestBase(): {
+  url: string
+  headers: Record<string, string>
+} {
   const baseURL = import.meta.env.VITE_API_BASE_URL
-  const token = storage.get<string>(TOKEN_KEY)
+  const token = storage.get<string>(ACCESS_TOKEN_KEY)
   return {
     url: baseURL,
     headers: {
@@ -53,7 +56,7 @@ function getRequestBase(): { url: string; headers: Record<string, string> } {
  * @param body - 请求体，内部会 JSON.stringify
  * @yields 文本增量片段
  */
-async function* streamSse(
+export async function* streamSse(
   path: string,
   body: unknown,
 ): AsyncGenerator<string, void, unknown> {
