@@ -560,7 +560,7 @@ onBeforeRouteLeave(to => {
           <SettingForm
             ref="settingFormRef"
             v-model:form="formDraft!"
-            :on-save="handleSave"
+            @save="handleSave"
             @cancel="handleCancel"
           />
         </template>
