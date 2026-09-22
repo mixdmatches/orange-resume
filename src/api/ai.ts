@@ -60,11 +60,12 @@ export async function* streamSse(
   path: string,
   body: unknown,
 ): AsyncGenerator<string, void, unknown> {
-  const { url } = getRequestBase()
+  const { url, headers } = getRequestBase()
 
   const response = await fetch(`${url}${path}`, {
     method: 'POST',
     body: JSON.stringify(body),
+    headers,
   })
 
   if (!response.ok) {

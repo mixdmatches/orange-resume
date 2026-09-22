@@ -1,31 +1,28 @@
 <script setup lang="ts">
+import LineMdChatRoundDots from '~icons/line-md/chat-round-dots'
+import LineMdPlusCircle from '~icons/line-md/plus-circle'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
-  computed,
-  inject,
-  nextTick,
-  onMounted,
-  onUnmounted,
-  ref,
-  watch,
-} from 'vue'
-import {
+  DeleteOutlined,
   RobotOutlined,
   CloseOutlined,
   MinusOutlined,
   SendOutlined,
 } from '@ant-design/icons-vue'
 import MarkdownIt from 'markdown-it'
-import type { Resume } from '@/types/resume'
-import { resumeToText } from '@/utils/resumeToText'
-import { chatStreamApi } from '@/api'
+import {
+  chatAiSessionApi,
+  createAiSessionApi,
+  deleteAiSessionApi,
+  listChatSesstionsApi,
+  listSessionMessagesApi,
+} from '@/api/ai-session'
 import type { ChatMessage } from '@/types/ai'
+import type { AiSession } from '@/types/ai-sesstion'
 
 /** 控制对话框显示/隐藏 */
 const props = defineProps<{ open: boolean }>()
 const emit = defineEmits<{ (e: 'update:open', value: boolean): void }>()
-
-/** 简历数据 */
-const resume = inject<Resume>('resume') as Resume
 
 /** markdown-it 实例 */
 const md = new MarkdownIt({ breaks: true, linkify: true })
@@ -158,49 +155,47 @@ const loading = ref(false)
 /** 消息列表容器的 ref，用于自动滚动到底部 */
 const messageListRef = ref<HTMLElement | null>(null)
 
+const dropdownVisible = ref(false)
+
 /**
  * 渲染 Markdown 为 HTML
  */
 const renderMd = (text: string) => md.render(text)
 
-const MAX_HISTORY_ROUNDS = 6
+/** 当前会话 ID（空对话首次发消息时才创建，之后复用） */
+const sessionId = ref<string | null>(null)
 
 /**
- * 构造智能助手对话的消息列表
- * - 注入简历上下文作为 system 消息
- * - 截断历史对话，只保留最近 MAX_HISTORY_ROUNDS 轮
- * @param resumeText - 简历纯文本
- * @param history - 历史对话（不含当前这条）
- * @param userInput - 当前用户输入
- * @returns 可直接传给 chatWithStream 的消息列表
+ * 切换会话
+ * 清空本地消息并重置会话，回到空对话状态
+ * 并将当前会话 ID 更新为选中的会话 ID
+ * @param sessionId 会话 ID
  */
-const buildAssistantMessages = (
-  resumeText: string,
-  history: ChatMessage[],
-  userInput: string,
-): ChatMessage[] => {
-  const systemPrompt = `你是一位资深简历顾问和职业规划师，正在协助用户优化简历。
-以下是用户的简历内容，请基于此上下文回答问题：
+const handleSession = async (id: string) => {
+  sessionId.value = id
+  const res = await listSessionMessagesApi(id)
+  messages.value = res.list || []
+  loading.value = false
+  userInput.value = ''
+  scrollToBottom()
+}
 
-${resumeText}
+const handleDeleteSession = async (id: string) => {
+  await deleteAiSessionApi(id)
+  await refreshSessionList()
+}
 
-回答要求：
-1. 具体可执行，避免空话套话
-2. 如果用户问的是简历外的问题也可以回答，但要尽量结合简历情况
-3. 回答用 Markdown 格式，重点加粗，用空行分段`
-
-  // 只保留最近 MAX_HISTORY_ROUNDS 轮（每轮 2 条消息）
-  const maxHistoryMessages = MAX_HISTORY_ROUNDS * 2
-  const trimmedHistory =
-    history.length > maxHistoryMessages
-      ? history.slice(-maxHistoryMessages)
-      : history
-
-  return [
-    { role: 'system', content: systemPrompt },
-    ...trimmedHistory,
-    { role: 'user', content: userInput },
-  ]
+/**
+ * 确保会话已创建
+ * 空对话首发消息时调用后端创建会话并记录 ID；已有会话则直接复用。
+ * 简历上下文与历史消息的组装均由后端完成，前端无需关心。
+ * @returns 会话 ID
+ */
+const ensureSession = async (): Promise<string> => {
+  if (sessionId.value) return sessionId.value
+  const session = await createAiSessionApi({ type: 'chat' })
+  sessionId.value = session.id
+  return session.id
 }
 
 /**
@@ -232,13 +227,11 @@ const handleSend = async () => {
   scrollToBottom()
 
   try {
-    // 3. 构造消息列表（不含最后那条空 assistant）
-    const history = messages.value.slice(0, -2)
-    const resumeText = resumeToText(resume)
-    const builtMessages = buildAssistantMessages(resumeText, history, input)
+    // 3. 空对话首发消息时先创建会话，后续复用同一会话
+    const sid = await ensureSession()
 
-    // 4. 流式接收并填充到最后一条 assistant 消息
-    for await (const delta of chatStreamApi({ messages: builtMessages })) {
+    // 4. 会话流式对话，上下文组装由后端完成，前端只传本次输入
+    for await (const delta of chatAiSessionApi(sid, { content: input })) {
       messages.value[messages.value.length - 1].content += delta
       scrollToBottom()
     }
@@ -263,6 +256,27 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 /** 是否有消息 */
 const hasMessages = computed(() => messages.value.length > 0)
+
+/**
+ * 新建对话：清空本地消息并重置会话，回到空对话状态
+ */
+const handleNewChat = () => {
+  if (loading.value) return
+  messages.value = []
+  sessionId.value = null
+}
+
+// =========会话列表==========
+
+const sessionList = ref<AiSession[]>([])
+
+/**
+ * 刷新会话列表
+ */
+const refreshSessionList = async () => {
+  const res = await listChatSesstionsApi()
+  sessionList.value = res || []
+}
 </script>
 
 <template>
@@ -280,6 +294,62 @@ const hasMessages = computed(() => messages.value.length > 0)
           智能助手
         </div>
         <div class="header-actions">
+          <a-button
+            type="text"
+            size="small"
+            class="header-action"
+            @click="handleNewChat"
+          >
+            <LineMdPlusCircle />
+          </a-button>
+          <a-dropdown v-model:open="dropdownVisible" :trigger="['click']">
+            <a-button
+              type="text"
+              size="small"
+              class="header-action"
+              @click="refreshSessionList"
+            >
+              <LineMdChatRoundDots />
+            </a-button>
+            <template #overlay>
+              <a-menu>
+                <div v-if="sessionList.length === 0" class="session-empty">
+                  暂无历史会话
+                </div>
+                <a-dropdown
+                  v-for="session in sessionList"
+                  :key="session.id"
+                  :trigger="['contextmenu']"
+                >
+                  <a-menu-item
+                    :class="{ active: session.id === sessionId }"
+                    @click="handleSession(session.id)"
+                  >
+                    <span class="session-title">{{ session.title }}</span>
+                  </a-menu-item>
+                  <template #overlay>
+                    <div class="session-menu">
+                      <div
+                        class="session-item"
+                        danger
+                        @click="handleDeleteSession(session.id)"
+                      >
+                        <span class="session-title">
+                          <DeleteOutlined /> 删除会话</span
+                        >
+                      </div>
+                      <div class="session-item">
+                        <span class="session-title">
+                          <EditOutlined /> 编辑标题</span
+                        >
+                      </div>
+                    </div>
+                  </template>
+                </a-dropdown>
+              </a-menu>
+            </template>
+          </a-dropdown>
+
           <a-button
             type="text"
             size="small"
@@ -378,7 +448,7 @@ const hasMessages = computed(() => messages.value.length > 0)
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  z-index: 1100;
+  z-index: 100;
   user-select: none;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
   border: 1px solid transparent;
@@ -422,6 +492,78 @@ const hasMessages = computed(() => messages.value.length > 0)
     color: #fff;
     &:hover {
       background: rgba(255, 255, 255, 0.2);
+    }
+  }
+}
+
+/* 历史会话下拉列表（dropdown overlay teleport 到 body） */
+.session-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 100px;
+  max-width: 120px;
+  border-radius: 054rem;
+  padding: 0.4rem;
+  border-radius: 0.5rem;
+  @include themify(
+    (
+      background-color: $bg-color,
+    )
+  );
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
+
+  .session-empty {
+    padding: 0.8rem;
+    text-align: center;
+    color: #999;
+  }
+
+  .session-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.3rem;
+    padding: 0.35rem 0.5re4;
+    gap: 0.4rem;
+    padding: 0.5rem 0.6rem;
+    border-radius: 0.4rem;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(22, 119, 255, 0.08);
+    }
+
+    &.active {
+      background: rgba(22, 119, 255, 0.12);
+    }
+
+    .session-title {
+      flex: 1;
+      min-width: 0;
+      font-size: 1.2rem;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      @include themify(
+        (
+          color: $text-color,
+        )
+      );
+    }
+
+    .session-delete-btn {
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity 0.15s;
+      color: #999;
+
+      &:hover {
+        color: #ff4d4f;
+      }
+    }
+
+    &:hover .session-delete-btn {
+      opacity: 1;
     }
   }
 }
