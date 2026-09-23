@@ -21,7 +21,6 @@ import { inject, ref } from 'vue'
 import type { Resume } from '@/types/resume'
 import templates from '@/template'
 import previewImage from '@/assets/images/classic.fcafadcb.svg'
-import { resumeToMarkdown } from '@/utils/markdownConverter'
 
 const props = defineProps<{
   canUndo: boolean
@@ -61,16 +60,6 @@ const handleDownloadPDF = async () => {
     console.error('导出 PDF 失败：', error)
     message.error('导出 PDF 失败，请查看控制台或重试')
   }
-}
-
-const handleDownloadMarkdown = () => {
-  const markdown = resumeToMarkdown(resume)
-  const blob = new Blob([markdown], { type: 'text/markdown' })
-  const a = document.createElement('a')
-  a.href = URL.createObjectURL(blob)
-  a.download = `${resume.title}.md`
-  a.click()
-  URL.revokeObjectURL(a.href)
 }
 
 const drawerOpen = ref(false)
@@ -197,9 +186,6 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
           <a-menu>
             <a-menu-item @click="handleDownloadPDF"> PDF </a-menu-item>
             <a-menu-item @click="handleDownloadJson"> JSON配置 </a-menu-item>
-            <a-menu-item @click="handleDownloadMarkdown">
-              Markdown
-            </a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>

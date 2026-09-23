@@ -7,10 +7,8 @@ import InternshipCard from '@/views/edit-resume/cards/InternshipCard.vue'
 import ProjectCard from '@/views/edit-resume/cards/ProjectCard.vue'
 import SkillsCard from '@/views/edit-resume/cards/SkillsCard.vue'
 import CustomCard from '@/views/edit-resume/cards/CustomCard.vue'
-import MarkdownEditor from './MarkdownEditor.vue'
 import type { Resume } from '@/types/resume'
 import { PlusOutlined, DownOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
 import { type UseDraggableReturn, VueDraggable } from 'vue-draggable-plus'
 import { getFontOptions } from '@/utils/fonts'
 
@@ -144,10 +142,6 @@ const showDivider = computed(() =>
       !resume.menuSections.some(section => section.id === item.id),
   ),
 )
-
-const disabledToggle = () => {
-  message.warn('功能开发中')
-}
 </script>
 
 <template>
@@ -158,76 +152,67 @@ const disabledToggle = () => {
     :animate="{ opacity: 1, y: 0 }"
     :transition="{ duration: 0.5, ease: 'easeOut' }"
   >
-    <span class="toggleModeBtn" @click="disabledToggle">
-      {{ '进入' }} markdown 模式
-    </span>
-    <!-- Markdown 模式 -->
-    <MarkdownEditor v-if="false" />
+    <!-- 布局内容 -->
+    <motion.div
+      class="model"
+      :initial="{ opacity: 0, y: 20 }"
+      :animate="{ opacity: 1, y: 0 }"
+      :transition="{ duration: 0.4, delay: 0.1 }"
+    >
+      <div class="model-title">
+        <span class="title">布局内容</span>
+      </div>
+      <div class="model-content">
+        <component
+          :is="getCardComponent('basic').component"
+          v-if="resume.menuSections.some(section => section.id === 'basic')"
+          v-bind="getCardComponent('basic').props"
+        />
 
-    <!-- 表单模式 -->
-    <template v-else>
-      <!-- 布局内容 -->
-      <motion.div
-        class="model"
-        :initial="{ opacity: 0, y: 20 }"
-        :animate="{ opacity: 1, y: 0 }"
-        :transition="{ duration: 0.4, delay: 0.1 }"
-      >
-        <div class="model-title">
-          <span class="title">布局内容</span>
-        </div>
-        <div class="model-content">
+        <VueDraggable
+          ref="el"
+          v-model="draggableMenuSections"
+          :animation="150"
+          ghost-class="ghost"
+          @end="onEnd"
+        >
           <component
-            :is="getCardComponent('basic').component"
-            v-if="resume.menuSections.some(section => section.id === 'basic')"
-            v-bind="getCardComponent('basic').props"
+            :is="getCardComponent(section.id).component"
+            v-for="section in draggableMenuSections"
+            :key="section.id"
+            v-bind="getCardComponent(section.id).props"
           />
-
-          <VueDraggable
-            ref="el"
-            v-model="draggableMenuSections"
-            :animation="150"
-            ghost-class="ghost"
-            @end="onEnd"
-          >
-            <component
-              :is="getCardComponent(section.id).component"
-              v-for="section in draggableMenuSections"
-              :key="section.id"
-              v-bind="getCardComponent(section.id).props"
-            />
-          </VueDraggable>
-        </div>
-        <a-dropdown :trigger="['click']">
-          <template #overlay>
-            <a-menu>
-              <template v-for="item in moduleList" :key="item.id">
-                <a-menu-item
-                  v-if="
-                    !resume.menuSections.some(section => section.id === item.id)
-                  "
-                  @click="handleMenuItemClick(item.id)"
-                >
-                  {{ item.title }}
-                </a-menu-item>
-              </template>
-              <a-menu-divider v-if="showDivider" />
-              <a-menu-item @click="handleAddCustom">自定义模块</a-menu-item>
-            </a-menu>
-          </template>
-          <a-button
-            type="primary"
-            block
-            class="add-custom-btn"
-            :icon="h(PlusOutlined)"
-            style="margin-top: 1rem"
-          >
-            添加模块
-            <DownOutlined />
-          </a-button>
-        </a-dropdown>
-      </motion.div>
-    </template>
+        </VueDraggable>
+      </div>
+      <a-dropdown :trigger="['click']">
+        <template #overlay>
+          <a-menu>
+            <template v-for="item in moduleList" :key="item.id">
+              <a-menu-item
+                v-if="
+                  !resume.menuSections.some(section => section.id === item.id)
+                "
+                @click="handleMenuItemClick(item.id)"
+              >
+                {{ item.title }}
+              </a-menu-item>
+            </template>
+            <a-menu-divider v-if="showDivider" />
+            <a-menu-item @click="handleAddCustom">自定义模块</a-menu-item>
+          </a-menu>
+        </template>
+        <a-button
+          type="primary"
+          block
+          class="add-custom-btn"
+          :icon="h(PlusOutlined)"
+          style="margin-top: 1rem"
+        >
+          添加模块
+          <DownOutlined />
+        </a-button>
+      </a-dropdown>
+    </motion.div>
     <!-- 排版 -->
     <motion.div
       class="model"
@@ -401,12 +386,6 @@ const disabledToggle = () => {
       background-color: $layout-bg-color,
     )
   );
-}
-.toggleModeBtn {
-  color: #8c8c8c;
-  font-size: 1.3rem;
-  font-weight: 600;
-  cursor: pointer;
 }
 .add-custom-btn {
   margin-top: auto;

@@ -301,7 +301,6 @@ export async function createResume(resume: Resume): Promise<void> {
  */
 export async function updateResume(resume: Resume): Promise<void> {
   ensureNetworkListener()
-  // 注意：updateResumeIDB 内部已有 debounceSyncToFile 调用，文件同步保留
   await updateResumeIDB(resume.id, resume)
   await enqueueSync({
     type: 'update',
