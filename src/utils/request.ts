@@ -35,7 +35,7 @@ export interface ApiResult<T = unknown> {
  * 跳转到登录页
  * 用于刷新失败、鉴权彻底失效场景。直接使用 router 单例跳转。
  */
-function redirectToLogin() {
+export function redirectToLogin() {
   // 已在登录页时不再重复跳转
   if (!window.location.hash.startsWith('#/login')) {
     router.push('/login')

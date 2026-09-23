@@ -5,9 +5,13 @@ import { useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
 import {
   ArrowLeftOutlined,
+  BulbOutlined,
+  CheckCircleOutlined,
   ClockCircleOutlined,
   RobotOutlined,
+  TrophyOutlined,
   UserOutlined,
+  WarningOutlined,
 } from '@ant-design/icons-vue'
 import MarkdownIt from 'markdown-it'
 import { useInterviewStore } from '@/stores/interview'
@@ -17,7 +21,8 @@ import type { Resume } from '@/types/resume'
 
 const router = useRouter()
 const interviewStore = useInterviewStore()
-const { jobType, jd, questionCount } = storeToRefs(interviewStore)
+const { jobType, jd, difficulty, questionCount, category, interviewId } =
+  storeToRefs(interviewStore)
 const resume = ref<Resume | null>(null)
 
 /** 面试会话状态机（聊天流、计时器、AI 交互） */
@@ -26,28 +31,56 @@ const {
   messages,
   thinking,
   askedCount,
+  totalRounds,
+  finalScore,
   elapsedText,
   start,
   submitAnswer,
   finish,
   reset,
-} = useInterviewSession({ resume, jobType, jd, questionCount })
+} = useInterviewSession({
+  resume,
+  jobType,
+  jd,
+  difficulty,
+  questionCount,
+  category,
+  interviewId,
+})
 
 /** 候选人正在输入的回答 */
 const answerInput = ref('')
 /** 聊天流滚动容器，用于自动滚动到底部 */
 const chatContainerRef = ref<HTMLElement | null>(null)
 
-/** markdown-it 实例：仅用于渲染面试总结（AI 输出） */
+/** markdown-it 实例：用于渲染面试总结与参考答案 */
 const md = new MarkdownIt({ breaks: true, linkify: true })
 
 /** 是否配置了岗位 JD */
 const hasJd = computed(() => !!jd.value)
 
 /**
- * 渲染 Markdown 文本为 HTML（面试总结卡片使用）
+ * 渲染 Markdown 文本为 HTML（面试总结卡片、参考答案使用）
  */
 const renderMarkdown = (content: string) => md.render(content)
+
+/**
+ * 评分对应的 tag 颜色（80+绿、60+蓝、低于 60 红）
+ */
+const scoreColor = (score: number) =>
+  score >= 80 ? 'success' : score >= 60 ? 'processing' : 'error'
+
+/**
+ * 难度对应的 tag 颜色
+ */
+const difficultyColor = (d: string) =>
+  d === 'easy' ? 'success' : d === 'hard' ? 'error' : 'warning'
+
+/**
+ * 难度中文标签
+ */
+const difficultyLabel = (d: string) =>
+  d === 'easy' ? '简单' : d === 'hard' ? '困难' : '中等'
 
 /**
  * 聊天流自动滚动到底部：新消息或"思考中"状态变化时触发
@@ -157,7 +190,7 @@ onMounted(loadResume)
         >
         <h2>面试间</h2>
         <a-tag v-if="phase === 'interviewing'" color="processing">
-          第 {{ askedCount }} / {{ questionCount }} 题
+          第 {{ askedCount }} / {{ totalRounds }} 题
         </a-tag>
         <a-tag v-else-if="phase === 'finished'" color="success"
           >面试已结束</a-tag
@@ -184,7 +217,7 @@ onMounted(loadResume)
         <h3>准备开始模拟面试</h3>
         <p class="welcome-desc">
           AI 面试官将基于你的简历{{ jobType ? '与目标岗位' : '' }}进行
-          {{ questionCount }} 个问题的一对一模拟面试，结束后生成总结评价。
+          多轮一对一模拟面试，结束后生成总结评价。
         </p>
 
         <div class="welcome-info">
@@ -193,12 +226,16 @@ onMounted(loadResume)
             <span>{{ resume?.title || '加载中…' }}</span>
           </div>
           <div class="info-line">
-            <span class="label">题目数量：</span>
-            <span>{{ questionCount }} 题</span>
+            <span class="label">面试轮数：</span>
+            <span>{{ questionCount }} 轮（动态出题）</span>
           </div>
           <div class="info-line">
             <span class="label">目标岗位：</span>
             <span>{{ jobType || '未指定' }}</span>
+          </div>
+          <div class="info-line">
+            <span class="label">面试难度：</span>
+            <span>{{ difficultyLabel(difficulty) }}</span>
           </div>
           <div v-if="hasJd" class="info-line jd-line">
             <span class="label">岗位 JD：</span>
@@ -244,14 +281,86 @@ onMounted(loadResume)
             </div>
           </div>
 
+          <!-- 单题评价卡片 -->
+          <div v-else-if="msg.role === 'evaluation'" class="msg-row evaluation">
+            <div class="avatar ai">
+              <robot-outlined />
+            </div>
+            <div class="eval-card">
+              <div v-if="msg.streaming" class="eval-loading">
+                <a-spin size="small" />
+                <span>AI 正在评价你的回答…</span>
+              </div>
+              <template v-else-if="msg.evaluation">
+                <div class="eval-header">
+                  <span class="eval-round"
+                    >第 {{ msg.evaluation.round }} 题评价</span
+                  >
+                  <a-tag :color="scoreColor(msg.evaluation.score)">
+                    <trophy-outlined /> {{ msg.evaluation.score }} 分
+                  </a-tag>
+                </div>
+                <div class="eval-feedback">{{ msg.evaluation.feedback }}</div>
+                <div
+                  v-if="msg.evaluation.strengths.length"
+                  class="eval-block eval-good"
+                >
+                  <div class="eval-block-title">
+                    <check-circle-outlined /> 亮点
+                  </div>
+                  <ul>
+                    <li v-for="(s, i) in msg.evaluation.strengths" :key="i">
+                      {{ s }}
+                    </li>
+                  </ul>
+                </div>
+                <div
+                  v-if="msg.evaluation.weaknesses.length"
+                  class="eval-block eval-bad"
+                >
+                  <div class="eval-block-title"><warning-outlined /> 不足</div>
+                  <ul>
+                    <li v-for="(s, i) in msg.evaluation.weaknesses" :key="i">
+                      {{ s }}
+                    </li>
+                  </ul>
+                </div>
+                <div
+                  v-if="msg.evaluation.suggestions.length"
+                  class="eval-block eval-tip"
+                >
+                  <div class="eval-block-title"><bulb-outlined /> 建议</div>
+                  <ul>
+                    <li v-for="(s, i) in msg.evaluation.suggestions" :key="i">
+                      {{ s }}
+                    </li>
+                  </ul>
+                </div>
+              </template>
+            </div>
+          </div>
+
           <!-- 面试总结卡片 -->
           <div v-else class="summary-card">
             <div class="summary-title">
               <robot-outlined />
               <span>面试总结评价</span>
+              <a-tag
+                v-if="finalScore !== null"
+                color="gold"
+                class="summary-score"
+              >
+                <trophy-outlined /> 总分 {{ finalScore }}
+              </a-tag>
+            </div>
+            <!-- 流式输出中（streaming）且尚无内容时显示思考态 -->
+            <div v-if="msg.streaming && !msg.content" class="summary-loading">
+              <a-spin size="small" />
+              <span>正在生成面试总结…</span>
             </div>
             <!-- 内容为 AI 生成的 Markdown，经 markdown-it 渲染 -->
             <div
+              v-else
               class="summary-body"
               v-html="renderMarkdown(msg.content)"
             ></div>
@@ -481,7 +590,8 @@ onMounted(loadResume)
   margin-bottom: 1rem;
 }
 
-.msg-row.interviewer {
+.msg-row.interviewer,
+.msg-row.evaluation {
   justify-content: flex-start;
 }
 
@@ -554,6 +664,108 @@ onMounted(loadResume)
   gap: 0.6rem;
 }
 
+/* ---------- 题目元信息 ---------- */
+.q-meta {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.ref-answer {
+  margin-top: 0.6rem;
+
+  :deep(.ant-collapse-header) {
+    padding: 0.3rem 0;
+    font-size: 0.85rem;
+  }
+}
+
+/* ---------- 评价卡片 ---------- */
+.eval-card {
+  max-width: 72%;
+  padding: 0.8rem 1rem;
+  border-radius: 0.8rem;
+  border: 1px solid;
+  @include themify(
+    (
+      background: (
+        light: #fafafa,
+        dark: rgba(255, 255, 255, 0.04),
+      ),
+      border-color: (
+        light: #e8e8e8,
+        dark: rgba(255, 255, 255, 0.12),
+      ),
+    )
+  );
+}
+
+.eval-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: rgba(0, 0, 0, 0.65);
+  @include themify(
+    (
+      color: (
+        light: rgba(0, 0, 0, 0.65),
+        dark: rgba(255, 255, 255, 0.65),
+      ),
+    )
+  );
+}
+
+.eval-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.eval-round {
+  font-weight: 600;
+}
+
+.eval-feedback {
+  line-height: 1.7;
+  margin-bottom: 0.6rem;
+}
+
+.eval-block {
+  margin-top: 0.5rem;
+}
+
+.eval-block-title {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+
+.eval-good .eval-block-title {
+  color: #52c41a;
+}
+
+.eval-bad .eval-block-title {
+  color: #ff4d4f;
+}
+
+.eval-tip .eval-block-title {
+  color: #faad14;
+}
+
+.eval-block ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.eval-block li {
+  margin: 0.2rem 0;
+  line-height: 1.6;
+}
+
 /* ---------- 总结卡片 ---------- */
 .summary-card {
   margin: 1.2rem 0;
@@ -581,6 +793,25 @@ onMounted(loadResume)
   font-weight: 600;
   font-size: 1.1rem;
   margin-bottom: 0.5rem;
+}
+
+.summary-score {
+  margin-left: auto;
+}
+
+.summary-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: rgba(0, 0, 0, 0.65);
+  @include themify(
+    (
+      color: (
+        light: rgba(0, 0, 0, 0.65),
+        dark: rgba(255, 255, 255, 0.65),
+      ),
+    )
+  );
 }
 
 .summary-body {
@@ -645,7 +876,8 @@ onMounted(loadResume)
 }
 
 @media screen and (max-width: 700px) {
-  .bubble {
+  .bubble,
+  .eval-card {
     max-width: 86%;
   }
 }

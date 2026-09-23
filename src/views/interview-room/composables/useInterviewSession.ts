@@ -1,19 +1,46 @@
 import { computed, onUnmounted, ref, type Ref } from 'vue'
-import type { ChatMessage } from '@/types/ai'
+import type {
+  InterviewCategory,
+  InterviewDifficulty,
+  InterviewSseEvent,
+} from '@/types/interview'
 import type { Resume } from '@/types/resume'
-import { resumeToText } from '@/utils/resumeToText'
+import { createInterviewApi, interviewStreamApi } from '@/api/interview'
+import { DEFAULT_QUESTION_COUNT } from '@/stores/interview'
 
 /** 面试阶段：idle=欢迎页 / interviewing=面试进行中 / finished=面试已结束 */
 export type InterviewPhase = 'idle' | 'interviewing' | 'finished'
 
+/** 单题评价的结构化载荷（evaluation 角色消息携带） */
+export interface EvaluationPayload {
+  /** 当前题号 */
+  round: number
+  /** 总题数 */
+  totalRounds: number
+  /** 得分（0-100） */
+  score: number
+  /** 文字反馈 */
+  feedback: string
+  /** 亮点列表 */
+  strengths: string[]
+  /** 不足列表 */
+  weaknesses: string[]
+  /** 改进建议列表 */
+  suggestions: string[]
+  /** 是否还有下一题 */
+  hasNext: boolean
+}
+
 /** 面试间聊天消息 */
 export interface RoomMessage {
   id: number
-  /** interviewer=面试官（AI），candidate=候选人（用户），summary=面试总结 */
-  role: 'interviewer' | 'candidate' | 'summary'
+  /** interviewer=面试官（AI），candidate=候选人（用户），summary=面试总结，evaluation=单题评价 */
+  role: 'interviewer' | 'candidate' | 'summary' | 'evaluation'
   content: string
-  /** 是否正在流式输出（true 时 UI 可把空气泡显示为思考态） */
+  /** 是否正在流式输出（true 时 UI 可显示思考态） */
   streaming?: boolean
+  /** 评价结构化数据（role='evaluation' 时填充） */
+  evaluation?: EvaluationPayload
 }
 
 /**
@@ -21,27 +48,48 @@ export interface RoomMessage {
  * 负责面试状态机（idle → interviewing → finished）、聊天消息流、
  * 计时器与 AI 面试官交互；UI 层只负责渲染与用户输入。
  *
+ * 基于"面试统一 SSE 流 API"驱动：start / answer / finish 都调同一个
+ * interviewStreamApi，后端按 interview_session.status 自动路由行为。
+ *
  * @param options.resume - 当前面试使用的简历（页面异步加载后写入的 ref）
  * @param options.jobType - 目标岗位方向（来自面试会话 store，选填）
- * @param options.jd - 目标岗位 JD 原文（来自面试会话 store，选填）
+ * @param options.jd - 目标岗位 JD 原文（来自面试会话 store，仅前端展示，不传后端）
+ * @param options.difficulty - 面试难度（来自面试会话 store）
  * @param options.questionCount - 面试题目数量（来自面试会话 store）
+ * @param options.category - 面试题目类型（来自面试会话 store，null=混合出题）
+ * @param options.interviewId - 后端面试会话 ID（来自 store，双向同步：创建时写入，结束时清空）
  */
 export const useInterviewSession = (options: {
   resume: Ref<Resume | null>
   jobType: Ref<string>
   jd: Ref<string>
+  difficulty: Ref<InterviewDifficulty>
   questionCount: Ref<number>
+  category: Ref<InterviewCategory>
+  interviewId: Ref<string>
 }) => {
-  const { resume, jobType, jd, questionCount } = options
+  const {
+    resume,
+    jobType,
+    jd,
+    difficulty,
+    questionCount,
+    category,
+    interviewId,
+  } = options
 
   /** 当前面试阶段 */
   const phase = ref<InterviewPhase>('idle')
-  /** 聊天消息流（含面试总结） */
+  /** 聊天消息流（含面试总结与评价） */
   const messages = ref<RoomMessage[]>([])
   /** AI 面试官是否正在回复（用于禁用输入与展示思考态） */
   const thinking = ref(false)
-  /** 已提问的数量（用于顶部进度展示） */
-  const askedCount = ref(0)
+  /** 当前题号（用于顶部进度展示） */
+  const currentRound = ref(0)
+  /** 题库总题数（来自 question_start 事件的 totalRounds） */
+  const totalRounds = ref(DEFAULT_QUESTION_COUNT)
+  /** 面试最终总分（done 事件后填充，null 表示未出分） */
+  const finalScore = ref<number | null>(null)
   /** 面试已用秒数 */
   const elapsedSeconds = ref(0)
 
@@ -61,85 +109,16 @@ export const useInterviewSession = (options: {
    * 追加一条聊天消息并返回它
    * @param role - 消息角色
    * @param content - 消息内容
+   * @param evaluation - 可选的评价载荷（role='evaluation' 时填充）
    */
-  const pushMessage = (role: RoomMessage['role'], content: string) => {
-    const msg: RoomMessage = { id: ++messageId, role, content }
+  const pushMessage = (
+    role: RoomMessage['role'],
+    content: string,
+    evaluation?: EvaluationPayload,
+  ) => {
+    const msg: RoomMessage = { id: ++messageId, role, content, evaluation }
     messages.value.push(msg)
     return msg
-  }
-
-  /**
-   * 构造面试官的 system 提示词（每次调用时基于最新状态生成）
-   */
-  const buildSystemPrompt = () => {
-    const lines = [
-      '你是一位经验丰富的面试官，正在对候选人进行一对一的模拟面试。',
-      '',
-      '候选人简历如下：',
-      resume.value ? resumeToText(resume.value) : '（未提供）',
-    ]
-    if (jobType.value) {
-      lines.push('', `目标岗位：${jobType.value}`)
-    }
-    if (jd.value) {
-      lines.push('', '岗位 JD 内容如下：', jd.value)
-    }
-    lines.push(
-      '',
-      '面试规则：',
-      `1. 整场面试共 ${questionCount.value} 个问题，每次只提出一个问题，等候选人回答后再继续`,
-      '2. 问题结合简历与岗位要求，由浅入深，覆盖专业技能、项目经验与解决问题能力',
-      '3. 收到回答后先用一两句话简要点评，再提出下一个问题，不要一次抛出多个问题',
-      '4. 语气专业自然，像真实面试对话，回复保持简洁',
-    )
-    return lines.join('\n')
-  }
-
-  /**
-   * 流式调用 AI 面试官，逐字增量追加到 target 消息
-   * @param target - 接收流式增量的消息对象（content 会被持续追加）
-   * @param extra - 本轮附加给模型的指令
-   * @param maxTokens - 回复最大 token 数
-   */
-  const streamInto = async (
-    target: RoomMessage,
-    extra: string,
-    maxTokens = 800,
-  ) => {
-    const apiMessages: ChatMessage[] = [
-      { role: 'system', content: buildSystemPrompt() },
-      ...messages.value
-        .filter(msg => msg.role !== 'summary' && msg.id !== target.id)
-        .map(msg => ({
-          role:
-            msg.role === 'interviewer'
-              ? ('assistant' as const)
-              : ('user' as const),
-          content: msg.content,
-        })),
-      { role: 'user', content: extra },
-    ]
-
-    const { chatStreamApi } = await import('@/api/ai')
-    // 标记为流式中：UI 会把空 content 的占位气泡显示为思考态
-    target.streaming = true
-    try {
-      const stream = chatStreamApi({ messages: apiMessages, maxTokens })
-      for await (const chunk of stream) {
-        target.content += chunk
-      }
-    } catch (error) {
-      // 异常中断（网络错误、后端 error 事件等）：若已无任何内容，
-      // 给占位消息填兑底文案，避免出现空气泡或一直停留在思考态；
-      // 若已收到部分内容则保留半截回复，对用户更友好
-      if (!target.content) {
-        target.content = '（回复失败，请稍后重试）'
-      }
-      throw error
-    } finally {
-      // 保险：无论成功、失败还是中途取消，都必清流式标记
-      target.streaming = false
-    }
   }
 
   /** 启动计时器 */
@@ -163,8 +142,136 @@ export const useInterviewSession = (options: {
   onUnmounted(stopTimer)
 
   /**
-   * 开始面试：重置会话并让 AI 提出第一个问题
-   * @throws 简历缺失或未配置 API Key 时抛出带友好文案的错误
+   * 处理统一 SSE 流的事件，将事件适配为 RoomMessage
+   *
+   * 事件序列（后端按状态自动路由，评价统一在结束后推送）：
+   * - 开始面试：question_start → question*（逐 token）→ question_done
+   * - 答题（还有下一轮）：question_start → question* → question_done（直接下一题，无评价）
+   * - 答题（最后一轮）：question_done → evaluation_start → evaluation_done（逐题批量评价）→ summary_start → summary* → done
+   * - 提前结束：直接 evaluation_start → evaluation_done（逐题批量评价）→ summary_start → summary* → done
+   *
+   * @param stream - interviewStreamApi 返回的异步迭代器
+   */
+  const consumeStream = async (
+    stream: AsyncGenerator<InterviewSseEvent, void, unknown>,
+  ) => {
+    /** 当前面试官占位消息（question_start 时创建，question 逐字追加） */
+    let interviewerMsg: RoomMessage | null = null
+    /** 当前评价占位消息（evaluation_start 时创建，evaluation_done 时回填） */
+    let evalMsg: RoomMessage | null = null
+    /** 总结占位消息（summary_start 时创建，summary 事件逐字追加） */
+    let summaryMsg: RoomMessage | null = null
+
+    for await (const evt of stream) {
+      switch (evt.event) {
+        // ========== 流式出题 ==========
+        case 'question_start':
+          // 占位面试官消息，UI 显示"面试官正在提问…"
+          interviewerMsg = pushMessage('interviewer', '')
+          interviewerMsg.streaming = true
+          totalRounds.value = evt.totalRounds
+          currentRound.value = evt.round
+          break
+
+        case 'question':
+          // 题目文本逐字追加
+          if (interviewerMsg) interviewerMsg.content += evt.content
+          break
+
+        case 'question_done':
+          // 出题完毕
+          if (interviewerMsg) interviewerMsg.streaming = false
+          interviewerMsg = null
+          break
+
+        // ========== 答题评价 ==========
+        case 'evaluation_start':
+          // 占位评价卡片，UI 显示 loading
+          evalMsg = pushMessage('evaluation', '')
+          evalMsg.streaming = true
+          break
+
+        case 'evaluation_done':
+          // 回填评价结构化数据
+          if (evalMsg) {
+            evalMsg.evaluation = {
+              round: evt.round,
+              totalRounds: evt.totalRounds,
+              score: evt.score,
+              feedback: evt.feedback,
+              strengths: evt.strengths,
+              weaknesses: evt.weaknesses,
+              suggestions: evt.suggestions,
+              hasNext: evt.hasNext,
+            }
+            evalMsg.streaming = false
+          }
+          break
+
+        // ========== 总结 ==========
+        case 'summary_start':
+          // 占位总结消息，准备流式追加
+          summaryMsg = pushMessage('summary', '')
+          summaryMsg.streaming = true
+          break
+
+        case 'summary':
+          // 总结文本逐字增量
+          if (summaryMsg) summaryMsg.content += evt.content
+          break
+
+        // ========== 流程结束 ==========
+        case 'done':
+          // 面试结束收尾
+          if (summaryMsg) {
+            summaryMsg.streaming = false
+            // done 事件里的 summary 作为兜底（流式中断且 summary 为空时回填）
+            if (!summaryMsg.content) summaryMsg.content = evt.summary
+          }
+          finalScore.value = evt.totalScore
+          phase.value = 'finished'
+          stopTimer()
+          interviewId.value = ''
+          break
+      }
+    }
+
+    // ========== 兜底：流结束后修正可能的半成品消息 ==========
+    // 面试官占位消息仍为 streaming 态（中途出错），兜底填充
+    if (interviewerMsg?.streaming) {
+      interviewerMsg.streaming = false
+      if (!interviewerMsg.content) {
+        interviewerMsg.content = '（题目生成失败，请稍后重试）'
+      }
+    }
+    // 评价占位消息仍为 streaming 态（中途出错）
+    if (evalMsg?.streaming) {
+      evalMsg.streaming = false
+      if (!evalMsg.evaluation) {
+        evalMsg.evaluation = {
+          round: currentRound.value,
+          totalRounds: totalRounds.value,
+          score: 0,
+          feedback: '（评价生成失败，请稍后重试）',
+          strengths: [],
+          weaknesses: [],
+          suggestions: [],
+          hasNext: false,
+        }
+      }
+    }
+    // 总结占位消息仍为 streaming 态（中途出错）
+    if (summaryMsg?.streaming) {
+      summaryMsg.streaming = false
+      if (!summaryMsg.content) {
+        summaryMsg.content = '未能生成面试总结，请稍后重试。'
+      }
+    }
+  }
+
+  /**
+   * 开始面试：创建后端面试会话 → 统一 SSE 流（空对象触发首题流式）
+   * @throws 简历缺失或后端创建/开始失败时抛出带友好文案的错误
    */
   const start = async () => {
     if (!resume.value) {
@@ -175,20 +282,31 @@ export const useInterviewSession = (options: {
     thinking.value = true
     phase.value = 'interviewing'
     messages.value = []
-    askedCount.value = 0
+    currentRound.value = 0
+    totalRounds.value = questionCount.value || DEFAULT_QUESTION_COUNT
+    finalScore.value = null
     startTimer()
+
     try {
-      // 先占位一条空消息，再流式追加，UI 即可逐字渲染面试官提问
-      const msg = pushMessage('interviewer', '')
-      askedCount.value = 1
-      await streamInto(msg, '请开始面试，提出第一个问题。')
-      if (!msg.content) {
-        msg.content = '你好，请先做一个简单的自我介绍。'
-      }
+      // 1. 创建面试会话（后端双写 ai_session + interview_session）
+      const session = await createInterviewApi({
+        resumeId: resume.value.id,
+        jobTitle: jobType.value.trim() || undefined,
+        questionCount: questionCount.value || undefined,
+        category: category.value ?? undefined,
+        difficulty: difficulty.value,
+      })
+      // 写回 store（通过 storeToRefs 的 ref 双向同步）
+      interviewId.value = session.id
+
+      // 2. 统一 SSE 流（空对象 → 后端根据 pending_questions 状态自动路由到"开始面试"路径）
+      const stream = interviewStreamApi(session.id, {})
+      await consumeStream(stream)
     } catch (error) {
-      // 启动失败则回退到欢迎页，避免停留在没有消息的"进行中"状态
+      // 启动失败则回退到欢迎页
       phase.value = 'idle'
       stopTimer()
+      interviewId.value = ''
       throw error
     } finally {
       thinking.value = false
@@ -196,64 +314,51 @@ export const useInterviewSession = (options: {
   }
 
   /**
-   * 生成面试总结评价并结束面试
-   * @param context - 总结时的附加说明（如"候选人主动结束面试"）
-   */
-  const generateSummary = async (context: string) => {
-    stopTimer()
-    const instruction = `面试到此结束。${context}请你以面试官身份，根据整场面试对话对候选人进行总结评价，用 Markdown 格式输出，包含以下四个部分：
-## 整体表现
-## 亮点
-## 待改进
-## 复习建议
-评价要具体、客观，尽量引用候选人回答中的实际内容作为依据。`
-    // 占位空 summary 消息，流式追加让总结也逐字呈现
-    const summaryMsg = pushMessage('summary', '')
-    await streamInto(summaryMsg, instruction, 1200)
-    if (!summaryMsg.content) {
-      summaryMsg.content = '未能生成面试总结，请稍后重试。'
-    }
-    phase.value = 'finished'
-  }
-
-  /**
    * 提交候选人的回答
-   * 非最后一题：AI 简短点评并提出下一个问题；
-   * 最后一题：AI 给出收尾点评后自动生成总结评价并结束面试。
+   * 统一 SSE 流 + content → 后端路由到"答题评价"路径：
+   * evaluation_start → evaluation_done → 下一题流式出题 / 总结 → done
    * @param raw - 用户输入的回答原文
    */
   const submitAnswer = async (raw: string) => {
     const text = raw.trim()
     if (!text || thinking.value || phase.value !== 'interviewing') return
+    if (!interviewId.value) {
+      throw new Error('面试会话未初始化，请重新开始面试')
+    }
 
     pushMessage('candidate', text)
     thinking.value = true
+
     try {
-      const isLast = askedCount.value >= questionCount.value
-      const instruction = isLast
-        ? `候选人已回答完全部 ${questionCount.value} 个问题。请用两三句话给出简短的现场收尾点评，不要提出新问题。`
-        : '请针对候选人的回答简要点评（一两句），然后提出下一个问题。'
-      // 占位空消息，流式追加点评与下一题，UI 逐字渲染
-      const replyMsg = pushMessage('interviewer', '')
-      await streamInto(replyMsg, instruction)
-      if (isLast) {
-        await generateSummary('')
-      } else {
-        askedCount.value += 1
-      }
+      const stream = interviewStreamApi(interviewId.value, { content: text })
+      await consumeStream(stream)
+    } catch (error) {
+      throw error
     } finally {
       thinking.value = false
     }
   }
 
   /**
-   * 提前结束面试：停止答题并生成总结评价
+   * 提前结束面试：统一 SSE 流 + finishOnly: true
+   * 后端路由到"提前结束"路径：summary_start → summary* → done
    */
   const finish = async () => {
     if (phase.value !== 'interviewing' || thinking.value) return
+    if (!interviewId.value) {
+      throw new Error('面试会话未初始化')
+    }
+
     thinking.value = true
+    stopTimer()
+
     try {
-      await generateSummary('候选人主动结束了面试。')
+      const stream = interviewStreamApi(interviewId.value, { finishOnly: true })
+      await consumeStream(stream)
+    } catch (error) {
+      // 失败时不改变 phase，让用户可以重试
+      startTimer()
+      throw error
     } finally {
       thinking.value = false
     }
@@ -266,15 +371,21 @@ export const useInterviewSession = (options: {
     stopTimer()
     phase.value = 'idle'
     messages.value = []
-    askedCount.value = 0
+    currentRound.value = 0
+    totalRounds.value = DEFAULT_QUESTION_COUNT
+    finalScore.value = null
     elapsedSeconds.value = 0
+    interviewId.value = ''
   }
 
   return {
     phase,
     messages,
     thinking,
-    askedCount,
+    /** 当前题号（兼容 index.vue 原有 askedCount 变量名） */
+    askedCount: currentRound,
+    totalRounds,
+    finalScore,
     elapsedText,
     start,
     submitAnswer,

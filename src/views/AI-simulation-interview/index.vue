@@ -2,12 +2,31 @@
 import { computed, onMounted, ref } from 'vue'
 import { h } from 'vue'
 import { useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import { SettingOutlined, FileTextOutlined } from '@ant-design/icons-vue'
 import ResumeSelectCard from './components/ResumeSelectCard.vue'
 import ResumePreviewCard from './components/ResumePreviewCard.vue'
+import InterviewHistoryList from './components/InterviewHistoryList.vue'
+import InterviewDetailDrawer from './components/InterviewDetailDrawer.vue'
 import { getAllResumesIDB } from '@/service/resumeIDB'
-import { useInterviewStore, DEFAULT_QUESTION_COUNT } from '@/stores/interview'
+import { useInterviewStore } from '@/stores/interview'
+import {
+  DEFAULT_CATEGORY,
+  DEFAULT_QUESTION_COUNT,
+  QUESTION_COUNT_MAX,
+  QUESTION_COUNT_MIN,
+} from '@/stores/interview'
+import type {
+  InterviewCategory,
+  InterviewDifficulty,
+  InterviewDetail,
+  InterviewSession,
+} from '@/types/interview'
+import {
+  deleteInterviewApi,
+  getInterviewDetailApi,
+  listInterviewsApi,
+} from '@/api/interview'
 import type { Resume } from '@/types/resume'
 
 const router = useRouter()
@@ -18,10 +37,22 @@ const resumePreviewVisible = ref(false)
 
 /** 目标岗位方向（选填，可从常用岗位中选择或自行输入） */
 const jobType = ref('')
-/** 目标岗位 JD 原文（选填） */
+/** 目标岗位 JD 原文（选填，仅前端展示） */
 const jd = ref('')
-/** 面试题目数量（1-10 题） */
-const questionCount = ref(DEFAULT_QUESTION_COUNT)
+/** 面试难度 */
+const difficulty = ref<InterviewDifficulty>('medium')
+/** 面试题目数量（5-20） */
+const questionCount = ref<number>(DEFAULT_QUESTION_COUNT)
+/** 面试题目类型（null=混合出题） */
+const category = ref<InterviewCategory>(DEFAULT_CATEGORY)
+
+/** 题目类型选项（混合出题 / 技术 / 行为 / 项目深挖） */
+const categoryOptions: Array<{ label: string; value: InterviewCategory }> = [
+  { label: '混合出题', value: null },
+  { label: '技术类', value: 'technical' },
+  { label: '行为面试题', value: 'behavioral' },
+  { label: '项目深挖', value: 'project_deep_dive' },
+]
 
 /** 常用岗位方向预置项，也支持用户自由输入 */
 const jobTypeOptions = [
@@ -40,6 +71,76 @@ const jobTypeOptions = [
 const selectedResume = computed(
   () => resumes.value.find(item => item.id === selectedResumeId.value) ?? null,
 )
+
+// ========= 历史面试列表 =========
+
+/** 历史面试列表 */
+const historyList = ref<InterviewSession[]>([])
+/** 历史列表加载中 */
+const historyLoading = ref(false)
+/** 详情抽屉是否打开 */
+const detailVisible = ref(false)
+/** 详情抽屉的面试详情数据 */
+const detailData = ref<InterviewDetail | null>(null)
+/** 详情抽屉加载中 */
+const detailLoading = ref(false)
+
+/**
+ * 加载历史面试列表
+ */
+const loadHistory = async () => {
+  historyLoading.value = true
+  try {
+    const res = await listInterviewsApi({ page: 1, pageSize: 20 })
+    historyList.value = res.list
+  } catch {
+    message.error('加载历史面试失败')
+  } finally {
+    historyLoading.value = false
+  }
+}
+
+/**
+ * 打开面试详情抽屉
+ * @param id 面试会话 ID
+ */
+const handleOpenDetail = async (id: string) => {
+  detailVisible.value = true
+  detailData.value = null
+  detailLoading.value = true
+  try {
+    detailData.value = await getInterviewDetailApi(id)
+  } catch {
+    message.error('加载面试详情失败')
+  } finally {
+    detailLoading.value = false
+  }
+}
+
+/**
+ * 删除面试会话（二次确认）
+ * @param session 面试会话对象
+ */
+const handleDeleteInterview = (session: InterviewSession) => {
+  Modal.confirm({
+    title: '删除该面试记录？',
+    content: `将删除「${session.title}」，此操作不可恢复。`,
+    okText: '删除',
+    okType: 'danger',
+    cancelText: '取消',
+    onOk: async () => {
+      try {
+        await deleteInterviewApi(session.id)
+        message.success('已删除')
+        await loadHistory()
+      } catch {
+        message.error('删除失败')
+      }
+    },
+  })
+}
+
+// ========= 简历加载 =========
 
 const loadResumes = async () => {
   try {
@@ -72,7 +173,7 @@ const handleOpenPreview = () => {
 
 /**
  * 进入面试间
- * 校验已选简历后，将简历 ID 与选填的岗位方向/JD 写入面试会话 store，
+ * 校验已选简历后，将简历 ID 与选填的岗位方向/JD/难度/题量/题型写入面试会话 store，
  * 再跳转到独立的面试间页面。
  */
 const handleEnterRoom = () => {
@@ -84,13 +185,16 @@ const handleEnterRoom = () => {
     resumeId: selectedResume.value.id,
     jobType: jobType.value.trim(),
     jd: jd.value.trim(),
+    difficulty: difficulty.value,
     questionCount: questionCount.value,
+    category: category.value,
   })
   router.push('/interview-room')
 }
 
 onMounted(() => {
   loadResumes()
+  loadHistory()
 })
 </script>
 
@@ -149,16 +253,48 @@ onMounted(() => {
 
       <div class="config-form">
         <div class="form-item">
+          <label class="form-label">面试难度</label>
+          <div class="difficulty-row">
+            <a-radio-group v-model:value="difficulty">
+              <a-radio value="easy">简单</a-radio>
+              <a-radio value="medium">中等</a-radio>
+              <a-radio value="hard">困难</a-radio>
+            </a-radio-group>
+            <span class="form-hint">难度影响题目深度与追问强度</span>
+          </div>
+        </div>
+
+        <div class="form-item">
           <label class="form-label">题目数量</label>
           <div class="question-count-row">
             <a-input-number
               v-model:value="questionCount"
-              :min="5"
-              :max="20"
-              :precision="0"
+              :min="QUESTION_COUNT_MIN"
+              :max="QUESTION_COUNT_MAX"
+              :step="1"
             />
-            <span class="form-hint">本次面试的提问数量（1-10 题）</span>
+            <span class="form-hint"
+              >共 {{ QUESTION_COUNT_MIN }}-{{
+                QUESTION_COUNT_MAX
+              }}
+              题，实际数量可能因答题情况略有浮动</span
+            >
           </div>
+        </div>
+
+        <div class="form-item">
+          <label class="form-label">题目类型</label>
+          <a-radio-group v-model:value="category" button-style="solid">
+            <a-radio-button
+              v-for="opt in categoryOptions"
+              :key="opt.value ?? 'mixed'"
+              :value="opt.value"
+              >{{ opt.label }}</a-radio-button
+            >
+          </a-radio-group>
+          <span class="form-hint"
+            >混合出题将综合考察技术、行为与项目深挖能力</span
+          >
         </div>
 
         <div class="form-item">
@@ -197,6 +333,22 @@ onMounted(() => {
         >
       </div>
     </a-card>
+
+    <!-- 历史面试列表 -->
+    <interview-history-list
+      :list="historyList"
+      :loading="historyLoading"
+      @open-detail="handleOpenDetail"
+      @delete="handleDeleteInterview"
+      @refresh="loadHistory"
+    />
+
+    <!-- 面试详情抽屉 -->
+    <interview-detail-drawer
+      v-model:open="detailVisible"
+      :detail="detailData"
+      :loading="detailLoading"
+    />
   </div>
 </template>
 
@@ -305,7 +457,8 @@ onMounted(() => {
   font-weight: 600;
 }
 
-.question-count-row {
+.question-count-row,
+.difficulty-row {
   display: flex;
   align-items: center;
   gap: 0.8rem;
