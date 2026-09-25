@@ -2,43 +2,47 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 /**
- * 同步结果接口
+ * 云端同步状态
+ * - synced：已同步，无待处理操作
+ * - syncing：同步中，正在向云端推送
+ * - pending：有待同步操作（断网期间累积）
+ * - offline：离线，无法同步
+ * - error：同步失败（重试上限）
  */
-interface SyncResult {
-  skipped: number // 跳过的文件数
-  synced: number // 同步的文件数
-  failed: number // 失败的文件数
-}
+type CloudSyncStatus = 'synced' | 'syncing' | 'pending' | 'offline' | 'error'
 
 /**
  * 同步状态管理 Store
- * 用于在 setting 和 my-resume 页面之间共享同步结果
+ * 用于在 setting / my-resume / edit-resume 页面之间共享：
+ *   云端同步状态与待同步条数（Local-First 架构）
  */
 export const useSyncStore = defineStore('sync', () => {
-  // 同步结果
-  const syncResult = ref<SyncResult | null>(null)
+  // 云端同步状态（Local-First 架构）
+  const cloudStatus = ref<CloudSyncStatus>('synced')
 
-  // 是否正在同步
-  const isSyncing = ref(false)
+  // 云端待同步条数
+  const cloudPending = ref<number>(0)
 
   /**
-   * 更新同步结果
+   * 设置云端同步状态
+   * @param status 云端同步状态枚举
    */
-  const updateSyncResult = (result: SyncResult) => {
-    syncResult.value = result
+  const setCloudStatus = (status: CloudSyncStatus) => {
+    cloudStatus.value = status
   }
 
   /**
-   * 清除同步结果
+   * 设置云端待同步条数
+   * @param count 待同步操作数
    */
-  const clearSyncResult = () => {
-    syncResult.value = null
+  const setCloudPending = (count: number) => {
+    cloudPending.value = count
   }
 
   return {
-    syncResult,
-    isSyncing,
-    updateSyncResult,
-    clearSyncResult,
+    cloudStatus,
+    cloudPending,
+    setCloudStatus,
+    setCloudPending,
   }
 })

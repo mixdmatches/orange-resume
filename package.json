@@ -16,6 +16,7 @@
     "@faker-js/faker": "^10.1.0",
     "aieditor": "^1.4.2",
     "ant-design-vue": "~4.2.6",
+    "axios": "^1.19.0",
     "dayjs": "^1.11.19",
     "element-plus": "^2.11.8",
     "html2canvas": "^1.4.1",
@@ -26,7 +27,6 @@
     "openai": "^6.39.1",
     "pdfjs-dist": "^6.0.227",
     "pinia-plugin-persistedstate": "^4.5.0",
-    "turndown": "^7.2.4",
     "vue": "^3.5.18",
     "vue-draggable-plus": "^0.6.1",
     "vue-router": "^4.5.1"
@@ -36,7 +36,6 @@
     "@iconify/json": "^2.2.382",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^24.3.0",
-    "@types/turndown": "^5.0.6",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/tsconfig": "^0.7.0",
     "eslint": "^9.34.0",

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import FileSetting from './components/FileSetting.vue'
+import UserSetting from './components/UserSetting.vue'
 import ApiKeySetting from './components/ApiKeySetting.vue'
 </script>
 
 <template>
-  <FileSetting />
+  <UserSetting />
   <ApiKeySetting />
 </template>

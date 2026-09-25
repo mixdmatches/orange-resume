@@ -7,11 +7,9 @@ import {
   WarningFilled,
 } from '@ant-design/icons-vue'
 import type { Resume } from '@/types/resume'
-import {
-  checkResumeGrammar,
-  hasApiKey,
-  type GrammarIssue,
-} from '@/utils/aiAPIConnect'
+import { grammarCheckApi } from '@/api'
+import { resumeToText } from '@/utils/resumeToText'
+import type { GrammarIssue } from '@/types/ai'
 
 /** 简历数据 */
 const resume = inject<Resume>('resume') as Resume
@@ -39,10 +37,6 @@ const warningCount = computed(
  * 执行语法纠错检查
  */
 const handleCheck = async () => {
-  if (!hasApiKey()) {
-    message.warning('请先在设置中配置 API Key')
-    return
-  }
   if (loading.value) return
 
   loading.value = true
@@ -50,11 +44,14 @@ const handleCheck = async () => {
   hasChecked.value = true
 
   try {
-    issues.value = await checkResumeGrammar(JSON.stringify(resume))
-    if (issues.value.length === 0) {
+    const { issues: resultIssues } = await grammarCheckApi({
+      resumeText: resumeToText(resume),
+    })
+    if (resultIssues.length === 0) {
       message.success('未发现语法问题，简历文本很规范')
     } else {
-      message.info(`共发现 ${issues.value.length} 处问题`)
+      issues.value = resultIssues
+      message.info(`共发现 ${resultIssues.length} 处问题`)
     }
   } catch (error) {
     message.error((error as Error).message || '检查失败，请重试')

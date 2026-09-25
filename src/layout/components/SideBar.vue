@@ -27,14 +27,18 @@ function getItem(
 
 const generateItems = () => {
   return header_routes.map(item =>
-    getItem(item.meta?.title as string, item.path, item.meta?.icon),
+    getItem(
+      item.meta?.title as string,
+      item.path,
+      item.meta?.icon as VueElement,
+    ),
   )
 }
 
 const items: ItemType[] = reactive(generateItems())
 
+// 点击仅发起导航；高亮统一由路由变化驱动，导航被守卫拦截时高亮不会误更新
 const handleClick: MenuProps['onClick'] = e => {
-  selectedKeys.value = [e.key as string]
   router.push(e.key as string)
 }
 
@@ -64,7 +68,7 @@ const collapsed = ref(false)
       />
     </div>
     <a-menu
-      v-model:selected-keys="selectedKeys"
+      :selected-keys="selectedKeys"
       class="menu"
       mode="inline"
       :items="items"

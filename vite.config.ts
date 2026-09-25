@@ -8,7 +8,7 @@ import Components from 'unplugin-vue-components/vite'
 import MotionResolver from 'motion-v/resolver'
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/orange-resume/',
+  base: '/',
   plugins: [
     vue(),
     vueDevTools(),
@@ -34,5 +34,13 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     open: true,
+    proxy: {
+      // 将 /api 前缀的请求代理到 NestJS 后端，避免联调时跨域
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/api/, '/api'),
+      },
+    },
   },
 })

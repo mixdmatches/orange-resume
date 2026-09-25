@@ -1,6 +1,4 @@
 import type { Resume } from '@/types/resume'
-import { debounceSyncToFile } from '@/utils/resumeSync'
-
 const DB_NAME = 'resumeDB'
 const DB_VERSION = 2
 const STORE_NAME = 'resumes'
@@ -39,9 +37,7 @@ export const openDB = (): Promise<IDBDatabase> => {
  * @param resume 简历数据
  * @returns Promise<string> 新创建的简历ID
  */
-export const addResumeIDB = async (
-  resume: Omit<Resume, 'createdAt' | 'updatedAt'>,
-): Promise<string> => {
+export const addResumeIDB = async (resume: Resume): Promise<string> => {
   const db = await openDB()
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(STORE_NAME, 'readwrite')
@@ -138,8 +134,6 @@ export const updateResumeIDB = async (
         updatedAt: Date.now(),
       }
 
-      debounceSyncToFile(updatedResume, existingResume)
-
       const putRequest = store.put(updatedResume)
 
       putRequest.onsuccess = () => {
@@ -175,6 +169,33 @@ export const deleteResumeIDB = async (id: string): Promise<boolean> => {
 
     request.onerror = () => {
       reject(new Error('删除简历失败'))
+    }
+  })
+}
+
+/**
+ * 批量删除简历
+ * @param ids 简历ID数组
+ * @returns Promise<boolean> 删除是否成功
+ */
+export const deleteBatchResumeIDB = async (ids: string[]): Promise<boolean> => {
+  if (ids.length === 0) return true
+  const db = await openDB()
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE_NAME, 'readwrite')
+    const store = transaction.objectStore(STORE_NAME)
+
+    // 使用同一个事务删除所有简历
+    ids.forEach(id => {
+      store.delete(id)
+    })
+
+    transaction.oncomplete = () => {
+      resolve(true)
+    }
+
+    transaction.onerror = () => {
+      reject(new Error('批量删除简历失败'))
     }
   })
 }

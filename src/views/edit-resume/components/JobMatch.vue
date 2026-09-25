@@ -10,12 +10,9 @@ import {
 } from '@ant-design/icons-vue'
 import { motion } from 'motion-v'
 import type { Resume } from '@/types/resume'
-import { resumeToText } from '@/views/AI-simulation-interview/composables/useAiInterview'
-import {
-  analyzeJobMatch,
-  hasApiKey,
-  type JobMatchResult,
-} from '@/utils/aiAPIConnect'
+import { resumeToText } from '@/utils/resumeToText'
+import { jobMatchApi } from '@/api'
+import type { JobMatchResult } from '@/types/ai'
 
 /** 简历数据 */
 const resume = inject<Resume>('resume') as Resume
@@ -56,10 +53,6 @@ function getScoreText(score: number): string {
  * 执行岗位匹配分析
  */
 const handleAnalyze = async () => {
-  if (!hasApiKey()) {
-    message.warning('请先在设置中配置 API Key')
-    return
-  }
   if (!jobDescription.value.trim()) {
     message.warning('请先粘贴岗位描述（JD）')
     return
@@ -72,7 +65,10 @@ const handleAnalyze = async () => {
 
   try {
     const resumeText = resumeToText(resume)
-    result.value = await analyzeJobMatch(resumeText, jobDescription.value)
+    result.value = await jobMatchApi({
+      resumeText,
+      jobDescription: jobDescription.value,
+    })
     message.success('分析完成')
   } catch (error) {
     message.error((error as Error).message || '分析失败，请重试')

@@ -94,3 +94,39 @@ export interface MenuSection {
 }
 
 export type Skill = string
+
+export interface ResumeRecord {
+  id: string
+  title: string
+  content: Resume
+  userId: string
+  createdAt: string
+  updatedAt: string
+}
+
+/** 创建/更新简历的请求参数 */
+export interface SaveResumeParams {
+  title: string
+  content: Resume
+}
+
+/** 列表项摘要（不含 content） */
+export interface ResumeSummary {
+  id: string
+  title: string
+  templateId: string
+  createdAt: number
+  updatedAt: number | null
+}
+
+/** 列表接口返回 */
+export interface ListResult {
+  list: ResumeSummary[]
+  total: number
+}
+
+export interface ResumePayload {
+  title: string
+  templateId: string
+  content: Record<string, any>
+}

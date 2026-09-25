@@ -10,6 +10,8 @@ import {
   ShopOutlined,
   HeatMapOutlined,
 } from '@ant-design/icons-vue'
+import { ACCESS_TOKEN_KEY } from '@/utils/request'
+import { storage } from '@/utils/storage'
 
 export const header_routes: RouteRecordRaw[] = [
   {
@@ -51,11 +53,18 @@ export const header_routes: RouteRecordRaw[] = [
 ]
 
 const routes: RouteRecordRaw[] = [
+  // 登录页（独立于 layout，不需要鉴权）
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('@/views/auth/index.vue'),
+  },
   {
     path: '/',
     name: 'layout',
     component: () => import('@/layout/index.vue'),
     redirect: '/my-resume',
+    meta: { requiresAuth: true },
     children: header_routes,
   },
   {
@@ -63,15 +72,49 @@ const routes: RouteRecordRaw[] = [
     name: 'edit-resume',
     meta: {
       title: '编辑简历',
+      requiresAuth: true,
     },
     component: () => import('@/views/edit-resume/index.vue'),
     props: true,
+  },
+  {
+    // 面试间：独立于 header 布局的专注式页面
+    path: '/interview-room',
+    name: 'interview-room',
+    meta: {
+      title: '面试间',
+      requiresAuth: true,
+    },
+    component: () => import('@/views/interview-room/index.vue'),
   },
 ]
 
 const router = createRouter({
   history: createWebHashHistory(),
   routes,
+})
+
+/**
+ * 全局前置守卫
+ * - 访问需鉴权路由但未登录 → 跳转登录页并携带 redirect
+ * - 已登录访问登录页 → 跳首页
+ */
+router.beforeEach((to, _from) => {
+  const token = storage.get<string>(ACCESS_TOKEN_KEY)
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+
+  if (requiresAuth && !token) {
+    return {
+      path: '/login',
+      query: { redirect: to.fullPath },
+    }
+  }
+
+  if (to.path === '/login' && token) {
+    return '/'
+  }
+
+  return true
 })
 
 export default router
