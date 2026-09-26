@@ -2,6 +2,7 @@
 import type { Resume } from '@/types/resume'
 import DataCard from '@/components/DataCard.vue'
 import { inject } from 'vue'
+import { generateUUID } from '@/utils/uuid'
 import type { FieldConfig } from '@/types/form'
 
 const resume: Resume = inject('resume') as Resume
@@ -30,7 +31,7 @@ const educationFields: FieldConfig[] = [
 
 const handleAddEducation = () => {
   resume.educations.push({
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     school: '学校',
     major: '专业',
     degree: '学历层次',

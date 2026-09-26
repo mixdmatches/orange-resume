@@ -2,6 +2,7 @@
 import type { FieldConfig } from '@/types/form'
 import type { Resume } from '@/types/resume'
 import { inject } from 'vue'
+import { generateUUID } from '@/utils/uuid'
 
 const resume: Resume = inject('resume') as Resume
 
@@ -26,7 +27,7 @@ const handleDeleteProject = (id: string) => {
  */
 const handleAddProject = () => {
   resume.projects.push({
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     name: '项目名称',
     role: '担任角色',
     gitAddress: 'GitHub/GitLab地址',

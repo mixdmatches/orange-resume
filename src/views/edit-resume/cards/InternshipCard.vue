@@ -2,6 +2,7 @@
 import type { FieldConfig } from '@/types/form'
 import type { Resume } from '@/types/resume'
 import { inject } from 'vue'
+import { generateUUID } from '@/utils/uuid'
 
 const resume: Resume = inject('resume') as Resume
 
@@ -26,7 +27,7 @@ const handleDeleteInternship = (id: string) => {
  */
 const handleAddInternship = () => {
   resume.internships.push({
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     companyName: '公司名称',
     position: '岗位名称',
     department: '所在部门',

@@ -67,12 +67,45 @@ const handleGenerate = async () => {
 
 /**
  * 复制全文到剪贴板
+ *
+ * navigator.clipboard 仅在安全上下文（HTTPS/localhost）存在，
+ * HTTP 线上环境会因 undefined 直接抛错，故降级为
+ * textarea + document.execCommand('copy') 方案（全浏览器兼容）。
  */
 const handleCopy = async () => {
   if (!content.value) return
+
+  // 优先走现代剪贴板 API
+  if (
+    navigator.clipboard &&
+    typeof navigator.clipboard.writeText === 'function'
+  ) {
+    try {
+      await navigator.clipboard.writeText(content.value)
+      message.success('已复制到剪贴板')
+      return
+    } catch {
+      // 写入被浏览器策略拦截时继续走降级方案
+    }
+  }
+
+  // 降级方案：创建隐藏 textarea，选中文本后用 execCommand 复制
   try {
-    await navigator.clipboard.writeText(content.value)
-    message.success('已复制到剪贴板')
+    const textarea = document.createElement('textarea')
+    textarea.value = content.value
+    // 移出可视区域，避免页面跳动；设置只读防止 iOS 唤起键盘
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    textarea.setAttribute('readonly', '')
+    document.body.appendChild(textarea)
+    textarea.select()
+    const ok = document.execCommand('copy')
+    document.body.removeChild(textarea)
+    if (ok) {
+      message.success('已复制到剪贴板')
+    } else {
+      message.error('复制失败，请手动选择文本复制')
+    }
   } catch {
     message.error('复制失败，请手动选择文本复制')
   }

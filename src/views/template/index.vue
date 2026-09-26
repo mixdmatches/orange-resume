@@ -6,6 +6,7 @@ import type { Resume } from '@/types/resume'
 import TemplateCard from './components/TemplateCard.vue'
 import { useRouter } from 'vue-router'
 import { addResumeIDB } from '@/service/resumeIDB'
+import { generateUUID } from '@/utils/uuid'
 import { message } from 'ant-design-vue'
 
 const router = useRouter()
@@ -55,7 +56,7 @@ const handleUse = async (templateId: string) => {
       ...previewResume,
       id: `resume_${Date.now()}`,
       templateId,
-      title: `${currentTemplateName.value}简历-${crypto.randomUUID().substring(0, 5)}`,
+      title: `${currentTemplateName.value}简历-${generateUUID().substring(0, 5)}`,
     }
 
     // 保存到 IndexedDB
@@ -80,7 +81,7 @@ const handleUseTemplate = async () => {
       ...previewResume,
       id: `resume_${Date.now()}`,
       templateId: currentTemplateId.value,
-      title: `${currentTemplateName.value}简历-${crypto.randomUUID().substring(0, 5)}`,
+      title: `${currentTemplateName.value}简历-${generateUUID().substring(0, 5)}`,
     }
 
     // 保存到 IndexedDB

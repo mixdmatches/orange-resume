@@ -21,6 +21,7 @@ import { computed, h, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { importPDF } from '@/utils/importPDF'
+import { generateUUID } from '@/utils/uuid'
 
 const router = useRouter()
 
@@ -48,7 +49,7 @@ onMounted(() => {
  * 创建简历（Repository 先写本地再入同步队列）
  */
 const handleAddResume = async () => {
-  const id = crypto.randomUUID().substring(0, 8)
+  const id = generateUUID().substring(0, 8)
   const newResume: Omit<Resume, 'createdAt' | 'updatedAt'> = {
     ...DEFAULT_RESUME,
     id,

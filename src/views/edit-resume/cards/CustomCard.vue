@@ -2,6 +2,7 @@
 import type { Resume } from '@/types/resume'
 import DataCard from '@/components/DataCard.vue'
 import { inject } from 'vue'
+import { generateUUID } from '@/utils/uuid'
 import type { FieldConfig } from '@/types/form'
 
 const props = defineProps({
@@ -37,7 +38,7 @@ const customFields: FieldConfig[] = [
 
 const handleAdd = () => {
   resume.customData[props.customName].push({
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     visible: true,
     title: '',
     subTitle: '',
