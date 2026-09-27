@@ -12,6 +12,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AiEditor: typeof import('./src/components/AiEditor.vue')['default']
+    ChatInput: typeof import('./src/components/ChatInput.vue')['default']
     DataCard: typeof import('./src/components/DataCard.vue')['default']
     ImgDrawer: typeof import('./src/components/ImgDrawer.vue')['default']
     PhotoImg: typeof import('./src/components/PhotoImg.vue')['default']

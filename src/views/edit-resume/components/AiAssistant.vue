@@ -1,14 +1,22 @@
 <script setup lang="ts">
 import LineMdChatRoundDots from '~icons/line-md/chat-round-dots'
 import LineMdPlusCircle from '~icons/line-md/plus-circle'
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  reactive,
+  ref,
+  watch,
+} from 'vue'
 import {
   DeleteOutlined,
   RobotOutlined,
   CloseOutlined,
   MinusOutlined,
-  SendOutlined,
 } from '@ant-design/icons-vue'
+import ChatInput from '@/components/ChatInput.vue'
 import MarkdownIt from 'markdown-it'
 import {
   chatAiSessionApi,
@@ -149,8 +157,29 @@ const messages = ref<ChatMessage[]>([])
 /** 用户输入框内容 */
 const userInput = ref('')
 
-/** 是否正在等待 AI 回复 */
-const loading = ref(false)
+/** 当前会话 ID（空对话首次发消息时才创建，之后复用） */
+const sessionId = ref<string | null>(null)
+
+/**
+ * 正在流式响应的会话 ID 列表
+ * 切换会话后旧会话的流仍在后台继续，需按会话维度记录，
+ * 避免 loading 状态跨会话串扰（切走后误清、切回后丢失）
+ */
+const streamingSessionIds = ref<string[]>([])
+
+/**
+ * 正在流式响应的 assistant 消息引用（按会话缓存）
+ * 切换会话时 messages 会被重新拉取替换，这里保留原流式对象，
+ * 便于切回后把它塞回列表，继续逐字实时渲染
+ */
+const streamingMessages = new Map<string, ChatMessage>()
+
+/** 当前视图会话是否正在等待 AI 回复（按会话隔离，切走后自动为 false，切回自动恢复） */
+const loading = computed(
+  () =>
+    sessionId.value !== null &&
+    streamingSessionIds.value.includes(sessionId.value),
+)
 
 /** 消息列表容器的 ref，用于自动滚动到底部 */
 const messageListRef = ref<HTMLElement | null>(null)
@@ -162,9 +191,6 @@ const dropdownVisible = ref(false)
  */
 const renderMd = (text: string) => md.render(text)
 
-/** 当前会话 ID（空对话首次发消息时才创建，之后复用） */
-const sessionId = ref<string | null>(null)
-
 /**
  * 切换会话
  * 清空本地消息并重置会话，回到空对话状态
@@ -174,8 +200,22 @@ const sessionId = ref<string | null>(null)
 const handleSession = async (id: string) => {
   sessionId.value = id
   const res = await listSessionMessagesApi(id)
-  messages.value = res.list || []
-  loading.value = false
+  // 后端按 id 倒序返回（最新在前），反转为时间正序以匹配发送时的顺序
+  const list: ChatMessage[] = (res.list || []).reverse()
+
+  // 该会话若仍在流式响应中，用流式引用替换列表末尾的空 assistant 占位符，
+  // 使切回后能继续逐字实时渲染，而非等到流结束才一次性刷新
+  const streaming = streamingMessages.get(id)
+  if (
+    streaming &&
+    list.length > 0 &&
+    list[list.length - 1].role === 'assistant' &&
+    !list[list.length - 1].content
+  ) {
+    list[list.length - 1] = streaming
+  }
+
+  messages.value = list
   userInput.value = ''
   scrollToBottom()
 }
@@ -218,39 +258,43 @@ const handleSend = async () => {
 
   // 1. 追加用户消息
   messages.value.push({ role: 'user', content: input })
+  // 立即清空输入：既作为 v-model 反馈，也天然防抖多次发送（input 为空则早退）
   userInput.value = ''
+  // 2. 追加空的 assistant 消息（用 reactive 使其在切换会话后仍能触发视图更新）
+  const assistantMsg = reactive<ChatMessage>({ role: 'assistant', content: '' })
+  messages.value.push(assistantMsg)
   scrollToBottom()
 
-  // 2. 先 push 一条空的 assistant 消息，用于流式填充
-  messages.value.push({ role: 'assistant', content: '' })
-  loading.value = true
-  scrollToBottom()
+  // 本次回复所属的会话 ID（提前声明，catch 块需据此判断是否还停留原会话）
+  let sid: string | null = null
 
   try {
     // 3. 空对话首发消息时先创建会话，后续复用同一会话
-    const sid = await ensureSession()
+    sid = await ensureSession()
+    // 标记本会话进入流式响应状态（按会话隔离，切走后保留，不会误清其他会话）
+    streamingSessionIds.value = [...streamingSessionIds.value, sid]
+    // 缓存流式消息引用，供切回后塞回列表继续实时渲染
+    streamingMessages.set(sid, assistantMsg)
 
-    // 4. 会话流式对话，上下文组装由后端完成，前端只传本次输入
+    // 4. 会话流式对话：按「对象引用」写入本次回复，避免切换会话后
+    //    messages 被替换，误把 AI 增量拼到其他消息上
     for await (const delta of chatAiSessionApi(sid, { content: input })) {
-      messages.value[messages.value.length - 1].content += delta
-      scrollToBottom()
+      // 仅停留在本会话时才实时写入 UI；切走后该引用仍在缓存中，
+      // 切回时由 handleSession 塞回列表，即可继续逐字渲染
+      if (sessionId.value === sid) {
+        assistantMsg.content += delta
+        scrollToBottom()
+      }
     }
   } catch (error) {
-    // 出错时把空 assistant 消息替换为错误提示
-    messages.value[messages.value.length - 1].content =
-      `> ⚠️ ${(error as Error).message || '请求失败，请重试'}`
+    // 出错时仅在仍停留在原会话的情况下，把空 assistant 消息替换为错误提示
+    if (sessionId.value === sid) {
+      assistantMsg.content = `> ⚠️ ${(error as Error).message || '请求失败，请重试'}`
+    }
   } finally {
-    loading.value = false
-  }
-}
-
-/**
- * 输入框回车发送（Shift+Enter 换行）
- */
-const handleKeydown = (e: KeyboardEvent) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault()
-    handleSend()
+    // 结束本会话的流式状态（仅移除自己，不影响其他并发中的会话）
+    if (sid) streamingMessages.delete(sid)
+    streamingSessionIds.value = streamingSessionIds.value.filter(v => v !== sid)
   }
 }
 
@@ -411,27 +455,18 @@ const refreshSessionList = async () => {
           </div>
         </div>
 
-        <!-- 输入区 -->
+        <!-- 输入区（DeepSeek 风格输入卡片） -->
         <div class="input-area">
-          <div class="input-row">
-            <a-textarea
-              v-model:value="userInput"
-              :auto-size="{ minRows: 1, maxRows: 6 }"
-              :disabled="loading"
-              placeholder="输入问题，Enter 发送，Shift+Enter 换行"
-              class="input-textarea"
-              @keydown="handleKeydown"
-            />
-            <a-button
-              type="primary"
-              :loading="loading"
-              :disabled="!userInput.trim() || loading"
-              class="send-btn"
-              @click="handleSend"
-            >
-              <SendOutlined v-if="!loading" />
-            </a-button>
-          </div>
+          <ChatInput
+            v-model:value="userInput"
+            :loading="loading"
+            :disabled="loading"
+            :min-rows="1"
+            :max-rows="6"
+            placeholder="给智能助手发送消息…"
+            hint="内容由 AI 生成，请仔细甄别"
+            @send="handleSend"
+          />
         </div>
       </div>
     </div>
@@ -734,44 +769,8 @@ const refreshSessionList = async () => {
 
 /* 输入区 */
 .input-area {
-  border-top: 1px solid;
-  padding: 0.6rem 0.8rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  @include themify(
-    (
-      border-color: $border-color-mode,
-    )
-  );
-
-  .input-toolbar {
-    display: flex;
-    justify-content: flex-end;
-  }
-
-  .input-row {
-    display: flex;
-    align-items: flex-end;
-    gap: 0.5rem;
-
-    .input-textarea {
-      flex: 1;
-      min-width: 0;
-      font-size: 1.3rem;
-      resize: none;
-      /* 超过 maxRows 后内部滚动 */
-      overflow-y: auto;
-
-      :deep(textarea) {
-        font-size: 1.3rem;
-      }
-    }
-
-    .send-btn {
-      flex-shrink: 0;
-    }
-  }
+  flex-shrink: 0;
+  padding: 0.6rem 0.8rem 0.4rem;
 }
 
 .fade-scale-enter-active,

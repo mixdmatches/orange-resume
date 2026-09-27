@@ -14,6 +14,7 @@ import {
   WarningOutlined,
 } from '@ant-design/icons-vue'
 import MarkdownIt from 'markdown-it'
+import ChatInput from '@/components/ChatInput.vue'
 import { useInterviewStore } from '@/stores/interview'
 import { getResumeByIdIDB } from '@/service/resumeIDB'
 import { useInterviewSession } from './composables/useInterviewSession'
@@ -71,12 +72,6 @@ const scoreColor = (score: number) =>
   score >= 80 ? 'success' : score >= 60 ? 'processing' : 'error'
 
 /**
- * 难度对应的 tag 颜色
- */
-const difficultyColor = (d: string) =>
-  d === 'easy' ? 'success' : d === 'hard' ? 'error' : 'warning'
-
-/**
  * 难度中文标签
  */
 const difficultyLabel = (d: string) =>
@@ -124,17 +119,6 @@ const handleSend = async () => {
     answerInput.value = ''
   } catch (error) {
     message.error((error as Error).message || '发送失败，请稍后重试')
-  }
-}
-
-/**
- * 输入框键盘事件：Enter 发送、Shift+Enter 换行；
- * 中文输入法组词期间的 Enter 不触发发送（isComposing 判断）
- */
-const handleKeydown = (e: KeyboardEvent) => {
-  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
-    e.preventDefault()
-    handleSend()
   }
 }
 
@@ -370,20 +354,16 @@ onMounted(loadResume)
 
       <div class="input-bar">
         <template v-if="phase === 'interviewing'">
-          <a-textarea
+          <ChatInput
             v-model:value="answerInput"
-            :rows="4"
-            :maxlength="2000"
-            placeholder="输入你的回答（Enter 发送，Shift + Enter 换行）"
-            @keydown="handleKeydown"
-          />
-          <a-button
-            type="primary"
             :loading="thinking"
-            :disabled="!answerInput.trim()"
-            @click="handleSend"
-            >发送</a-button
-          >
+            :min-rows="2"
+            :max-rows="6"
+            :maxlength="2000"
+            placeholder="输入你的回答…"
+            hint="Enter 发送，Shift + Enter 换行"
+            @send="handleSend"
+          />
         </template>
 
         <template v-else>
