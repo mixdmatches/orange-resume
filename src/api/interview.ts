@@ -51,16 +51,18 @@ export function createInterviewApi(data: CreateInterviewDto) {
  *
  * @param interviewId 面试会话 ID
  * @param data 统一流 DTO（开始时可空对象，答题传 content，提前结束传 finishOnly: true）
+ * @param signal 可选中止信号（"停止生成"时传入 AbortController.signal）
  * @yields 面试 SSE 事件对象（按 event 字段判别处理）
  */
 export async function* interviewStreamApi(
   interviewId: string,
   data: InterviewStreamDto = {},
+  signal?: AbortSignal,
 ): AsyncGenerator<InterviewSseEvent, void, unknown> {
   for await (const event of fetchSseEvents(
     `/interviews/${interviewId}/stream`,
     data,
-    { errorPrefix: '面试请求失败' },
+    { errorPrefix: '面试请求失败', signal },
   )) {
     yield event as InterviewSseEvent
   }

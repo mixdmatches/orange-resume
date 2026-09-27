@@ -84,13 +84,14 @@ async function parseStreamError(
  *
  * @param path - 接口路径（如 /ai/chat/stream）
  * @param body - 请求体，内部会 JSON.stringify
- * @param opts - 可选项：errorPrefix 用于拼接 HTTP 层默认错误文案
+ * @param opts - 可选项：errorPrefix 用于拼接 HTTP 层默认错误文案；
+ *                signal 传入 AbortController 的信号，abort() 时立即中断流（"停止生成"）
  * @yields 每帧解析后的 JSON 对象（具体结构由各业务协议定义）
  */
 export async function* fetchSseEvents(
   path: string,
   body: unknown,
-  opts?: { errorPrefix?: string },
+  opts?: { errorPrefix?: string; signal?: AbortSignal },
 ): AsyncGenerator<Record<string, unknown>, void, unknown> {
   const { url, headers } = getRequestBase()
 
@@ -98,6 +99,8 @@ export async function* fetchSseEvents(
     method: 'POST',
     body: JSON.stringify(body),
     headers,
+    // abort() 后：未发出的请求直接取消；已在读取的流 reader.read() 立即抛出 AbortError
+    signal: opts?.signal,
   })
 
   if (!response.ok) {
@@ -105,6 +108,17 @@ export async function* fetchSseEvents(
     throw await parseStreamError(
       response,
       `${opts?.errorPrefix ?? '流式请求失败'}（${response.status}）`,
+    )
+  }
+
+  // SSE 端点的业务异常可能以 HTTP 200 + 裸 JSON 返回（如"请先选择 AI 服务商"），
+  // 此时 content-type 不是 event-stream；按 JSON 错误解析并抛出，
+  // 避免被当作 SSE 帧解析后静默失败（表现为界面无响应）
+  const contentType = response.headers.get('content-type') ?? ''
+  if (!contentType.includes('text/event-stream')) {
+    throw await parseStreamError(
+      response,
+      `${opts?.errorPrefix ?? '流式请求失败'}（响应格式异常）`,
     )
   }
 
@@ -153,14 +167,17 @@ export async function* fetchSseEvents(
  *
  * @param path - 接口路径（如 /ai/chat/stream）
  * @param body - 请求体，内部会 JSON.stringify
+ * @param signal - 可选中止信号（"停止生成"时传入 AbortController.signal）
  * @yields 文本增量片段
  */
 export async function* streamSse(
   path: string,
   body: unknown,
+  signal?: AbortSignal,
 ): AsyncGenerator<string, void, unknown> {
   for await (const event of fetchSseEvents(path, body, {
     errorPrefix: 'AI 流式请求失败',
+    signal,
   })) {
     const parsed = event as { content?: string; done?: boolean; error?: string }
     // 后端中途出错（以 200 响应写入 error 事件）
@@ -177,23 +194,27 @@ export async function* streamSse(
  * 逐字返回 AI 回复，适用于实时交互的聊天场景。
  *
  * @param params - 对话消息列表与模型参数
+ * @param signal - 可选中止信号（"停止生成"时传入）
  * @yields 文本增量片段
  */
 export async function* chatStreamApi(
   params: ChatParams,
+  signal?: AbortSignal,
 ): AsyncGenerator<string, void, unknown> {
-  yield* streamSse('/ai/chat/stream', params)
+  yield* streamSse('/ai/chat/stream', params, signal)
 }
 
 /**
  * AI 自我介绍流式生成
  * @param params - 简历纯文本与生成选项（场景/时长/语气）
+ * @param signal - 可选中止信号（"停止生成"时传入）
  * @yields 文本增量片段
  */
 export async function* selfIntroStreamApi(
   params: SelfIntroDto,
+  signal?: AbortSignal,
 ): AsyncGenerator<string, void, unknown> {
-  yield* streamSse('/ai/self-intro/stream', params)
+  yield* streamSse('/ai/self-intro/stream', params, signal)
 }
 
 /**

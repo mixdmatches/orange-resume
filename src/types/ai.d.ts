@@ -2,6 +2,7 @@
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant'
   content: string
+  stopped?: boolean
 }
 
 /** 对话请求参数 */

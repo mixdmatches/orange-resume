@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import { ArrowUpOutlined, LoadingOutlined } from '@ant-design/icons-vue'
+import { ArrowUpOutlined, CloseOutlined } from '@ant-design/icons-vue'
 
 /** 输入框组件属性 */
 const props = withDefaults(
@@ -21,6 +21,8 @@ const props = withDefaults(
     maxRows?: number
     /** 底部提示文字（如免责声明、快捷键说明） */
     hint?: string
+    /** AI 生成中是否显示"停止生成"按钮；面试间等受控流程不允许中途停止单条消息时传 false */
+    showStop?: boolean
   }>(),
   {
     placeholder: '输入消息…',
@@ -30,13 +32,15 @@ const props = withDefaults(
     minRows: 1,
     maxRows: 6,
     hint: '',
+    showStop: true,
   },
 )
 
-/** 更新内容事件与发送事件 */
+/** 更新内容事件、发送事件与停止生成事件 */
 const emit = defineEmits<{
   (e: 'update:value', value: string): void
   (e: 'send'): void
+  (e: 'stop'): void
 }>()
 
 /** textarea DOM 引用，用于自动增高 */
@@ -96,6 +100,14 @@ const trySend = () => {
   emit('send')
 }
 
+/**
+ * 触发停止生成：AI 回复中点击停止按钮时向外抛出 stop 事件
+ * （由父组件负责中止 SSE 流，如调用 AbortController.abort()）
+ */
+const stopSend = () => {
+  emit('stop')
+}
+
 /** 发送按钮是否可点击（决定按钮配色与禁用态） */
 const canSend = computed(
   () => !!props.value.trim() && !props.disabled && !props.loading,
@@ -136,16 +148,26 @@ watch(
           <span v-if="maxlength && value" class="char-count">
             {{ value.length }} / {{ maxlength }}
           </span>
-          <!-- 圆形发送按钮：有内容时主题色，无内容时置灰 -->
           <button
+            v-if="!loading"
             type="button"
             class="send-btn"
             :class="{ 'is-active': canSend }"
             :disabled="!canSend"
             @click="trySend"
           >
-            <LoadingOutlined v-if="loading" spin />
-            <ArrowUpOutlined v-else />
+            <ArrowUpOutlined />
+          </button>
+          <!-- 停止按钮：AI 流式回复中显示，点击中止生成；
+               showStop=false 时隐藏（面试间等受控流程不允许中途停止单条消息） -->
+          <button
+            v-else-if="showStop"
+            type="button"
+            class="send-btn is-stop"
+            title="停止生成"
+            @click="stopSend"
+          >
+            <CloseOutlined />
           </button>
         </div>
       </div>
@@ -160,7 +182,7 @@ watch(
   width: 100%;
 }
 
-/* 输入卡片容器（DeepSeek / 豆包风格的大圆角卡片） */
+/* 输入卡片容器 */
 .chat-input {
   border-radius: 1.6rem;
   padding: 0.2rem 0.4rem 0.4rem;
@@ -256,7 +278,7 @@ watch(
   );
 }
 
-/* 圆形发送按钮（参考 DeepSeek 的向上箭头圆钮） */
+/* 圆形发送按钮 */
 .send-btn {
   width: 3.2rem;
   height: 3.2rem;
@@ -299,6 +321,29 @@ watch(
 
   &:disabled {
     cursor: not-allowed;
+  }
+
+  &.is-stop {
+    @include themify(
+      (
+        background-color: (
+          light: #1f2329,
+          dark: #f0f0f0,
+        ),
+        color: (
+          light: #fff,
+          dark: #1f2329,
+        ),
+      )
+    );
+
+    &:hover {
+      opacity: 0.85;
+    }
+
+    &:active {
+      transform: scale(0.92);
+    }
   }
 }
 

@@ -15,6 +15,7 @@ import {
   RobotOutlined,
   CloseOutlined,
   MinusOutlined,
+  StopOutlined,
 } from '@ant-design/icons-vue'
 import ChatInput from '@/components/ChatInput.vue'
 import MarkdownIt from 'markdown-it'
@@ -27,6 +28,7 @@ import {
 } from '@/api/ai-session'
 import type { ChatMessage } from '@/types/ai'
 import type { AiSession } from '@/types/ai-sesstion'
+import { ensureAiProviderReady } from '@/utils/ai-ready'
 
 /** 控制对话框显示/隐藏 */
 const props = defineProps<{ open: boolean }>()
@@ -137,6 +139,7 @@ onUnmounted(() => {
   window.removeEventListener('mousemove', handleMouseMove)
   window.removeEventListener('mouseup', handleMouseUp)
   window.removeEventListener('resize', handleResize)
+  chatControllers.forEach(controller => controller.abort())
 })
 
 /** 关闭对话框 */
@@ -173,6 +176,13 @@ const streamingSessionIds = ref<string[]>([])
  * 便于切回后把它塞回列表，继续逐字实时渲染
  */
 const streamingMessages = new Map<string, ChatMessage>()
+
+/**
+ * 正在流式响应的 AbortController（按会话缓存）
+ * "停止生成"按钮据此中止对应会话的 SSE 流；与流式状态一样按会话隔离，
+ * 避免停止操作误伤其他并发中会话的流
+ */
+const chatControllers = new Map<string, AbortController>()
 
 /** 当前视图会话是否正在等待 AI 回复（按会话隔离，切走后自动为 false，切回自动恢复） */
 const loading = computed(
@@ -255,6 +265,8 @@ const scrollToBottom = () => {
 const handleSend = async () => {
   const input = userInput.value.trim()
   if (!input || loading.value) return
+  // AI 服务就绪预检查：未选择服务商或未配置 Key 时提示并中止
+  if (!(await ensureAiProviderReady())) return
 
   // 1. 追加用户消息
   messages.value.push({ role: 'user', content: input })
@@ -275,10 +287,17 @@ const handleSend = async () => {
     streamingSessionIds.value = [...streamingSessionIds.value, sid]
     // 缓存流式消息引用，供切回后塞回列表继续实时渲染
     streamingMessages.set(sid, assistantMsg)
+    // 为本次流创建中止控制器（按会话缓存，供"停止生成"中止）
+    const controller = new AbortController()
+    chatControllers.set(sid, controller)
 
     // 4. 会话流式对话：按「对象引用」写入本次回复，避免切换会话后
     //    messages 被替换，误把 AI 增量拼到其他消息上
-    for await (const delta of chatAiSessionApi(sid, { content: input })) {
+    for await (const delta of chatAiSessionApi(
+      sid,
+      { content: input },
+      controller.signal,
+    )) {
       // 仅停留在本会话时才实时写入 UI；切走后该引用仍在缓存中，
       // 切回时由 handleSession 塞回列表，即可继续逐字渲染
       if (sessionId.value === sid) {
@@ -287,15 +306,33 @@ const handleSend = async () => {
       }
     }
   } catch (error) {
+    // 用户主动停止生成：不算错误，标记消息以便 UI 显示"已手动停止生成"提示
+    // （已有内容保留已生成部分，无内容显示空消息框 + 提示行）
+    if ((error as Error).name === 'AbortError') {
+      assistantMsg.stopped = true
+      return
+    }
     // 出错时仅在仍停留在原会话的情况下，把空 assistant 消息替换为错误提示
     if (sessionId.value === sid) {
       assistantMsg.content = `> ⚠️ ${(error as Error).message || '请求失败，请重试'}`
     }
   } finally {
     // 结束本会话的流式状态（仅移除自己，不影响其他并发中的会话）
-    if (sid) streamingMessages.delete(sid)
+    if (sid) {
+      streamingMessages.delete(sid)
+      chatControllers.delete(sid)
+    }
     streamingSessionIds.value = streamingSessionIds.value.filter(v => v !== sid)
   }
+}
+
+/**
+ * 停止当前视图会话的 AI 生成
+ * 通过 AbortController 中止对应会话的 SSE 流，已生成的内容保留
+ */
+const handleStopStream = () => {
+  const sid = sessionId.value
+  if (sid) chatControllers.get(sid)?.abort()
 }
 
 /** 是否有消息 */
@@ -433,24 +470,37 @@ const refreshSessionList = async () => {
             class="message-item"
             :class="msg.role"
           >
-            <div class="bubble">
-              <!-- AI 回复：等待中显示打字动画，有内容显示 Markdown -->
-              <div
-                v-if="msg.role === 'assistant'"
-                class="bubble-content markdown-body"
-              >
+            <!-- 纵向容器：气泡 + 可选的"手动停止"提示行 -->
+            <div class="msg-main" :class="msg.role">
+              <div class="bubble">
+                <!-- AI 回复：等待中显示打字动画，有内容显示 Markdown -->
                 <div
-                  v-if="loading && idx === messages.length - 1 && !msg.content"
-                  class="typing-indicator"
+                  v-if="msg.role === 'assistant'"
+                  class="bubble-content markdown-body"
                 >
-                  <span class="dot"></span>
-                  <span class="dot"></span>
-                  <span class="dot"></span>
+                  <div
+                    v-if="
+                      loading && idx === messages.length - 1 && !msg.content
+                    "
+                    class="typing-indicator"
+                  >
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                  </div>
+                  <div v-else v-html="renderMd(msg.content)"></div>
                 </div>
-                <div v-else v-html="renderMd(msg.content)"></div>
+                <!-- 用户消息：纯文本 -->
+                <template v-else>{{ msg.content }}</template>
               </div>
-              <!-- 用户消息：纯文本 -->
-              <template v-else>{{ msg.content }}</template>
+              <!-- 手动停止生成提示（AI 消息被用户停止时显示，无论是否有内容） -->
+              <div
+                v-if="msg.role === 'assistant' && msg.stopped"
+                class="stop-tip"
+              >
+                <stop-outlined />
+                <span>已手动停止生成</span>
+              </div>
             </div>
           </div>
         </div>
@@ -466,6 +516,7 @@ const refreshSessionList = async () => {
             placeholder="给智能助手发送消息…"
             hint="内容由 AI 生成，请仔细甄别"
             @send="handleSend"
+            @stop="handleStopStream"
           />
         </div>
       </div>
@@ -669,7 +720,7 @@ const refreshSessionList = async () => {
   }
 
   .bubble {
-    max-width: 85%;
+    max-width: 100%;
     padding: 0.7rem 1rem;
     border-radius: 0.8rem;
     font-size: 1.3rem;
@@ -691,6 +742,40 @@ const refreshSessionList = async () => {
       )
     );
     border-bottom-left-radius: 0.2rem;
+  }
+
+  /* 纵向容器：气泡 + 提示行堆叠（user 靠右、assistant 靠左对齐）
+     宽度上限 85% 放在这里：父级 .message-item 宽度确定，百分比才能正确解析；
+     若放在 .bubble 上，父级宽度由内容撑开，短文本会被 85% 反向压缩成竖排 */
+  .msg-main {
+    display: flex;
+    flex-direction: column;
+    max-width: 85%;
+
+    &.user {
+      align-items: flex-end;
+    }
+
+    &.assistant {
+      align-items: flex-start;
+    }
+  }
+
+  /* 手动停止生成提示行 */
+  .stop-tip {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.4rem;
+    font-size: 1.2rem;
+    @include themify(
+      (
+        color: (
+          light: rgba(0, 0, 0, 0.45),
+          dark: rgba(255, 255, 255, 0.45),
+        ),
+      )
+    );
   }
 }
 

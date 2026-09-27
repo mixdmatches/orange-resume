@@ -6,6 +6,7 @@ import MarkdownIt from 'markdown-it'
 import type { Resume } from '@/types/resume'
 import { resumeToText } from '@/utils/resumeToText'
 import { selfIntroStreamApi } from '@/api'
+import { ensureAiProviderReady } from '@/utils/ai-ready'
 import type { SelfIntroOptions } from '@/types/ai'
 
 /** 简历数据 */
@@ -39,6 +40,8 @@ const renderedHtml = computed(() => md.render(content.value))
  */
 const handleGenerate = async () => {
   if (loading.value) return
+  // AI 服务就绪预检查：未选择服务商或未配置 Key 时提示并中止
+  if (!(await ensureAiProviderReady())) return
 
   loading.value = true
   content.value = ''

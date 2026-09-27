@@ -26,6 +26,7 @@ const emit = defineEmits<{
 const statusColor = (status: string) => {
   if (status === 'finished') return 'success'
   if (status === 'in_progress') return 'processing'
+  if (status === 'stopped') return 'warning'
   return 'default'
 }
 
@@ -35,6 +36,7 @@ const statusColor = (status: string) => {
 const statusLabel = (status: string) => {
   if (status === 'finished') return '已结束'
   if (status === 'in_progress') return '进行中'
+  if (status === 'stopped') return '已中止'
   return '待开始'
 }
 

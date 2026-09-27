@@ -7,6 +7,7 @@ import type {
 import type { Resume } from '@/types/resume'
 import { createInterviewApi, interviewStreamApi } from '@/api/interview'
 import { DEFAULT_QUESTION_COUNT } from '@/stores/interview'
+import { ensureAiProviderReady } from '@/utils/ai-ready'
 
 /** 面试阶段：idle=欢迎页 / interviewing=面试进行中 / finished=面试已结束 */
 export type InterviewPhase = 'idle' | 'interviewing' | 'finished'
@@ -39,6 +40,8 @@ export interface RoomMessage {
   content: string
   /** 是否正在流式输出（true 时 UI 可显示思考态） */
   streaming?: boolean
+  /** 该条 AI 消息被用户手动停止生成（UI 据此在消息下方显示停止提示行） */
+  stopped?: boolean
   /** 评价结构化数据（role='evaluation' 时填充） */
   evaluation?: EvaluationPayload
 }
@@ -68,15 +71,8 @@ export const useInterviewSession = (options: {
   category: Ref<InterviewCategory>
   interviewId: Ref<string>
 }) => {
-  const {
-    resume,
-    jobType,
-    jd,
-    difficulty,
-    questionCount,
-    category,
-    interviewId,
-  } = options
+  const { resume, jobType, difficulty, questionCount, category, interviewId } =
+    options
 
   /** 当前面试阶段 */
   const phase = ref<InterviewPhase>('idle')
@@ -97,6 +93,12 @@ export const useInterviewSession = (options: {
   let timer: number | null = null
   /** 消息 id 自增器 */
   let messageId = 0
+  /** 当前流式请求控制器（中断生成时调用 abort() 断开 SSE 流） */
+  let streamController: AbortController | null = null
+  /** 当前进行中的流式消费任务（"结束面试"中断旧流前需等待其收尾，避免两个流并发写消息） */
+  let activeRun: Promise<void> | null = null
+  /** 是否正在执行"结束面试"流程（中断旧流 → 生成总结），用于防止重入与复位竞争 */
+  let finishing = false
 
   /** 计时显示文本（mm:ss） */
   const elapsedText = computed(() => {
@@ -138,8 +140,22 @@ export const useInterviewSession = (options: {
     }
   }
 
-  // 组件卸载时清理计时器，防止内存泄漏
-  onUnmounted(stopTimer)
+  // 组件卸载时清理计时器并中止进行中的流式请求，防止内存泄漏
+  onUnmounted(() => {
+    stopTimer()
+    streamController?.abort()
+  })
+
+  /**
+   * 中止当前 SSE 流（仅供内部"结束面试"流程与组件卸载使用）
+   * 通过 AbortController 中止底层 fetch，SSE 流立即断开；
+   * consumeStream 会捕获 AbortError 并兜底修复半成品消息（标记 stopped），不视为错误。
+   * 注意：面试间 UI 不提供单条消息的"停止生成"按钮（ChatInput showStop=false），
+   * 中断面试行为的唯一入口是"返回"（组件卸载）与"结束面试"（finish 内部中断旧流）
+   */
+  const stopStream = () => {
+    streamController?.abort()
+  }
 
   /**
    * 处理统一 SSE 流的事件，将事件适配为 RoomMessage
@@ -161,93 +177,116 @@ export const useInterviewSession = (options: {
     let evalMsg: RoomMessage | null = null
     /** 总结占位消息（summary_start 时创建，summary 事件逐字追加） */
     let summaryMsg: RoomMessage | null = null
+    /** 是否被用户主动停止（AbortError） */
+    let stopped = false
 
-    for await (const evt of stream) {
-      switch (evt.event) {
-        // ========== 流式出题 ==========
-        case 'question_start':
-          // 占位面试官消息，UI 显示"面试官正在提问…"
-          interviewerMsg = pushMessage('interviewer', '')
-          interviewerMsg.streaming = true
-          totalRounds.value = evt.totalRounds
-          currentRound.value = evt.round
-          break
+    try {
+      for await (const evt of stream) {
+        switch (evt.event) {
+          // ========== 流式出题 ==========
+          case 'question_start':
+            // 占位面试官消息，UI 显示"面试官正在提问…"
+            interviewerMsg = pushMessage('interviewer', '')
+            interviewerMsg.streaming = true
+            totalRounds.value = evt.totalRounds
+            currentRound.value = evt.round
+            break
 
-        case 'question':
-          // 题目文本逐字追加
-          if (interviewerMsg) interviewerMsg.content += evt.content
-          break
+          case 'question':
+            // 题目文本逐字追加
+            if (interviewerMsg) interviewerMsg.content += evt.content
+            break
 
-        case 'question_done':
-          // 出题完毕
-          if (interviewerMsg) interviewerMsg.streaming = false
-          interviewerMsg = null
-          break
+          case 'question_done':
+            // 出题完毕
+            if (interviewerMsg) interviewerMsg.streaming = false
+            interviewerMsg = null
+            break
 
-        // ========== 答题评价 ==========
-        case 'evaluation_start':
-          // 占位评价卡片，UI 显示 loading
-          evalMsg = pushMessage('evaluation', '')
-          evalMsg.streaming = true
-          break
+          // ========== 答题评价 ==========
+          case 'evaluation_start':
+            // 占位评价卡片，UI 显示 loading
+            evalMsg = pushMessage('evaluation', '')
+            evalMsg.streaming = true
+            break
 
-        case 'evaluation_done':
-          // 回填评价结构化数据
-          if (evalMsg) {
-            evalMsg.evaluation = {
-              round: evt.round,
-              totalRounds: evt.totalRounds,
-              score: evt.score,
-              feedback: evt.feedback,
-              strengths: evt.strengths,
-              weaknesses: evt.weaknesses,
-              suggestions: evt.suggestions,
-              hasNext: evt.hasNext,
+          case 'evaluation_done':
+            // 回填评价结构化数据
+            if (evalMsg) {
+              evalMsg.evaluation = {
+                round: evt.round,
+                totalRounds: evt.totalRounds,
+                score: evt.score,
+                feedback: evt.feedback,
+                strengths: evt.strengths,
+                weaknesses: evt.weaknesses,
+                suggestions: evt.suggestions,
+                hasNext: evt.hasNext,
+              }
+              evalMsg.streaming = false
             }
-            evalMsg.streaming = false
-          }
-          break
+            break
 
-        // ========== 总结 ==========
-        case 'summary_start':
-          // 占位总结消息，准备流式追加
-          summaryMsg = pushMessage('summary', '')
-          summaryMsg.streaming = true
-          break
+          // ========== 总结 ==========
+          case 'summary_start':
+            // 占位总结消息，准备流式追加
+            summaryMsg = pushMessage('summary', '')
+            summaryMsg.streaming = true
+            break
 
-        case 'summary':
-          // 总结文本逐字增量
-          if (summaryMsg) summaryMsg.content += evt.content
-          break
+          case 'summary':
+            // 总结文本逐字增量
+            if (summaryMsg) summaryMsg.content += evt.content
+            break
 
-        // ========== 流程结束 ==========
-        case 'done':
-          // 面试结束收尾
-          if (summaryMsg) {
-            summaryMsg.streaming = false
-            // done 事件里的 summary 作为兜底（流式中断且 summary 为空时回填）
-            if (!summaryMsg.content) summaryMsg.content = evt.summary
-          }
-          finalScore.value = evt.totalScore
-          phase.value = 'finished'
-          stopTimer()
-          interviewId.value = ''
-          break
+          // ========== 流程结束 ==========
+          case 'done':
+            // 面试结束收尾
+            if (summaryMsg) {
+              summaryMsg.streaming = false
+              // done 事件里的 summary 作为兜底（流式中断且 summary 为空时回填）
+              if (!summaryMsg.content) summaryMsg.content = evt.summary
+            }
+            finalScore.value = evt.totalScore
+            phase.value = 'finished'
+            stopTimer()
+            interviewId.value = ''
+            break
+
+          // ========== 后端错误 ==========
+          case 'error':
+            // 抛给调用方（UI 层 catch 后 message.error 展示原因），
+            // finally 会复位 thinking，兜底逻辑修复半成品消息
+            throw new Error(evt.message)
+        }
+      }
+    } catch (error) {
+      // 用户主动停止生成：不算错误，走下方兜底修复半成品消息；其余错误继续抛出
+      if ((error as Error).name === 'AbortError') {
+        stopped = true
+      } else {
+        throw error
       }
     }
 
     // ========== 兜底：流结束后修正可能的半成品消息 ==========
-    // 面试官占位消息仍为 streaming 态（中途出错），兜底填充
+    // 用户手动停止：不填占位文案，保留已生成的部分内容，
+    // 通过 stopped 标记让 UI 在消息下方渲染"已手动停止生成"提示行
+    // 面试官占位消息仍为 streaming 态（中途出错或被停止），兜底填充
     if (interviewerMsg?.streaming) {
       interviewerMsg.streaming = false
-      if (!interviewerMsg.content) {
+      if (stopped) {
+        interviewerMsg.stopped = true
+      } else if (!interviewerMsg.content) {
         interviewerMsg.content = '（题目生成失败，请稍后重试）'
       }
     }
-    // 评价占位消息仍为 streaming 态（中途出错）
+    // 评价占位消息仍为 streaming 态（中途出错或被停止）
     if (evalMsg?.streaming) {
       evalMsg.streaming = false
-      if (!evalMsg.evaluation) {
+      if (stopped) {
+        evalMsg.stopped = true
+      } else if (!evalMsg.evaluation) {
         evalMsg.evaluation = {
           round: currentRound.value,
           totalRounds: totalRounds.value,
@@ -260,10 +299,12 @@ export const useInterviewSession = (options: {
         }
       }
     }
-    // 总结占位消息仍为 streaming 态（中途出错）
+    // 总结占位消息仍为 streaming 态（中途出错或被停止）
     if (summaryMsg?.streaming) {
       summaryMsg.streaming = false
-      if (!summaryMsg.content) {
+      if (stopped) {
+        summaryMsg.stopped = true
+      } else if (!summaryMsg.content) {
         summaryMsg.content = '未能生成面试总结，请稍后重试。'
       }
     }
@@ -278,6 +319,8 @@ export const useInterviewSession = (options: {
       throw new Error('简历数据缺失，请返回重新选择简历')
     }
     if (thinking.value) return
+    // AI 服务就绪预检查：未选择服务商或未配置 Key 时提示并中止
+    if (!(await ensureAiProviderReady())) return
 
     thinking.value = true
     phase.value = 'interviewing'
@@ -300,8 +343,10 @@ export const useInterviewSession = (options: {
       interviewId.value = session.id
 
       // 2. 统一 SSE 流（空对象 → 后端根据 pending_questions 状态自动路由到"开始面试"路径）
-      const stream = interviewStreamApi(session.id, {})
-      await consumeStream(stream)
+      streamController = new AbortController()
+      const stream = interviewStreamApi(session.id, {}, streamController.signal)
+      activeRun = consumeStream(stream)
+      await activeRun
     } catch (error) {
       // 启动失败则回退到欢迎页
       phase.value = 'idle'
@@ -309,7 +354,10 @@ export const useInterviewSession = (options: {
       interviewId.value = ''
       throw error
     } finally {
-      thinking.value = false
+      activeRun = null
+      streamController = null
+      // "结束面试"中断本流后将接管 thinking（保持 true 直至总结流程结束），此处不能复位
+      if (!finishing) thinking.value = false
     }
   }
 
@@ -325,41 +373,88 @@ export const useInterviewSession = (options: {
     if (!interviewId.value) {
       throw new Error('面试会话未初始化，请重新开始面试')
     }
+    // AI 服务就绪预检查：未选择服务商或未配置 Key 时提示并中止
+    if (!(await ensureAiProviderReady())) return
+    // "结束面试"流程已启动（可能正在中断旧流）：本次回答不再提交，避免与总结流并发写消息
+    if (finishing) return
 
     pushMessage('candidate', text)
     thinking.value = true
 
     try {
-      const stream = interviewStreamApi(interviewId.value, { content: text })
-      await consumeStream(stream)
-    } catch (error) {
-      throw error
+      streamController = new AbortController()
+      const stream = interviewStreamApi(
+        interviewId.value,
+        { content: text },
+        streamController.signal,
+      )
+      activeRun = consumeStream(stream)
+      await activeRun
     } finally {
-      thinking.value = false
+      activeRun = null
+      streamController = null
+      // "结束面试"中断本流后将接管 thinking（保持 true 直至总结流程结束），此处不能复位
+      if (!finishing) thinking.value = false
     }
   }
+
+  /** 面试总结是否已完成（phase 为 finished）；用函数封装读取，避免 TS 对 phase.value 的字面量收窄导致后续比较报错 */
+  const isPhaseFinished = () => phase.value === 'finished'
 
   /**
    * 提前结束面试：统一 SSE 流 + finishOnly: true
    * 后端路由到"提前结束"路径：summary_start → summary* → done
+   *
+   * 允许在 AI 生成中（出题/评价/总结）点击：先中断当前流并等待其收尾
+   * （半成品消息由 consumeStream 兜底标记 stopped，UI 显示"已手动停止生成"），
+   * 再发起总结流，保证同一时刻只有一个流在写消息。
+   * 这是面试间唯一主动中断生成的方式（单条消息不支持停止，见 ChatInput showStop=false）
    */
   const finish = async () => {
-    if (phase.value !== 'interviewing' || thinking.value) return
+    // 防止重入（如总结生成中再次确认结束）
+    if (finishing) return
+    if (phase.value !== 'interviewing') return
     if (!interviewId.value) {
       throw new Error('面试会话未初始化')
     }
 
-    thinking.value = true
-    stopTimer()
-
+    finishing = true
     try {
-      const stream = interviewStreamApi(interviewId.value, { finishOnly: true })
-      await consumeStream(stream)
+      if (thinking.value) {
+        // AI 正在生成：中断当前流并等待其收尾（旧流的 finally 会跳过 thinking 复位），
+        // thinking 在整个结束流程中保持 true，避免等待间隙用户提交回答与结束流程并发
+        if (activeRun) {
+          stopStream()
+          await activeRun.catch(() => {})
+        }
+        // 等待收尾期间面试可能已自然结束（done 事件先于中断到达）
+        if (phase.value !== 'interviewing' || !interviewId.value) return
+      }
+
+      // AI 服务就绪预检查：未选择服务商或未配置 Key 时提示并中止
+      if (!(await ensureAiProviderReady())) return
+
+      thinking.value = true
+      stopTimer()
+
+      streamController = new AbortController()
+      const stream = interviewStreamApi(
+        interviewId.value,
+        { finishOnly: true },
+        streamController.signal,
+      )
+      activeRun = consumeStream(stream)
+      await activeRun
+      // 流正常结束但未进入 finished（如服务端提前关闭）：恢复计时器让用户可重试
+      if (!isPhaseFinished()) startTimer()
     } catch (error) {
       // 失败时不改变 phase，让用户可以重试
       startTimer()
       throw error
     } finally {
+      finishing = false
+      activeRun = null
+      streamController = null
       thinking.value = false
     }
   }

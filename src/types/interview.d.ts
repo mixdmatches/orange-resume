@@ -8,8 +8,12 @@ export type InterviewCategory =
   | 'project_deep_dive'
   | null
 
-/** 面试状态机状态：待开始 → 进行中 → 已结束 */
-export type InterviewStatus = 'pending_questions' | 'in_progress' | 'finished'
+/** 面试状态机状态：待开始 → 进行中 → 已结束（stopped=用户中途中止，可恢复） */
+export type InterviewStatus =
+  | 'pending_questions'
+  | 'in_progress'
+  | 'stopped'
+  | 'finished'
 
 /** 分维度评分明细（总结阶段生成） */
 export interface InterviewScoreDetail {

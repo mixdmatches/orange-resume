@@ -9,6 +9,7 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   RobotOutlined,
+  StopOutlined,
   TrophyOutlined,
   UserOutlined,
   WarningOutlined,
@@ -187,7 +188,6 @@ onMounted(loadResume)
           v-if="phase === 'interviewing'"
           danger
           size="small"
-          :disabled="thinking"
           @click="handleFinishClick"
           >结束面试</a-button
         >
@@ -246,14 +246,22 @@ onMounted(loadResume)
             <div class="avatar ai">
               <robot-outlined />
             </div>
-            <div
-              v-if="msg.streaming && !msg.content"
-              class="bubble interviewer-bubble thinking-bubble"
-            >
-              <a-spin size="small" />
-            </div>
-            <div v-else class="bubble interviewer-bubble">
-              {{ msg.content }}
+            <!-- 纵向容器：气泡 + 可选的"手动停止"提示行 -->
+            <div class="msg-main">
+              <div
+                v-if="msg.streaming && !msg.content"
+                class="bubble interviewer-bubble thinking-bubble"
+              >
+                <a-spin size="small" />
+              </div>
+              <div v-else class="bubble interviewer-bubble">
+                {{ msg.content }}
+              </div>
+              <!-- 手动停止生成提示 -->
+              <div v-if="msg.stopped" class="stop-tip">
+                <stop-outlined />
+                <span>已手动停止生成</span>
+              </div>
             </div>
           </div>
 
@@ -270,57 +278,69 @@ onMounted(loadResume)
             <div class="avatar ai">
               <robot-outlined />
             </div>
-            <div class="eval-card">
-              <div v-if="msg.streaming" class="eval-loading">
-                <a-spin size="small" />
-                <span>AI 正在评价你的回答…</span>
-              </div>
-              <template v-else-if="msg.evaluation">
-                <div class="eval-header">
-                  <span class="eval-round"
-                    >第 {{ msg.evaluation.round }} 题评价</span
-                  >
-                  <a-tag :color="scoreColor(msg.evaluation.score)">
-                    <trophy-outlined /> {{ msg.evaluation.score }} 分
-                  </a-tag>
+            <!-- 纵向容器：评价卡片 + 可选的"手动停止"提示行 -->
+            <div class="msg-main">
+              <div class="eval-card">
+                <div v-if="msg.streaming" class="eval-loading">
+                  <a-spin size="small" />
+                  <span>AI 正在评价你的回答…</span>
                 </div>
-                <div class="eval-feedback">{{ msg.evaluation.feedback }}</div>
-                <div
-                  v-if="msg.evaluation.strengths.length"
-                  class="eval-block eval-good"
-                >
-                  <div class="eval-block-title">
-                    <check-circle-outlined /> 亮点
+                <template v-else-if="msg.evaluation">
+                  <div class="eval-header">
+                    <span class="eval-round"
+                      >第 {{ msg.evaluation.round }} 题评价</span
+                    >
+                    <a-tag :color="scoreColor(msg.evaluation.score)">
+                      <trophy-outlined /> {{ msg.evaluation.score }} 分
+                    </a-tag>
                   </div>
-                  <ul>
-                    <li v-for="(s, i) in msg.evaluation.strengths" :key="i">
-                      {{ s }}
-                    </li>
-                  </ul>
-                </div>
-                <div
-                  v-if="msg.evaluation.weaknesses.length"
-                  class="eval-block eval-bad"
-                >
-                  <div class="eval-block-title"><warning-outlined /> 不足</div>
-                  <ul>
-                    <li v-for="(s, i) in msg.evaluation.weaknesses" :key="i">
-                      {{ s }}
-                    </li>
-                  </ul>
-                </div>
-                <div
-                  v-if="msg.evaluation.suggestions.length"
-                  class="eval-block eval-tip"
-                >
-                  <div class="eval-block-title"><bulb-outlined /> 建议</div>
-                  <ul>
-                    <li v-for="(s, i) in msg.evaluation.suggestions" :key="i">
-                      {{ s }}
-                    </li>
-                  </ul>
-                </div>
-              </template>
+                  <div class="eval-feedback">
+                    {{ msg.evaluation.feedback }}
+                  </div>
+                  <div
+                    v-if="msg.evaluation.strengths.length"
+                    class="eval-block eval-good"
+                  >
+                    <div class="eval-block-title">
+                      <check-circle-outlined /> 亮点
+                    </div>
+                    <ul>
+                      <li v-for="(s, i) in msg.evaluation.strengths" :key="i">
+                        {{ s }}
+                      </li>
+                    </ul>
+                  </div>
+                  <div
+                    v-if="msg.evaluation.weaknesses.length"
+                    class="eval-block eval-bad"
+                  >
+                    <div class="eval-block-title">
+                      <warning-outlined /> 不足
+                    </div>
+                    <ul>
+                      <li v-for="(s, i) in msg.evaluation.weaknesses" :key="i">
+                        {{ s }}
+                      </li>
+                    </ul>
+                  </div>
+                  <div
+                    v-if="msg.evaluation.suggestions.length"
+                    class="eval-block eval-tip"
+                  >
+                    <div class="eval-block-title"><bulb-outlined /> 建议</div>
+                    <ul>
+                      <li v-for="(s, i) in msg.evaluation.suggestions" :key="i">
+                        {{ s }}
+                      </li>
+                    </ul>
+                  </div>
+                </template>
+              </div>
+              <!-- 手动停止生成提示 -->
+              <div v-if="msg.stopped" class="stop-tip">
+                <stop-outlined />
+                <span>已手动停止生成</span>
+              </div>
             </div>
           </div>
 
@@ -348,6 +368,11 @@ onMounted(loadResume)
               class="summary-body"
               v-html="renderMarkdown(msg.content)"
             ></div>
+            <!-- 手动停止生成提示 -->
+            <div v-if="msg.stopped" class="stop-tip">
+              <stop-outlined />
+              <span>已手动停止生成</span>
+            </div>
           </div>
         </template>
       </div>
@@ -362,6 +387,7 @@ onMounted(loadResume)
             :maxlength="2000"
             placeholder="输入你的回答…"
             hint="Enter 发送，Shift + Enter 换行"
+            :show-stop="false"
             @send="handleSend"
           />
         </template>
@@ -573,6 +599,31 @@ onMounted(loadResume)
 .msg-row.interviewer,
 .msg-row.evaluation {
   justify-content: flex-start;
+}
+
+/* 气泡/卡片与停止提示行的纵向容器 */
+.msg-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+/* 手动停止生成提示行 */
+.stop-tip {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+  font-size: 1.2rem;
+  @include themify(
+    (
+      color: (
+        light: rgba(0, 0, 0, 0.45),
+        dark: rgba(255, 255, 255, 0.45),
+      ),
+    )
+  );
 }
 
 .msg-row.candidate {

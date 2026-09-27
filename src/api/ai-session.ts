@@ -69,11 +69,13 @@ export function listSessionMessagesApi(
  *
  * @param sessionId 会话 ID
  * @param data 会话聊天 DTO
+ * @param signal 可选中止信号（"停止生成"时传入 AbortController.signal）
  * @yields 文本增量片段
  */
 export async function* chatAiSessionApi(
   sessionId: string,
   data: SendMessageDto,
+  signal?: AbortSignal,
 ): AsyncGenerator<string, void, unknown> {
-  yield* streamSse(`/ai-sessions/${sessionId}/chat/stream`, data)
+  yield* streamSse(`/ai-sessions/${sessionId}/chat/stream`, data, signal)
 }
