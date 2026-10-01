@@ -17,7 +17,8 @@ import GrammarCheck from './GrammarCheck.vue'
 import SelfIntro from './SelfIntro.vue'
 import JobMatch from './JobMatch.vue'
 import { message } from 'ant-design-vue'
-import { inject, ref } from 'vue'
+import { computed, inject, ref } from 'vue'
+import { resumeToText } from '@/utils/resumeToText'
 import type { Resume } from '@/types/resume'
 import templates from '@/template'
 import previewImage from '@/assets/images/classic.fcafadcb.svg'
@@ -33,6 +34,9 @@ const emit = defineEmits<{
 }>()
 
 const resume: Resume = inject('resume') as Resume
+
+/** 当前简历的纯文本形式（传给 AI 助手供 Agent 工具调用） */
+const resumeText = computed(() => resumeToText(resume))
 
 const handleDownloadJson = () => {
   const json = JSON.stringify(resume)
@@ -257,7 +261,7 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
   </a-drawer>
 
   <!-- 智能助手可拖拽对话框 -->
-  <AiAssistant v-model:open="aiAssistantOpen" />
+  <AiAssistant v-model:open="aiAssistantOpen" :resume-text="resumeText" />
 </template>
 
 <style scoped lang="scss">

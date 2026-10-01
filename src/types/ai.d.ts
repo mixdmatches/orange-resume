@@ -1,8 +1,25 @@
+/** 工具调用状态 */
+export type ToolCallStatus = 'calling' | 'done' | 'error'
+
+/** 单条工具调用记录（Agent 自主调用工具时产生） */
+export interface ToolCallInfo {
+  /** 工具名称 */
+  name: string
+  /** 工具入参 */
+  args: Record<string, unknown>
+  /** 调用状态：calling 进行中 / done 完成 / error 出错 */
+  status: ToolCallStatus
+  /** 工具返回结果（JSON 字符串，可选） */
+  output?: string
+}
+
 /** AI 对话消息（OpenAI 兼容格式） */
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant'
   content: string
   stopped?: boolean
+  /** Agent 调用的工具列表（仅 assistant 消息可能有） */
+  toolCalls?: ToolCallInfo[]
 }
 
 /** 对话请求参数 */

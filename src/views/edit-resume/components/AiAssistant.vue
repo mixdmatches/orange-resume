@@ -20,18 +20,18 @@ import {
 import ChatInput from '@/components/ChatInput.vue'
 import MarkdownIt from 'markdown-it'
 import {
-  chatAiSessionApi,
   createAiSessionApi,
   deleteAiSessionApi,
   listChatSesstionsApi,
   listSessionMessagesApi,
 } from '@/api/ai-session'
-import type { ChatMessage } from '@/types/ai'
+import { agentChatStreamApi } from '@/api/agent'
+import type { ChatMessage, ToolCallInfo } from '@/types/ai'
 import type { AiSession } from '@/types/ai-sesstion'
 import { ensureAiProviderReady } from '@/utils/ai-ready'
 
 /** 控制对话框显示/隐藏 */
-const props = defineProps<{ open: boolean }>()
+const props = defineProps<{ open: boolean; resumeText?: string }>()
 const emit = defineEmits<{ (e: 'update:open', value: boolean): void }>()
 
 /** markdown-it 实例 */
@@ -202,6 +202,21 @@ const dropdownVisible = ref(false)
 const renderMd = (text: string) => md.render(text)
 
 /**
+ * 工具内部名称转中文展示名
+ * 后端工具名为英文 snake_case，前端展示时转为中文更友好
+ * @param name 工具内部名称（如 resume_score）
+ * @returns 中文展示名（如 简历质量评分）
+ */
+const getToolDisplayName = (name: string): string => {
+  const map: Record<string, string> = {
+    resume_score: '简历质量评分',
+    grammar_check: '语法检查',
+    job_match: '岗位匹配分析',
+  }
+  return map[name] || name
+}
+
+/**
  * 切换会话
  * 清空本地消息并重置会话，回到空对话状态
  * 并将当前会话 ID 更新为选中的会话 ID
@@ -291,19 +306,49 @@ const handleSend = async () => {
     const controller = new AbortController()
     chatControllers.set(sid, controller)
 
-    // 4. 会话流式对话：按「对象引用」写入本次回复，避免切换会话后
-    //    messages 被替换，误把 AI 增量拼到其他消息上
-    for await (const delta of chatAiSessionApi(
+    // 4. Agent 流式对话：按「对象引用」写入本次回复
+    //    事件类型包括 content（文本增量）、tool_call（调用工具）、tool_result（工具结果）、done、error
+    for await (const event of agentChatStreamApi(
       sid,
-      { content: input },
+      { content: input, resumeText: props.resumeText },
       controller.signal,
     )) {
-      // 仅停留在本会话时才实时写入 UI；切走后该引用仍在缓存中，
-      // 切回时由 handleSession 塞回列表，即可继续逐字渲染
-      if (sessionId.value === sid) {
-        assistantMsg.content += delta
+      if (!assistantMsg.toolCalls) assistantMsg.toolCalls = []
+
+      if (event.type === 'content') {
+        // 文本增量：仅停留在本会话时实时写入 UI
+        if (sessionId.value === sid) {
+          assistantMsg.content += event.content
+          scrollToBottom()
+        }
+      } else if (event.type === 'tool_call') {
+        // Agent 决定调用工具：追加一条 calling 状态的工具记录
+        const toolCall: ToolCallInfo = {
+          name: event.name,
+          args: event.args,
+          status: 'calling',
+        }
+        assistantMsg.toolCalls.push(toolCall)
         scrollToBottom()
+      } else if (event.type === 'tool_result') {
+        // 工具执行完成：找到对应工具记录，更新状态为 done 并保存结果
+        const tc = assistantMsg.toolCalls.find(
+          t => t.name === event.name && t.status === 'calling',
+        )
+        if (tc) {
+          tc.status = 'done'
+          tc.output = event.output
+        }
+        scrollToBottom()
+      } else if (event.type === 'error') {
+        // 执行出错：标记最后一条工具为 error（如果有），其余逻辑由外层 catch 处理
+        const lastCalling = [...assistantMsg.toolCalls]
+          .reverse()
+          .find(t => t.status === 'calling')
+        if (lastCalling) lastCalling.status = 'error'
+        throw new Error(event.error)
       }
+      // done 事件无需特殊处理，循环自然结束
     }
   } catch (error) {
     // 用户主动停止生成：不算错误，标记消息以便 UI 显示"已手动停止生成"提示
@@ -478,9 +523,44 @@ const refreshSessionList = async () => {
                   v-if="msg.role === 'assistant'"
                   class="bubble-content markdown-body"
                 >
+                  <!-- 工具调用卡片列表（Agent 自主调用工具时展示） -->
+                  <div
+                    v-if="msg.toolCalls && msg.toolCalls.length > 0"
+                    class="tool-call-list"
+                  >
+                    <div
+                      v-for="(tc, tcIdx) in msg.toolCalls"
+                      :key="tcIdx"
+                      class="tool-call-item"
+                      :class="tc.status"
+                    >
+                      <span class="tool-icon">
+                        <template v-if="tc.status === 'calling'">⏳</template>
+                        <template v-else-if="tc.status === 'done'">✅</template>
+                        <template v-else>❌</template>
+                      </span>
+                      <span class="tool-name">{{
+                        getToolDisplayName(tc.name)
+                      }}</span>
+                      <span class="tool-status-text">
+                        <template v-if="tc.status === 'calling'"
+                          >分析中…</template
+                        >
+                        <template v-else-if="tc.status === 'done'"
+                          >已完成</template
+                        >
+                        <template v-else>失败</template>
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- 打字动画（仅在没有内容且最后一条消息正在加载时显示） -->
                   <div
                     v-if="
-                      loading && idx === messages.length - 1 && !msg.content
+                      loading &&
+                      idx === messages.length - 1 &&
+                      !msg.content &&
+                      (!msg.toolCalls || msg.toolCalls.length === 0)
                     "
                     class="typing-indicator"
                   >
@@ -488,7 +568,8 @@ const refreshSessionList = async () => {
                     <span class="dot"></span>
                     <span class="dot"></span>
                   </div>
-                  <div v-else v-html="renderMd(msg.content)"></div>
+                  <!-- Markdown 内容 -->
+                  <div v-if="msg.content" v-html="renderMd(msg.content)"></div>
                 </div>
                 <!-- 用户消息：纯文本 -->
                 <template v-else>{{ msg.content }}</template>
@@ -813,6 +894,55 @@ const refreshSessionList = async () => {
     border-left: 3px solid $primary-color;
     background: rgba(22, 119, 255, 0.08);
     border-radius: 0 0.4rem 0.4rem 0;
+  }
+}
+
+/* 工具调用卡片列表 */
+.tool-call-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.tool-call-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 0.5rem;
+  font-size: 1.2rem;
+  background: rgba(22, 119, 255, 0.06);
+  border: 1px solid rgba(22, 119, 255, 0.12);
+
+  .tool-icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+
+  .tool-name {
+    font-weight: 600;
+    @include themify(
+      (
+        color: $text-color,
+      )
+    );
+  }
+
+  .tool-status-text {
+    margin-left: auto;
+    font-size: 1.1rem;
+    color: #8c8c8c;
+  }
+
+  &.done {
+    background: rgba(82, 196, 26, 0.08);
+    border-color: rgba(82, 196, 26, 0.2);
+  }
+
+  &.error {
+    background: rgba(255, 77, 79, 0.08);
+    border-color: rgba(255, 77, 79, 0.2);
   }
 }
 

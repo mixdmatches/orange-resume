@@ -129,6 +129,7 @@ export async function* fetchSseEvents(
 
   const decoder = new TextDecoder('utf-8')
   let buffer = ''
+  let eventCount = 0
 
   // 逐块读取并解析 SSE 数据帧
   while (true) {
@@ -147,11 +148,22 @@ export async function* fetchSseEvents(
 
       try {
         yield JSON.parse(trimmed.slice(5).trim())
+        eventCount++
       } catch {
         // 非 JSON 数据（如心跳/注释），跳过
         continue
       }
     }
+  }
+
+  // 流正常结束但零事件产出：说明响应体不是有效 SSE 帧
+  // （如后端异常被中间件/代理篡改了 content-type，或返回了裸 JSON）
+  // 此时不能静默返回，否则上层 for-await 循环正常结束、loading 被清空，
+  // 表现为气泡框空白且无任何提示
+  if (eventCount === 0) {
+    throw new Error(
+      `${opts?.errorPrefix ?? '流式请求失败'}（响应未包含有效 SSE 事件）`,
+    )
   }
 }
 
