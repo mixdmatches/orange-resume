@@ -1,0 +1,1 @@
+import{as as i,aV as n,au as o,at as t}from"./index-D9siia_C.js";function r(e){return o("/user/ai-config",e)}function s(){return i("/user/ai-config")}function u(e){return t(`/user/ai-config/${e}`)}function p(){return i("/user/ai-config/sel-model-and-prompt")}function d(e){return n("/user/ai-config/sel-model-and-prompt",e)}export{s as a,r as b,u as d,p as g,d as s};
