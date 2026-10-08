@@ -1,3 +1,5 @@
+import type { ToolCallInfo } from './ai'
+
 /** 面试会话扩展信息（type 为 interview 时返回，chat 会话为 null） */
 export interface AiInterviewSessionInfo {
   /** 关联的简历 ID */
@@ -98,6 +100,10 @@ export interface AiSessionMessage {
   promptTokens?: number | null
   /** 输出 token 用量 */
   completionTokens?: number | null
+  /** Agent 工具调用记录列表（仅 chat 会话的 assistant 消息有值，其余为 null） */
+  toolCalls?: ToolCallInfo[] | null
+  /** 扩展数据（面试场景专用：roundIndex/score/strengths 等，Agent 场景为 null） */
+  extra?: Record<string, unknown> | null
   /** 流式状态：streaming 进行中 / done 完成 / failed 失败 */
   streamStatus?: string | null
   /** 创建时间 */

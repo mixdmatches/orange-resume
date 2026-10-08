@@ -225,8 +225,16 @@ const getToolDisplayName = (name: string): string => {
 const handleSession = async (id: string) => {
   sessionId.value = id
   const res = await listSessionMessagesApi(id)
-  // 后端按 id 倒序返回（最新在前），反转为时间正序以匹配发送时的顺序
-  const list: ChatMessage[] = (res.list || []).reverse()
+  // 后端按 id 倒序返回（最新在前），反转为时间正序以匹配发送时的顺序；
+  // 同时把持久化在 toolCalls 字段的工具调用记录还原（刷新/重载后恢复卡片展示）
+  const list: ChatMessage[] = (res.list || []).reverse().map(m => ({
+    ...m,
+    toolCalls: m.toolCalls?.map(tc => ({
+      ...tc,
+      // 流式中断时停在 calling 的记录，刷新后永远等不到结果，统一标记为 error 避免永久转圈
+      status: tc.status === 'calling' ? ('error' as const) : tc.status,
+    })),
+  }))
 
   // 该会话若仍在流式响应中，用流式引用替换列表末尾的空 assistant 占位符，
   // 使切回后能继续逐字实时渲染，而非等到流结束才一次性刷新
