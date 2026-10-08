@@ -13,7 +13,7 @@
 :root,
 [data-theme='light'] {
   // 背景层
-  --color-bg: #{$gray-0}; // 最底层页面背景
+  --color-bg: #{$gray-50}; // 最底层页面背景（极淡灰，卡片用 surface 白色凸显）
   --color-bg-subtle: #{$gray-50}; // 微弱区分的背景
   --color-bg-muted: #{$gray-100}; // 卡片底色 / 编辑区
   --color-surface: #{$gray-0}; // 卡片/弹层表面
