@@ -1,5 +1,16 @@
 @use './reset.scss';
 
+/* Element Plus 橙色主题覆盖 */
+:root {
+  --el-color-primary: #FF7A00;
+  --el-color-primary-light-3: #ff8c1a;
+  --el-color-primary-light-5: #ffa14d;
+  --el-color-primary-light-7: #ffbb80;
+  --el-color-primary-light-8: #ffc899;
+  --el-color-primary-light-9: #ffe0cc;
+  --el-color-primary-dark-2: #e06c00;
+}
+
 ::-webkit-scrollbar {
   display: none;
 }

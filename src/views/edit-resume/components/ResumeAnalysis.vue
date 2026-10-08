@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, inject, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { motion } from 'motion-v'
@@ -76,7 +76,7 @@ const levelConfig: Record<
     label: '建议完善',
   },
   info: {
-    color: '#1677ff',
+    color: '#FF7A00',
     bg: 'rgba(22, 119, 255, 0.1)',
     icon: InfoCircleFilled,
     label: '温馨提示',
@@ -88,7 +88,7 @@ const levelConfig: Record<
  */
 function getCompletenessColor(value: number): string {
   if (value >= 90) return '#52c41a'
-  if (value >= 75) return '#1677ff'
+  if (value >= 75) return '#FF7A00'
   if (value >= 50) return '#faad14'
   return '#ff4d4f'
 }
@@ -101,7 +101,7 @@ function getGradeColor(grade: string): string {
     case 'A':
       return '#52c41a'
     case 'B':
-      return '#1677ff'
+      return '#FF7A00'
     case 'C':
       return '#faad14'
     default:
@@ -137,7 +137,7 @@ const hasAiScored = ref(false)
  */
 function getAiScoreColor(value: number): string {
   if (value >= 90) return '#52c41a'
-  if (value >= 75) return '#1677ff'
+  if (value >= 75) return '#FF7A00'
   if (value >= 60) return '#faad14'
   return '#ff4d4f'
 }
@@ -152,7 +152,7 @@ function getAiGradeColor(grade: string): string {
     case 'A':
       return '#52c41a'
     case 'B':
-      return '#1677ff'
+      return '#FF7A00'
     case 'C':
       return '#faad14'
     default:
@@ -569,7 +569,7 @@ const handleStartAiScore = async () => {
     .progress-num {
       font-size: 2.4rem;
       font-weight: 700;
-      color: #1677ff;
+      color: #FF7A00;
     }
 
     .progress-unit {

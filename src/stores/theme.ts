@@ -23,11 +23,17 @@ export const useThemeStore = defineStore(
     })
 
     // 计算主题配置（根据实际应用的主题）
+    // 主色：橙色 (#FF7A00)，与品牌一致
     const themeConfig = computed(() => ({
       algorithm:
         activeTheme.value === 'light'
           ? theme.defaultAlgorithm
           : theme.darkAlgorithm,
+      token: {
+        colorPrimary: '#FF7A00',
+        colorLink: '#FF7A00',
+        borderRadius: 8,
+      },
     }))
 
     // 处理系统主题变化

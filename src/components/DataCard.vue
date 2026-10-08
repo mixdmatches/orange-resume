@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, h } from 'vue'
 import { motion } from 'motion-v'
 import type { ResumeFormProps, ResumeFormEmits } from '@/types/form.d.ts'
@@ -127,7 +127,7 @@ const handleHideImg = () => {
         </motion.span>
         <motion.span
           v-if="showTitleEye"
-          :while-hover="{ scale: 1.1, color: '#1890ff' }"
+          :while-hover="{ scale: 1.1, color: '#FF7A00' }"
           :while-tap="{ scale: 0.9 }"
         >
           <EyeOutlined style="font-size: 16px" />

@@ -460,7 +460,7 @@ const handleImportPDF = async () => {
   grid-template-columns: repeat(4, 1fr);
   grid-gap: 2rem;
   .card-selected {
-    border: 2px solid #1677ff;
+    border: 2px solid #FF7A00;
     box-shadow: 0 4px 12px rgba(22, 119, 255, 0.25);
     cursor: pointer;
   }
@@ -494,7 +494,7 @@ const handleImportPDF = async () => {
 }
 
 .json-icon {
-  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+  background: linear-gradient(135deg, #FF7A00 0%, #FFB347 100%);
 }
 
 .pdf-icon {

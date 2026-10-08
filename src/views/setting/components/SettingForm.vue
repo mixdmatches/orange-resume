@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import type { APIManufacturer } from '@/types/ai-config'
 import { message, type FormInstance } from 'ant-design-vue'
 import { computed, ref } from 'vue'
@@ -246,11 +246,11 @@ const apiLink = computed(() => {
       margin-left: 20px;
       font-size: 13px;
       font-weight: normal;
-      color: #1890ff;
+      color: #FF7A00;
       @include themify(
         (
           color: (
-            light: #1890ff,
+            light: #FF7A00,
             dark: #60a5fa,
           ),
         )
