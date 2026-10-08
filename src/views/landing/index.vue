@@ -127,7 +127,7 @@ const faqs = [
   },
   {
     q: '可以在多设备间同步吗？',
-    a: '目前推荐使用 JSON 导出/导入实现设备间迁移。云端同步功能正在规划中。',
+    a: '是，橘子简历支持多设备同步，你可以在不同设备上登录后查看和编辑你的简历。',
   },
 ]
 
@@ -481,11 +481,6 @@ const mobileMenuOpen = ref(false)
           </div>
           <p class="footer-slogan">让简历制作变得简单而智能</p>
         </div>
-        <div class="footer-right">
-          <a href="#features">功能</a>
-          <a href="#templates">模板</a>
-          <a href="#faq">FAQ</a>
-        </div>
       </div>
       <div class="footer-bottom">
         © {{ new Date().getFullYear() }} 橘子简历 · 用心打造
@@ -675,7 +670,11 @@ const mobileMenuOpen = ref(false)
 .shape-2 {
   width: 360px;
   height: 360px;
-  background: radial-gradient(circle, rgba(22, 119, 255, 0.12), transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(22, 119, 255, 0.12),
+    transparent 70%
+  );
   bottom: 10%;
   left: -60px;
   animation: drift 25s ease-in-out infinite reverse;
@@ -1486,22 +1485,6 @@ const mobileMenuOpen = ref(false)
   font-size: 13px;
   margin-top: 10px;
   color: rgba(255, 255, 255, 0.5);
-}
-
-.footer-right {
-  display: flex;
-  gap: 28px;
-
-  a {
-    color: rgba(255, 255, 255, 0.6);
-    text-decoration: none;
-    font-size: 14px;
-    transition: color 0.2s;
-
-    &:hover {
-      color: white;
-    }
-  }
 }
 
 .footer-bottom {
