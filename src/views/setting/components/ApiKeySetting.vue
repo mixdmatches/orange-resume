@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import type { APIManufacturer, AiConfigInput } from '@/types/ai-config'
 import { Modal, message } from 'ant-design-vue'
 import {
@@ -684,11 +684,11 @@ onBeforeRouteLeave(to => {
     }
 
     &.add-item {
-      color: #FF7A00;
+      color: #1890ff;
       @include themify(
         (
           color: (
-            light: #FF7A00,
+            light: #1890ff,
             dark: #60a5fa,
           ),
         )

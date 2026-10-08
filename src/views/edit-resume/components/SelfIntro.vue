@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, inject, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { CopyOutlined, ReloadOutlined } from '@ant-design/icons-vue'
@@ -276,7 +276,7 @@ const handleCopy = async () => {
 
     :deep(strong) {
       font-weight: 600;
-      color: #FF7A00;
+      color: #1677ff;
     }
 
     :deep(ul),

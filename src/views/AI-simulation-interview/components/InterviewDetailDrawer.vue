@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import {
   BulbOutlined,
   CheckCircleOutlined,
@@ -36,7 +36,7 @@ const renderMarkdown = (content: string) => md.render(content)
  * 评分对应的颜色（80+绿、60+蓝、低于 60 红）
  */
 const scoreColor = (score: number) =>
-  score >= 80 ? '#52c41a' : score >= 60 ? '#FF7A00' : '#ff4d4f'
+  score >= 80 ? '#52c41a' : score >= 60 ? '#1677ff' : '#ff4d4f'
 
 /**
  * 评分对应的 tag 颜色

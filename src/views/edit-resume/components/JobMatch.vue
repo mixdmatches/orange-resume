@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { inject, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import {
@@ -34,7 +34,7 @@ const result = ref<JobMatchResult | null>(null)
  */
 function getScoreColor(score: number): string {
   if (score >= 80) return '#52c41a'
-  if (score >= 60) return '#FF7A00'
+  if (score >= 60) return '#1677ff'
   if (score >= 40) return '#faad14'
   return '#ff4d4f'
 }
@@ -249,7 +249,7 @@ const handleAnalyze = async () => {
         :transition="{ duration: 0.4, delay: 0.3 }"
       >
         <div class="card-title">
-          <BulbFilled style="color: #FF7A00; margin-right: 0.4rem" />
+          <BulbFilled style="color: #1677ff; margin-right: 0.4rem" />
           改进建议
         </div>
         <ol v-if="result.suggestions.length" class="suggestion-list">

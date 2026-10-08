@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, h, nextTick, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
@@ -643,7 +643,7 @@ onMounted(loadResume)
 }
 
 .avatar.ai {
-  background: #FF7A00;
+  background: #1677ff;
 }
 
 .avatar.user {
