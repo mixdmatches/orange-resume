@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { DeleteOutlined, EyeOutlined, ReloadOutlined } from '@ant-design/icons-vue'
+import {
+  DeleteOutlined,
+  EyeOutlined,
+  ReloadOutlined,
+} from '@ant-design/icons-vue'
 import type { InterviewSession } from '@/types/interview'
 
 /** 历史面试列表组件 Props */
@@ -8,6 +12,12 @@ const props = defineProps<{
   list: InterviewSession[]
   /** 是否正在加载 */
   loading: boolean
+  /** 总页数 */
+  total: number
+  /** 当前页 */
+  currentPage: number
+  /** 每页数量 */
+  pageSize: number
 }>()
 
 /** 历史面试列表组件 Emits */
@@ -18,7 +28,19 @@ const emit = defineEmits<{
   (e: 'delete', session: InterviewSession): void
   /** 刷新列表 */
   (e: 'refresh'): void
+  /** 分页改变 */
+  (e: 'page-size', current: number, size: number): void
+  /** 当前页改变 */
+  (e: 'current-page', current: number): void
 }>()
+
+const handleCurrentChange = (current: number) => {
+  emit('current-page', current)
+}
+
+const handlePageSizeChange = (current: number, size: number) => {
+  emit('page-size', current, size)
+}
 
 /**
  * 面试状态对应的 tag 颜色
@@ -113,11 +135,19 @@ const formatTime = (t?: string) => {
                   <a-tag :color="statusColor(item.interviewStatus)">
                     {{ statusLabel(item.interviewStatus) }}
                   </a-tag>
-                  <a-tag v-if="item.difficulty" :color="difficultyColor(item.difficulty)">
+                  <a-tag
+                    v-if="item.difficulty"
+                    :color="difficultyColor(item.difficulty)"
+                  >
                     {{ difficultyLabel(item.difficulty) }}
                   </a-tag>
-                  <span class="meta-text">{{ formatTime(item.createdAt) }}</span>
-                  <span v-if="item.totalScore !== null" class="meta-text score-text">
+                  <span class="meta-text">{{
+                    formatTime(item.createdAt)
+                  }}</span>
+                  <span
+                    v-if="item.totalScore !== null"
+                    class="meta-text score-text"
+                  >
                     总分 {{ item.totalScore }}
                   </span>
                 </a-space>
@@ -149,6 +179,17 @@ const formatTime = (t?: string) => {
         </a-dropdown>
       </template>
     </a-list>
+
+    <a-pagination
+      v-if="total > 0"
+      :page-size="pageSize"
+      :current="currentPage"
+      :total="total"
+      :page-size-options="[5, 10, 20]"
+      show-size-changer
+      @change="handleCurrentChange"
+      @show-size-change="handlePageSizeChange"
+    />
   </a-card>
 </template>
 

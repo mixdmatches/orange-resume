@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { h } from 'vue'
 import { useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
@@ -84,6 +84,12 @@ const detailVisible = ref(false)
 const detailData = ref<InterviewDetail | null>(null)
 /** 详情抽屉加载中 */
 const detailLoading = ref(false)
+/** 分页信息 */
+const pagination = reactive({
+  currentPage: 1,
+  pageSize: 5,
+  total: 0,
+})
 
 /**
  * 加载历史面试列表
@@ -91,13 +97,28 @@ const detailLoading = ref(false)
 const loadHistory = async () => {
   historyLoading.value = true
   try {
-    const res = await listInterviewsApi({ page: 1, pageSize: 20 })
+    const res = await listInterviewsApi({
+      page: pagination.currentPage,
+      pageSize: pagination.pageSize,
+    })
+    pagination.total = res.total
     historyList.value = res.list
   } catch {
     message.error('加载历史面试失败')
   } finally {
     historyLoading.value = false
   }
+}
+
+const handleCurrentChange = (current: number) => {
+  pagination.currentPage = current
+  loadHistory()
+}
+
+const handlePageSizeChange = (_current: number, size: number) => {
+  pagination.currentPage = 1
+  pagination.pageSize = size
+  loadHistory()
 }
 
 /**
@@ -338,7 +359,12 @@ onMounted(() => {
     <interview-history-list
       :list="historyList"
       :loading="historyLoading"
+      :total="pagination.total"
+      :current-page="pagination.currentPage"
+      :page-size="pagination.pageSize"
       @open-detail="handleOpenDetail"
+      @page-size="handlePageSizeChange"
+      @current-page="handleCurrentChange"
       @delete="handleDeleteInterview"
       @refresh="loadHistory"
     />
