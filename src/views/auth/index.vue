@@ -69,7 +69,7 @@ const registerRules = {
  */
 function redirectAfterAuth() {
   const redirect = route.query.redirect
-  router.replace(typeof redirect === 'string' ? redirect : '/')
+  router.replace(typeof redirect === 'string' ? redirect : '/app')
 }
 
 /**

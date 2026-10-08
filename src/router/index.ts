@@ -53,6 +53,12 @@ export const header_routes: RouteRecordRaw[] = [
 ]
 
 const routes: RouteRecordRaw[] = [
+  // 营销主页（独立于 layout，不需要鉴权）
+  {
+    path: '/',
+    name: 'landing',
+    component: () => import('@/views/landing/index.vue'),
+  },
   // 登录页（独立于 layout，不需要鉴权）
   {
     path: '/login',
@@ -60,7 +66,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/auth/index.vue'),
   },
   {
-    path: '/',
+    path: '/app',
     name: 'layout',
     component: () => import('@/layout/index.vue'),
     redirect: '/my-resume',
@@ -111,7 +117,7 @@ router.beforeEach((to, _from) => {
   }
 
   if (to.path === '/login' && token) {
-    return '/'
+    return '/app'
   }
 
   return true
