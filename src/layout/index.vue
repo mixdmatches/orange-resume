@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import SideBar from './components/SideBar.vue'
-import SiteHeader from './components/SiteHeader.vue'
 </script>
 
 <template>
   <div class="container">
     <side-bar></side-bar>
     <div class="main-content">
-      <site-header></site-header>
       <router-view v-slot="{ Component }">
         <transition name="slide">
           <component :is="Component" />
@@ -20,16 +18,17 @@ import SiteHeader from './components/SiteHeader.vue'
 <style scoped lang="scss">
 .container {
   display: flex;
+  flex-direction: column;
   height: 100vh;
 
   .main-content {
-    overflow-x: hidden;
     flex: 1;
-    border-left: 1px solid $border-color;
-    padding: 2rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1.5rem;
     @include themify(
       (
-        border-color: $border-color-mode,
+        background-color: $layout-bg-color,
       )
     );
   }

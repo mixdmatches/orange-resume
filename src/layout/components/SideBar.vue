@@ -2,13 +2,20 @@
 import { reactive, ref, VueElement, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { header_routes } from '@/router'
-import { MenuUnfoldOutlined, MenuFoldOutlined } from '@ant-design/icons-vue'
+import LineMdGithub from '~icons/line-md/github'
+import ThemeIcon from '@/components/ThemeIcon.vue'
 import type { MenuProps, ItemType } from 'ant-design-vue'
 
 const router = useRouter()
 
 const selectedKeys = ref<string[]>([])
 
+/**
+ * 构造 a-menu 所需的菜单项数据
+ * @param label - 菜单标题
+ * @param key - 路由路径，作为菜单 key
+ * @param icon - 菜单图标
+ */
 function getItem(
   label: VueElement | string,
   key: string,
@@ -25,6 +32,7 @@ function getItem(
   } as ItemType
 }
 
+/** 将路由配置转换为菜单项列表 */
 const generateItems = () => {
   return header_routes.map(item =>
     getItem(
@@ -37,11 +45,12 @@ const generateItems = () => {
 
 const items: ItemType[] = reactive(generateItems())
 
-// 点击仅发起导航；高亮统一由路由变化驱动，导航被守卫拦截时高亮不会误更新
+/** 点击菜单项发起导航 */
 const handleClick: MenuProps['onClick'] = e => {
   router.push(e.key as string)
 }
 
+/** 路由变化时同步高亮菜单项 */
 watch(
   () => router.currentRoute.value.path,
   newVal => {
@@ -50,71 +59,100 @@ watch(
   { immediate: true },
 )
 
-const toggleCollapsed = () => {
-  collapsed.value = !collapsed.value
+/** 跳转 GitHub 仓库 */
+const goToGithub = () => {
+  window.location.href = 'https://github.com/mixdmatches/orange-resume'
 }
-
-const collapsed = ref(false)
 </script>
 
 <template>
-  <div class="side-bar">
+  <div class="top-nav">
+    <!-- 左侧：Logo -->
     <div class="logo">
-      <img src="~@/assets/images/logo.png" alt="fan-resume" />
+      <img src="~@/assets/images/logo.png" alt="orange-resume" />
       <img
-        v-if="!collapsed"
         src="~@/assets/images/logo-text.png"
-        alt="fan-resume"
+        alt="orange-resume"
+        class="logo-text"
       />
     </div>
+
+    <!-- 中间：横向导航菜单 -->
     <a-menu
       :selected-keys="selectedKeys"
       class="menu"
-      mode="inline"
+      mode="horizontal"
       :items="items"
-      :inline-collapsed="collapsed"
       @click="handleClick"
     ></a-menu>
-    <div class="menu-btn">
-      <a-button
-        type="primary"
-        style="margin-bottom: 16px"
-        @click="toggleCollapsed"
-      >
-        <MenuUnfoldOutlined v-if="collapsed" />
-        <MenuFoldOutlined v-else />
-      </a-button>
+
+    <!-- 右侧：操作区 -->
+    <div class="actions">
+      <line-md-github class="action-icon" @click="goToGithub" />
+      <theme-icon></theme-icon>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.side-bar {
+.top-nav {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  height: $site-header-height;
+  padding: 0 1.5rem;
+  border-bottom: 1px solid $border-color;
+  @include themify(
+    (
+      border-color: $border-color-mode,
+      background-color: $bg-color,
+    )
+  );
 }
-.menu {
-  height: 100%;
-}
-.ant-menu-root {
-  border-inline-end: none !important;
-}
+
 .logo {
   display: flex;
-  height: $site-header-height;
   align-items: center;
-  justify-content: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  margin-right: 2rem;
+
   img:nth-child(1) {
-    height: 90%;
+    height: 36px;
   }
-  img:nth-child(2) {
-    width: 15rem;
+
+  .logo-text {
+    width: 8rem;
     object-fit: contain;
   }
 }
-.menu-btn {
-  padding: 1rem;
+
+.menu {
+  flex: 1;
+  border: none !important;
+  background: transparent !important;
+}
+
+/* 去掉 ant-menu 横向模式下的下边框 */
+:deep(.ant-menu-root) {
+  border-inline-end: none !important;
+  border-bottom: none !important;
+}
+
+.actions {
   display: flex;
-  justify-content: right;
+  align-items: center;
+  gap: 1.5rem;
+  flex-shrink: 0;
+  margin-left: auto;
+
+  .action-icon {
+    font-size: 1.4rem;
+    cursor: pointer;
+    @include themify(
+      (
+        color: $text-color,
+      )
+    );
+  }
 }
 </style>
