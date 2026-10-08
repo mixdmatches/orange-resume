@@ -56,6 +56,14 @@ const sortedMenuSections = () => {
 </template>
 
 <style lang="scss" scoped>
+// 根元素白底 + 文字色，与其他模板（professional-business / modern-tech 等）保持一致
+.classic {
+  background: #fff;
+  color: #333;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
 .preview-header {
   display: flex;
   align-items: flex-start;

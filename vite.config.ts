@@ -25,6 +25,8 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
+        // 注入全局 SCSS 变量与 mixin（themify 等）
+        // design-tokens/themes/utilities 由 index.scss 统一引入，避免 :root 重复输出
         additionalData: `
           @use "@/assets/styles/variables.scss" as *;
         `,

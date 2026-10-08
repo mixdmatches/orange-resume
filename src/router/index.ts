@@ -5,10 +5,10 @@ import {
 } from 'vue-router'
 import { h } from 'vue'
 import {
-  SettingOutlined,
   FileTextOutlined,
   ShopOutlined,
   HeatMapOutlined,
+  UserOutlined,
 } from '@ant-design/icons-vue'
 import { ACCESS_TOKEN_KEY } from '@/utils/request'
 import { storage } from '@/utils/storage'
@@ -42,13 +42,13 @@ export const header_routes: RouteRecordRaw[] = [
     component: () => import('@/views/AI-simulation-interview/index.vue'),
   },
   {
-    path: '/setting',
-    name: 'setting',
+    path: '/profile',
+    name: 'profile',
     meta: {
-      title: '通用设置',
-      icon: () => h(SettingOutlined),
+      title: '个人中心',
+      icon: () => h(UserOutlined),
     },
-    component: () => import('@/views/setting/index.vue'),
+    component: () => import('@/views/profile/index.vue'),
   },
 ]
 

@@ -2,6 +2,7 @@
 import { computed, provide } from 'vue'
 import type { Resume } from '@/types/resume'
 import templates from '@/template'
+import TemplateThumb from '@/components/TemplateThumb.vue'
 
 const props = defineProps({
   resume: {
@@ -34,13 +35,13 @@ const currentTemplate = computed(() => {
     </div>
 
     <div class="preview-content">
-      <div class="resume-preview-wrapper">
-        <div class="preview-stage">
-          <div class="preview-paper">
-            <component :is="currentTemplate" v-if="currentTemplate" />
-          </div>
-        </div>
-      </div>
+      <!-- 用 TemplateThumb 统一缩略图渲染：自带 padding 页面边距 + 居中缩放 -->
+      <TemplateThumb
+        v-if="props.resume?.templateId"
+        :template-id="props.resume.templateId"
+        :resume="props.resume"
+        :scale="0.54"
+      />
     </div>
   </a-card>
 </template>
@@ -92,74 +93,17 @@ const currentTemplate = computed(() => {
 }
 
 .preview-content {
-  padding: 0;
-  background: transparent;
-
-  .resume-preview-wrapper {
-    width: 100%;
-    max-width: 860px;
-    max-height: calc(100vh - 260px);
-    overflow-y: auto;
-    background: linear-gradient(180deg, #f7fbff 0%, #ffffff 100%);
-    border: 1px solid rgba(24, 144, 255, 0.16);
-    padding: 16px;
-    border-radius: 18px;
-    box-shadow: 0 18px 48px rgba(15, 23, 42, 0.12);
-    margin: 0 auto;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    @include themify(
-      (
-        background: (
-          light: linear-gradient(180deg, #f7fbff 0%, #ffffff 100%),
-          dark: linear-gradient(180deg, #0f172a 0%, #111827 100%),
-        ),
-        border-color: (
-          light: rgba(24, 144, 255, 0.16),
-          dark: rgba(255, 255, 255, 0.08),
-        ),
-        box-shadow: (
-          light: 0 18px 48px rgba(15, 23, 42, 0.12),
-          dark: 0 18px 48px rgba(0, 0, 0, 0.45),
-        ),
-      )
-    );
-
-    .preview-stage {
-      width: 100%;
-      transform: scale(0.54);
-      transform-origin: top center;
-      border-radius: 18px;
-      overflow: visible;
-      background: transparent;
-      box-shadow: none;
-    }
-
-    .preview-paper {
-      width: 100%;
-      aspect-ratio: 0.707 / 1;
-      max-width: 720px;
-      background: #ffffff;
-      border-radius: 18px;
-      border: 1px solid rgba(15, 23, 42, 0.08);
-      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
-      padding: 20px;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-    }
-
-    :deep(.resume-preview) {
-      width: 100%;
-      min-height: 100%;
-    }
-  }
-}
-
-.preview-body {
+  // 灰底衬托白纸，避免卡片白底与模板白纸融为一体
+  padding: var(--space-4);
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-lg);
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  justify-content: center;
+
+  // A4 白纸加投影，呈现层次感
+  :deep(.thumb-viewport) {
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
+  }
 }
 </style>

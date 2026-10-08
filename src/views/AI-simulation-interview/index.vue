@@ -181,7 +181,7 @@ const handleManageResume = () => {
 }
 
 const handleOpenSetting = () => {
-  router.push('/setting')
+  router.push('/profile')
 }
 
 const handleOpenPreview = () => {
@@ -220,38 +220,38 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="ai-interview-page">
-    <div class="page-header">
+  <div class="page page-ai-interview">
+    <header class="page-header">
       <div>
-        <h2>AI 模拟面试</h2>
-        <p>
-          基于简历内容智能生成面试题与参考回答，支持自定义提问、快速复制与实践演练。
+        <h1 class="page-title">AI 模拟面试</h1>
+        <p class="page-subtitle">
+          基于简历内容智能生成面试题与参考回答，支持自定义提问、快速复制与实践演练
         </p>
       </div>
-      <a-space>
-        <a-button
-          type="default"
-          :icon="h(FileTextOutlined)"
-          @click="handleManageResume"
-          >我的简历</a-button
-        >
+      <div class="page-actions">
+        <a-button :icon="h(FileTextOutlined)" @click="handleManageResume">
+          我的简历
+        </a-button>
         <a-button
           type="primary"
           :icon="h(SettingOutlined)"
           @click="handleOpenSetting"
-          >AI 设置</a-button
         >
-      </a-space>
-    </div>
+          AI 设置
+        </a-button>
+      </div>
+    </header>
 
-    <div class="selection-panel">
+    <!-- ============ 选择简历区块 ============ -->
+    <section class="section-block">
+      <h2 class="block-title">选择简历</h2>
       <resume-select-card
         v-model:model-value="selectedResumeId"
         :resumes="resumes"
         @manage="handleManageResume"
         @preview="handleOpenPreview"
       />
-    </div>
+    </section>
 
     <a-modal
       v-model:open="resumePreviewVisible"
@@ -263,16 +263,15 @@ onMounted(() => {
       <resume-preview-card :resume="selectedResume" />
     </a-modal>
 
-    <a-card class="interview-config-card">
-      <div class="config-header">
-        <h3>面试配置</h3>
-        <p>
-          选择目标岗位或粘贴岗位 JD（均为选填），AI
-          将结合简历内容让面试更贴近真实求职场景。
-        </p>
-      </div>
+    <!-- ============ 面试配置区块 ============ -->
+    <section class="section-block">
+      <h2 class="block-title">面试配置</h2>
+      <p class="block-desc">
+        选择目标岗位或粘贴岗位 JD（均为选填），AI
+        将结合简历内容让面试更贴近真实求职场景。
+      </p>
 
-      <div class="config-form">
+      <div class="config-grid">
         <div class="form-item">
           <label class="form-label">面试难度</label>
           <div class="difficulty-row">
@@ -294,12 +293,10 @@ onMounted(() => {
               :max="QUESTION_COUNT_MAX"
               :step="1"
             />
-            <span class="form-hint"
-              >共 {{ QUESTION_COUNT_MIN }}-{{
-                QUESTION_COUNT_MAX
-              }}
-              题，实际数量可能因答题情况略有浮动</span
-            >
+            <span class="form-hint">
+              共 {{ QUESTION_COUNT_MIN }}-{{ QUESTION_COUNT_MAX }}
+              题，实际数量可能因答题情况略有浮动
+            </span>
           </div>
         </div>
 
@@ -328,7 +325,7 @@ onMounted(() => {
           />
         </div>
 
-        <div class="form-item">
+        <div class="form-item form-item-full">
           <label class="form-label">岗位 JD</label>
           <a-textarea
             v-model:value="jd"
@@ -353,21 +350,24 @@ onMounted(() => {
           >请先在上方选择一份简历</span
         >
       </div>
-    </a-card>
+    </section>
 
-    <!-- 历史面试列表 -->
-    <interview-history-list
-      :list="historyList"
-      :loading="historyLoading"
-      :total="pagination.total"
-      :current-page="pagination.currentPage"
-      :page-size="pagination.pageSize"
-      @open-detail="handleOpenDetail"
-      @page-size="handlePageSizeChange"
-      @current-page="handleCurrentChange"
-      @delete="handleDeleteInterview"
-      @refresh="loadHistory"
-    />
+    <!-- ============ 历史面试区块 ============ -->
+    <section class="section-block">
+      <h2 class="block-title">历史面试</h2>
+      <interview-history-list
+        :list="historyList"
+        :loading="historyLoading"
+        :total="pagination.total"
+        :current-page="pagination.currentPage"
+        :page-size="pagination.pageSize"
+        @open-detail="handleOpenDetail"
+        @page-size="handlePageSizeChange"
+        @current-page="handleCurrentChange"
+        @delete="handleDeleteInterview"
+        @refresh="loadHistory"
+      />
+    </section>
 
     <!-- 面试详情抽屉 -->
     <interview-detail-drawer
@@ -379,157 +379,88 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
-.ai-interview-page {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding: 1rem;
+.page-ai-interview {
+  // 继承 .page 基础 padding
+
+  :deep(.section-block) {
+    // 让 a-card 等子组件继承圆角
+    .ant-card {
+      border-radius: var(--radius-md);
+    }
+  }
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.2rem 1.4rem;
-  border-radius: 1rem;
-  background: #fff;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
-  @include themify(
-    (
-      background: (
-        light: #fff,
-        dark: #111827,
-      ),
-      box-shadow: (
-        light: 0 12px 30px rgba(15, 23, 42, 0.04),
-        dark: 0 12px 30px rgba(0, 0, 0, 0.3),
-      ),
-    )
-  );
-}
-
-.page-header h2 {
-  margin: 0;
-  font-size: 1.9rem;
-}
-
-.page-header p {
-  margin: 0.45rem 0 0;
-  color: rgba(0, 0, 0, 0.65);
-  max-width: 620px;
-  @include themify(
-    (
-      color: (
-        light: rgba(0, 0, 0, 0.65),
-        dark: rgba(255, 255, 255, 0.65),
-      ),
-    )
-  );
-}
-
-.selection-panel {
+/* ============ 配置网格 ============ */
+.config-grid {
   display: grid;
-  gap: 1rem;
-  align-items: start;
-}
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-5);
+  margin-top: var(--space-4);
 
-.interview-config-card {
-  border-radius: 1rem;
-  @include themify(
-    (
-      background: (
-        light: #fff,
-        dark: #111827,
-      ),
-      border-color: (
-        light: #f0f0f0,
-        dark: rgba(255, 255, 255, 0.12),
-      ),
-    )
-  );
-}
-
-.config-header h3 {
-  margin: 0;
-  font-size: 1.6rem;
-}
-
-.config-header p {
-  margin: 0.5rem 0 0;
-  color: rgba(0, 0, 0, 0.65);
-  @include themify(
-    (
-      color: (
-        light: rgba(0, 0, 0, 0.65),
-        dark: rgba(255, 255, 255, 0.65),
-      ),
-    )
-  );
-}
-
-.config-form {
-  display: grid;
-  gap: 1.2rem;
-  margin-top: 1.4rem;
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .form-item {
-  display: grid;
-  gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  &.form-item-full {
+    grid-column: 1 / -1;
+  }
 }
 
 .form-label {
-  font-weight: 600;
-}
-
-.question-count-row,
-.difficulty-row {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-}
-
-.question-count-row .ant-input-number {
-  width: 120px;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-text);
 }
 
 .form-hint {
-  font-size: 0.85rem;
-  color: rgba(0, 0, 0, 0.45);
-  @include themify(
-    (
-      color: (
-        light: rgba(0, 0, 0, 0.45),
-        dark: rgba(255, 255, 255, 0.45),
-      ),
-    )
-  );
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-1);
+}
+
+.difficulty-row,
+.question-count-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+
+  .form-hint {
+    margin-top: 0;
+  }
+}
+
+.question-count-row {
+  :deep(.ant-input-number) {
+    width: 120px;
+  }
 }
 
 .config-footer {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-top: 1.6rem;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
 }
 
 .footer-hint {
-  color: rgba(0, 0, 0, 0.45);
-  @include themify(
-    (
-      color: (
-        light: rgba(0, 0, 0, 0.45),
-        dark: rgba(255, 255, 255, 0.45),
-      ),
-    )
-  );
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
 }
 
-@media screen and (max-width: 900px) {
-  .page-header,
-  .selection-panel {
+@media (max-width: 768px) {
+  .page-header {
     flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
   }
 }
 </style>

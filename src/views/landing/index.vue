@@ -1,7 +1,10 @@
 ﻿<script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { motion } from 'motion-v'
+import TemplateThumb from '@/components/TemplateThumb.vue'
+import { templates } from '@/template/index'
+import { DEFAULT_RESUME } from '@/config/init-resume-data'
 
 const router = useRouter()
 
@@ -54,9 +57,7 @@ onMounted(() => {
   })
 })
 
-import { nextTick } from 'vue'
-
-/** 功能亮点列表（交错布局） */
+/** 功能亮点列表（单列纵向，每项：左小图标 + 右标题/描述/要点）*/
 const features = [
   {
     icon: '✨',
@@ -69,8 +70,6 @@ const features = [
       '职位匹配',
       '自我介绍生成',
     ],
-    accent: '#6366F1',
-    reverse: false,
   },
   {
     icon: '🏗️',
@@ -82,24 +81,18 @@ const features = [
       '离线可编辑',
       '多端对账',
     ],
-    accent: '#0EA5E9',
-    reverse: true,
   },
   {
     icon: '🎨',
     title: '5 套风格化模板',
     desc: '经典商务、极简干净、专业稳重、现代科技、创意设计——套模板不用从零开始，内容填好直接用。',
     points: ['经典商务', '极简干净', '专业稳重', '现代科技', '创意设计'],
-    accent: '#F59E0B',
-    reverse: false,
   },
   {
     icon: '🎙️',
     title: 'AI 模拟面试间',
     desc: '独立面试间页面，流式 SSE 追问引擎，多轮对话还原真实面试。结束后自动生成评分与问题清单，帮你越练越稳。',
     points: ['流式追问', '多轮对话', '评分清单', '面试历史'],
-    accent: '#EC4899',
-    reverse: true,
   },
 ]
 
@@ -133,6 +126,9 @@ const faqs = [
 
 /** 移动端菜单 */
 const mobileMenuOpen = ref(false)
+
+/** 模板预览用的简历数据（DEFAULT_RESUME）*/
+const previewResume = { ...DEFAULT_RESUME, id: '1' }
 </script>
 
 <template>
@@ -140,19 +136,8 @@ const mobileMenuOpen = ref(false)
     <!-- ========== 导航栏 ========== -->
     <header class="nav" :class="{ scrolled }">
       <div class="nav-inner">
-        <div class="nav-brand">
-          <div class="brand-mark">
-            <svg viewBox="0 0 40 40" width="36" height="36">
-              <defs>
-                <linearGradient id="navGrad" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#4096ff" />
-                  <stop offset="100%" stop-color="#0958d9" />
-                </linearGradient>
-              </defs>
-              <circle cx="20" cy="22" r="14" fill="url(#navGrad)" />
-              <path d="M20 8 Q22 4 25 5 Q23 7 22 9" fill="#22C55E" />
-            </svg>
-          </div>
+        <div class="nav-brand" @click="goToApp">
+          <img src="~@/assets/images/logo.png" alt="橘子简历" />
           <span class="brand-name">橘子简历</span>
         </div>
 
@@ -167,23 +152,6 @@ const mobileMenuOpen = ref(false)
 
     <!-- ========== Hero ========== -->
     <section class="hero">
-      <!-- 背景几何装饰 -->
-      <div class="hero-deco">
-        <div class="deco-shape shape-1"></div>
-        <div class="deco-shape shape-2"></div>
-        <div class="deco-shape shape-3"></div>
-        <svg
-          class="hero-wave"
-          viewBox="0 0 1440 120"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M0,60 C320,120 640,0 960,40 C1200,80 1320,60 1440,30 L1440,120 L0,120 Z"
-            fill="#F5F7FA"
-          />
-        </svg>
-      </div>
-
       <div class="hero-grid">
         <!-- 左侧文案 -->
         <div class="hero-left">
@@ -205,7 +173,7 @@ const mobileMenuOpen = ref(false)
             class="hero-title"
           >
             写简历<br />
-            <span class="gradient-text">不该这么累</span>
+            <span class="hero-title-accent">不该这么累</span>
           </motion.h1>
 
           <motion.p
@@ -238,44 +206,236 @@ const mobileMenuOpen = ref(false)
                 <path d="M5 12h14M13 6l6 6-6 6" />
               </svg>
             </button>
-            <button class="btn-outline" @click="goToTemplates">浏览模板</button>
           </motion.div>
         </div>
 
-        <!-- 右侧几何插画 -->
+        <!-- 右侧：极简 SVG 线条插画（替代原 hero-visual 浮动卡组）-->
         <motion.div
-          :initial="{ opacity: 0, scale: 0.9 }"
+          :initial="{ opacity: 0, scale: 0.96 }"
           :animate="{ opacity: 1, scale: 1 }"
           :transition="{ duration: 0.8, delay: 0.3 }"
           class="hero-visual"
         >
-          <!-- 浮动几何卡片组合 -->
-          <div class="visual-card card-main">
-            <div class="card-strip"></div>
-            <div class="card-content">
-              <div class="vc-row">
-                <div class="vc-avatar"></div>
-                <div class="vc-lines">
-                  <div class="vc-line w70"></div>
-                  <div class="vc-line w40"></div>
-                </div>
-              </div>
-              <div class="vc-tags">
-                <span class="vc-tag">Vue</span>
-                <span class="vc-tag">TS</span>
-                <span class="vc-tag">Node</span>
-              </div>
-            </div>
-          </div>
-          <div class="visual-card card-float-1">
-            <div class="float-icon">✨</div>
-            <div class="float-label">AI 润色</div>
-          </div>
-          <div class="visual-card card-float-2">
-            <div class="float-icon">📄</div>
-            <div class="float-label">PDF 导出</div>
-          </div>
-          <div class="visual-orbit"></div>
+          <svg viewBox="0 0 440 440" class="hero-visual-svg">
+            <!-- 背景圆环 -->
+            <circle
+              cx="220"
+              cy="220"
+              r="200"
+              fill="none"
+              stroke="var(--color-border)"
+              stroke-width="1"
+              stroke-dasharray="2 4"
+            />
+            <circle
+              cx="220"
+              cy="220"
+              r="160"
+              fill="none"
+              stroke="var(--color-border)"
+              stroke-width="1"
+            />
+
+            <!-- 中心简历卡片（线稿）-->
+            <rect
+              x="140"
+              y="120"
+              width="160"
+              height="200"
+              rx="8"
+              fill="var(--color-surface)"
+              stroke="var(--color-border-strong)"
+              stroke-width="1.5"
+            />
+            <line
+              x1="160"
+              y1="150"
+              x2="220"
+              y2="150"
+              stroke="var(--color-text)"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+            <circle
+              cx="172"
+              cy="170"
+              r="8"
+              fill="none"
+              stroke="var(--color-primary)"
+              stroke-width="1.5"
+            />
+            <line
+              x1="190"
+              y1="166"
+              x2="240"
+              y2="166"
+              stroke="var(--color-border-strong)"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+            <line
+              x1="190"
+              y1="176"
+              x2="220"
+              y2="176"
+              stroke="var(--color-border-strong)"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+            <line
+              x1="160"
+              y1="200"
+              x2="280"
+              y2="200"
+              stroke="var(--color-border)"
+              stroke-width="1"
+            />
+            <line
+              x1="160"
+              y1="215"
+              x2="270"
+              y2="215"
+              stroke="var(--color-border-strong)"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+            <line
+              x1="160"
+              y1="225"
+              x2="250"
+              y2="225"
+              stroke="var(--color-border-strong)"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+            <line
+              x1="160"
+              y1="240"
+              x2="280"
+              y2="240"
+              stroke="var(--color-border)"
+              stroke-width="1"
+            />
+            <line
+              x1="160"
+              y1="255"
+              x2="265"
+              y2="255"
+              stroke="var(--color-border-strong)"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+            <line
+              x1="160"
+              y1="265"
+              x2="240"
+              y2="265"
+              stroke="var(--color-border-strong)"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+            <line
+              x1="160"
+              y1="280"
+              x2="275"
+              y2="280"
+              stroke="var(--color-border-strong)"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+
+            <!-- 浮动小卡片 1：AI 标记 -->
+            <g class="float-card-1">
+              <rect
+                x="296"
+                y="100"
+                width="100"
+                height="56"
+                rx="6"
+                fill="var(--color-surface)"
+                stroke="var(--color-border)"
+                stroke-width="1"
+              />
+              <circle cx="316" cy="128" r="8" fill="var(--color-primary)" />
+              <line
+                x1="332"
+                y1="124"
+                x2="378"
+                y2="124"
+                stroke="var(--color-border-strong)"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+              <line
+                x1="332"
+                y1="134"
+                x2="362"
+                y2="134"
+                stroke="var(--color-border-strong)"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </g>
+
+            <!-- 浮动小卡片 2：导出标记 -->
+            <g class="float-card-2">
+              <rect
+                x="44"
+                y="280"
+                width="100"
+                height="56"
+                rx="6"
+                fill="var(--color-surface)"
+                stroke="var(--color-border)"
+                stroke-width="1"
+              />
+              <rect
+                x="60"
+                y="296"
+                width="20"
+                height="24"
+                rx="2"
+                fill="none"
+                stroke="var(--color-primary)"
+                stroke-width="1.5"
+              />
+              <line
+                x1="88"
+                y1="304"
+                x2="128"
+                y2="304"
+                stroke="var(--color-border-strong)"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+              <line
+                x1="88"
+                y1="314"
+                x2="118"
+                y2="314"
+                stroke="var(--color-border-strong)"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </g>
+
+            <!-- 装饰点 -->
+            <circle cx="360" cy="200" r="4" fill="var(--color-primary)" />
+            <circle
+              cx="80"
+              cy="180"
+              r="3"
+              fill="var(--color-primary)"
+              opacity="0.6"
+            />
+            <circle
+              cx="380"
+              cy="340"
+              r="3"
+              fill="var(--color-primary)"
+              opacity="0.4"
+            />
+          </svg>
         </motion.div>
       </div>
     </section>
@@ -290,7 +450,7 @@ const mobileMenuOpen = ref(false)
       </div>
     </section>
 
-    <!-- ========== 功能区（交错布局） ========== -->
+    <!-- ========== 功能区（单列纵向）========== -->
     <section class="features" id="features">
       <motion.div
         :initial="{ opacity: 0, y: 30 }"
@@ -308,17 +468,16 @@ const mobileMenuOpen = ref(false)
         <motion.div
           v-for="(f, i) in features"
           :key="f.title"
-          :initial="{ opacity: 0, y: 40 }"
+          :initial="{ opacity: 0, y: 20 }"
           :while-in-view="{ opacity: 1, y: 0 }"
           :viewport="{ once: true, margin: '-60px' }"
-          :transition="{ duration: 0.6, delay: i * 0.1 }"
+          :transition="{ duration: 0.5, delay: i * 0.08 }"
           class="feature-row"
-          :class="{ reverse: f.reverse }"
         >
+          <div class="feature-icon-wrap">
+            <span class="feature-icon">{{ f.icon }}</span>
+          </div>
           <div class="feature-text">
-            <div class="feature-icon-wrap" :style="{ '--accent': f.accent }">
-              <span class="feature-icon">{{ f.icon }}</span>
-            </div>
             <h3 class="feature-title">{{ f.title }}</h3>
             <p class="feature-desc">{{ f.desc }}</p>
             <div class="feature-points">
@@ -327,18 +486,11 @@ const mobileMenuOpen = ref(false)
               }}</span>
             </div>
           </div>
-          <div class="feature-visual" :style="{ '--accent': f.accent }">
-            <div class="visual-blob"></div>
-            <div class="visual-ring"></div>
-            <div class="visual-dots">
-              <span v-for="n in 6" :key="n"></span>
-            </div>
-          </div>
         </motion.div>
       </div>
     </section>
 
-    <!-- ========== 模板展示（横向滚动） ========== -->
+    <!-- ========== 模板展示（横向滚动 + 实时渲染）========== -->
     <section class="templates" id="templates">
       <motion.div
         :initial="{ opacity: 0, y: 30 }"
@@ -349,38 +501,33 @@ const mobileMenuOpen = ref(false)
       >
         <span class="eyebrow">模板中心</span>
         <h2 class="section-title">挑一个喜欢的起点</h2>
-        <p class="section-sub">多种风格，总有一款适合你</p>
+        <p class="section-sub">多种风格，总有一款适合你 · 卡片为实时渲染</p>
       </motion.div>
 
       <div class="template-scroll">
         <motion.div
-          v-for="(t, i) in [
-            { name: '经典', color: '#1677ff', tag: 'Traditional' },
-            { name: '极简', color: '#0F172A', tag: 'Minimalist' },
-            { name: '画报', color: '#EC4899', tag: 'Magazine' },
-            { name: '瑞士风', color: '#0EA5E9', tag: 'Swiss' },
-            { name: '现代科技', color: '#6366F1', tag: 'Tech' },
-            { name: '商务专业', color: '#059669', tag: 'Business' },
-          ]"
-          :key="t.name"
-          :initial="{ opacity: 0, scale: 0.9 }"
-          :while-in-view="{ opacity: 1, scale: 1 }"
+          v-for="(t, i) in templates"
+          :key="t.id"
+          :initial="{ opacity: 0, y: 20 }"
+          :while-in-view="{ opacity: 1, y: 0 }"
           :viewport="{ once: true, margin: '-40px' }"
-          :transition="{
-            type: 'spring',
-            stiffness: 200,
-            damping: 20,
-            delay: i * 0.08,
-          }"
+          :transition="{ duration: 0.5, delay: i * 0.06 }"
           class="tpl-card"
-          :style="{ '--c': t.color }"
+          @click="goToTemplates"
         >
+          <!-- 实时渲染真实模板预览（非纯色占位）-->
           <div class="tpl-cover">
-            <div class="tpl-pattern"></div>
-            <span class="tpl-tag">{{ t.tag }}</span>
+            <TemplateThumb
+              :template-id="t.id"
+              :resume="previewResume"
+              :scale="0.3"
+            />
           </div>
           <div class="tpl-meta">
-            <span class="tpl-name">{{ t.name }}</span>
+            <div>
+              <div class="tpl-name">{{ t.name }}</div>
+              <div class="tpl-tag">{{ t.description }}</div>
+            </div>
             <span class="tpl-arrow">→</span>
           </div>
         </motion.div>
@@ -440,13 +587,12 @@ const mobileMenuOpen = ref(false)
     <!-- ========== CTA ========== -->
     <section class="cta">
       <motion.div
-        :initial="{ opacity: 0, scale: 0.95 }"
-        :while-in-view="{ opacity: 1, scale: 1 }"
+        :initial="{ opacity: 0, y: 20 }"
+        :while-in-view="{ opacity: 1, y: 0 }"
         :viewport="{ once: true, margin: '-80px' }"
         :transition="{ duration: 0.6 }"
         class="cta-box"
       >
-        <div class="cta-deco"></div>
         <h2 class="cta-title">现在就开始，<br />写一份让人记住的简历</h2>
         <p class="cta-desc">登录后使用 · 免费 · Local-First 架构</p>
         <button class="btn-primary btn-lg" @click="goToApp">
@@ -471,12 +617,7 @@ const mobileMenuOpen = ref(false)
       <div class="footer-inner">
         <div class="footer-left">
           <div class="nav-brand">
-            <div class="brand-mark">
-              <svg viewBox="0 0 40 40" width="32" height="32">
-                <circle cx="20" cy="22" r="14" fill="#1677ff" opacity="0.15" />
-                <circle cx="20" cy="22" r="10" fill="#1677ff" />
-              </svg>
-            </div>
+            <img src="~@/assets/images/logo.png" alt="橘子简历" />
             <span class="brand-name">橘子简历</span>
           </div>
           <p class="footer-slogan">让简历制作变得简单而智能</p>
@@ -490,28 +631,96 @@ const mobileMenuOpen = ref(false)
 </template>
 
 <style scoped lang="scss">
-/* ========== 设计令牌（写在 .landing 上，避免 scoped :root 不生效） ========== */
+/* ========== 全局容器 ========== */
 .landing {
-  --c-primary: #1677ff;
-  --c-primary-light: #4096ff;
-  --c-primary-dark: #0958d9;
-  --c-ink: #0f172a;
-  --c-ink-soft: #334155;
-  --c-muted: #64748b;
-  --c-bg: #f5f7fa;
-  --c-card: #ffffff;
-  --c-border: rgba(15, 23, 42, 0.08);
-
-  background: #fafbfd;
-  color: var(--c-ink);
-  font-family:
-    'MiSans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Noto Sans SC',
-    sans-serif;
+  color: var(--color-text);
+  font-family: var(--font-sans);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  &::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1; // 垫到所有内容之下、body 底色之上
+    background-image:
+      linear-gradient(to right, var(--color-border) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--color-border) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(
+      ellipse 90% 65% at 50% 0%,
+      #000 25%,
+      transparent 75%
+    );
+    mask-image: radial-gradient(
+      ellipse 90% 65% at 50% 0%,
+      #000 25%,
+      transparent 75%
+    );
+    pointer-events: none;
+  }
+
+  // 主色柔光 + 极光渐变动效：蓝/青/靛三色光斑缓慢漂移 + 色相微转
+  // 放大 20% 留出漂移余量，18s 一循环，克制的呼吸感
+  &::after {
+    content: '';
+    position: fixed;
+    inset: -20%;
+    z-index: -1;
+    background:
+      radial-gradient(
+        ellipse 42% 36% at 32% 8%,
+        rgba(22, 119, 255, 0.16),
+        transparent 65%
+      ),
+      radial-gradient(
+        ellipse 38% 32% at 72% 16%,
+        rgba(34, 211, 238, 0.1),
+        transparent 65%
+      ),
+      radial-gradient(
+        ellipse 48% 40% at 55% 2%,
+        rgba(99, 102, 241, 0.1),
+        transparent 68%
+      ),
+      radial-gradient(
+        ellipse 55% 45% at 50% 0%,
+        var(--color-primary-bg),
+        transparent 70%
+      );
+    animation: aurora-drift 10s ease-in-out infinite;
+    pointer-events: none;
+    will-change: transform, filter;
+  }
+
+  // 减弱动效偏好：停掉极光漂移，保留静态光斑
+  @media (prefers-reduced-motion: reduce) {
+    &::after {
+      animation: none;
+    }
+  }
+}
+
+// 极光漂移：位移 + 缩放 + 色相微转（±15° 内，保持蓝色主基调不跑偏）
+@keyframes aurora-drift {
+  0% {
+    transform: translate3d(-2%, -1.5%, 0) scale(1);
+    filter: hue-rotate(-15deg) saturate(1);
+  }
+
+  33% {
+    transform: translate3d(1.5%, 1%, 0) scale(1.05);
+    filter: hue-rotate(8deg) saturate(1.15);
+  }
+
+  66% {
+    transform: translate3d(2%, -1%, 0) scale(1.02);
+    filter: hue-rotate(15deg) saturate(1.1);
+  }
+
+  100% {
+    transform: translate3d(-2%, -1.5%, 0) scale(1);
+    filter: hue-rotate(-15deg) saturate(1);
+  }
 }
 
 /* ========== 导航栏 ========== */
@@ -520,20 +729,20 @@ const mobileMenuOpen = ref(false)
   top: 0;
   left: 0;
   right: 0;
-  z-index: 100;
-  transition: all 0.3s;
+  z-index: var(--z-sticky);
+  transition: all var(--duration-base) var(--ease-out);
+  background: transparent;
 
   &.scrolled {
-    background: rgba(250, 251, 253, 0.85);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--c-border);
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
   }
 }
 
 .nav-inner {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 18px 32px;
+  padding: var(--space-5) var(--space-8);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -542,74 +751,59 @@ const mobileMenuOpen = ref(false)
 .nav-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-}
+  gap: var(--space-2);
+  cursor: pointer;
 
-.brand-mark svg {
-  display: block;
-}
+  img {
+    height: 52px;
+    width: auto;
+  }
 
-.brand-name {
-  font-weight: 700;
-  font-size: 18px;
-  letter-spacing: -0.02em;
-}
-
-.nav-links {
-  display: flex;
-  gap: 36px;
-
-  a {
-    color: var(--c-muted);
-    text-decoration: none;
-    font-size: 15px;
-    font-weight: 500;
-    transition: color 0.2s;
-
-    &:hover {
-      color: var(--c-ink);
-    }
+  .brand-name {
+    font-family: var(--font-display);
+    font-weight: var(--font-semibold);
+    font-size: var(--text-3xl);
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-text);
   }
 }
 
 .nav-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .btn-ghost {
-  padding: 8px 18px;
+  padding: var(--space-2) var(--space-4);
   background: none;
   border: none;
-  color: var(--c-ink-soft);
-  font-size: 14px;
-  font-weight: 500;
+  color: var(--color-text-secondary);
+  font-size: var(--text-xl);
+  font-weight: var(--font-medium);
   cursor: pointer;
-  border-radius: 8px;
-  transition: background 0.2s;
+  border-radius: var(--radius-md);
+  transition: all var(--duration-base) var(--ease-out);
 
   &:hover {
-    background: rgba(15, 23, 42, 0.05);
+    background: var(--color-surface-hover);
+    color: var(--color-text);
   }
 }
 
 .btn-primary-sm {
-  padding: 9px 20px;
-  background: var(--c-ink);
-  color: white;
+  padding: var(--space-2) var(--space-5);
+  background: var(--color-text);
+  color: var(--color-text-inverse);
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: var(--radius-md);
+  font-size: var(--text-xl);
+  font-weight: var(--font-medium);
   cursor: pointer;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
+  transition: all var(--duration-base) var(--ease-out);
 
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.25);
+    background: var(--color-text-secondary);
   }
 }
 
@@ -617,7 +811,7 @@ const mobileMenuOpen = ref(false)
   display: none;
   flex-direction: column;
   gap: 4px;
-  padding: 8px;
+  padding: var(--space-2);
   background: none;
   border: none;
   cursor: pointer;
@@ -625,95 +819,24 @@ const mobileMenuOpen = ref(false)
   span {
     width: 20px;
     height: 2px;
-    background: var(--c-ink);
+    background: var(--color-text);
     border-radius: 2px;
-    transition: 0.3s;
+    transition: var(--duration-base) var(--ease-out);
   }
 }
 
 /* ========== Hero ========== */
 .hero {
   position: relative;
-  min-height: 100vh;
-  padding: 140px 32px 100px;
+  min-height: 88vh;
+  padding: 120px var(--space-8) 80px;
   display: flex;
   align-items: center;
-  background: linear-gradient(180deg, #f0f5ff 0%, #fafbfd 60%);
-  overflow-x: clip;
-}
-
-.hero-deco {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.deco-shape {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(60px);
-}
-
-.shape-1 {
-  width: 480px;
-  height: 480px;
-  background: radial-gradient(
-    circle,
-    rgba(99, 102, 241, 0.15),
-    transparent 70%
-  );
-  top: -80px;
-  right: 5%;
-  animation: drift 20s ease-in-out infinite;
-}
-
-.shape-2 {
-  width: 360px;
-  height: 360px;
-  background: radial-gradient(
-    circle,
-    rgba(22, 119, 255, 0.12),
-    transparent 70%
-  );
-  bottom: 10%;
-  left: -60px;
-  animation: drift 25s ease-in-out infinite reverse;
-}
-
-.shape-3 {
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(14, 165, 233, 0.1), transparent 70%);
-  top: 30%;
-  right: 35%;
-  animation: drift 22s ease-in-out infinite;
-}
-
-@keyframes drift {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-  33% {
-    transform: translate(30px, -40px) scale(1.05);
-  }
-  66% {
-    transform: translate(-20px, 30px) scale(0.95);
-  }
-}
-
-.hero-wave {
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  width: 100%;
-  height: 80px;
 }
 
 .hero-grid {
   position: relative;
-  z-index: 2;
+  z-index: 1;
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
@@ -726,22 +849,21 @@ const mobileMenuOpen = ref(false)
 .hero-pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px 8px 12px;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(22, 119, 255, 0.2);
-  border-radius: 100px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #0958d9;
-  margin-bottom: 28px;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4) var(--space-2) var(--space-3);
+  background: var(--color-primary-bg);
+  border: 1px solid var(--color-primary-border);
+  border-radius: var(--radius-full);
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  color: var(--color-primary-pressed);
+  margin-bottom: var(--space-6);
 }
 
 .pill-dot {
-  width: 8px;
-  height: 8px;
-  background: var(--c-primary);
+  width: 6px;
+  height: 6px;
+  background: var(--color-primary);
   border-radius: 50%;
   animation: pulse 2s ease-in-out infinite;
 }
@@ -757,200 +879,96 @@ const mobileMenuOpen = ref(false)
 }
 
 .hero-title {
-  font-size: clamp(40px, 5.5vw, 68px);
-  font-weight: 800;
-  line-height: 1.08;
-  letter-spacing: -0.04em;
-  margin-bottom: 24px;
+  font-family: var(--font-display);
+  // 收敛 hero 尺寸：64px 对中文偏大，上限 56px；负字距 -0.04em 汉字显挤，减半
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: var(--font-bold);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+  margin-bottom: var(--space-6);
 }
 
-.gradient-text {
-  background: linear-gradient(135deg, #1677ff 0%, #4096ff 50%, #69b1ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.hero-title-accent {
+  color: var(--color-primary);
 }
 
 .hero-desc {
-  font-size: clamp(15px, 1.6vw, 18px);
-  color: var(--c-muted);
-  line-height: 1.7;
-  margin-bottom: 36px;
+  font-size: clamp(14px, 1.4vw, 16px);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-8);
 }
 
 .hero-btns {
   display: flex;
-  gap: 14px;
+  gap: var(--space-3);
 }
 
 .btn-primary {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 14px 28px;
-  background: var(--c-ink);
-  color: white;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
   border: none;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 600;
+  border-radius: var(--radius-md);
+  font-size: var(--text-xl);
+  font-weight: var(--font-medium);
   cursor: pointer;
-  transition:
-    transform 0.25s,
-    box-shadow 0.25s;
+  transition: all var(--duration-base) var(--ease-out);
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.3);
+    background: var(--color-primary-hover);
   }
 
   &.btn-lg {
-    padding: 18px 36px;
-    font-size: 17px;
+    padding: var(--space-4) var(--space-8);
+    font-size: var(--text-lg);
   }
 }
 
 .btn-outline {
-  padding: 14px 28px;
-  background: white;
-  color: var(--c-ink);
-  border: 1px solid var(--c-border);
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 500;
+  padding: var(--space-3) var(--space-6);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
   cursor: pointer;
-  transition: all 0.25s;
+  transition: all var(--duration-base) var(--ease-out);
 
   &:hover {
-    border-color: var(--c-ink);
-    transform: translateY(-2px);
+    border-color: var(--color-border-strong);
+    background: var(--color-surface-hover);
   }
 }
 
-/* Hero 右侧视觉 */
+/* Hero 右侧 SVG 视觉 */
 .hero-visual {
   position: relative;
   height: 440px;
-}
-
-.visual-orbit {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 380px;
-  height: 380px;
-  border: 2px dashed rgba(99, 102, 241, 0.15);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  animation: spin 40s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: translate(-50%, -50%) rotate(360deg);
-  }
-}
-
-.visual-card {
-  position: absolute;
-  background: white;
-  border-radius: 16px;
-  box-shadow:
-    0 4px 24px rgba(15, 23, 42, 0.1),
-    0 1px 4px rgba(15, 23, 42, 0.06);
-  border: 1px solid rgba(15, 23, 42, 0.04);
-}
-
-.card-main {
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 280px;
-  padding: 24px;
-  animation: floatCard 6s ease-in-out infinite;
-}
-
-@keyframes floatCard {
-  0%,
-  100% {
-    transform: translate(-50%, -50%);
-  }
-  50% {
-    transform: translate(-50%, -55%);
-  }
-}
-
-.card-strip {
-  height: 4px;
-  background: linear-gradient(90deg, #1677ff, #6366f1);
-  border-radius: 2px;
-  margin-bottom: 20px;
-}
-
-.vc-row {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 18px;
+  justify-content: center;
 }
 
-.vc-avatar {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #4096ff, #1677ff);
-  border-radius: 50%;
-  flex-shrink: 0;
-}
+.hero-visual-svg {
+  width: 100%;
+  height: 100%;
+  max-width: 440px;
 
-.vc-lines {
-  flex: 1;
-
-  .vc-line {
-    height: 10px;
-    background: #f1f5f9;
-    border-radius: 4px;
-    margin-bottom: 6px;
-
-    &.w70 {
-      width: 70%;
-      background: linear-gradient(90deg, #e2e8f0, #f1f5f9);
-    }
-    &.w40 {
-      width: 40%;
-    }
+  .float-card-1,
+  .float-card-2 {
+    animation: floatSide 6s ease-in-out infinite;
+    transform-origin: center;
   }
-}
 
-.vc-tags {
-  display: flex;
-  gap: 6px;
-}
-
-.vc-tag {
-  padding: 4px 10px;
-  background: #f0f5ff;
-  color: #0958d9;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.card-float-1 {
-  top: 15%;
-  right: 0;
-  width: 130px;
-  padding: 16px;
-  text-align: center;
-  animation: floatSide 5s ease-in-out infinite;
-}
-
-.card-float-2 {
-  bottom: 12%;
-  left: 5%;
-  width: 130px;
-  padding: 16px;
-  text-align: center;
-  animation: floatSide 5s ease-in-out infinite 1.5s;
+  .float-card-2 {
+    animation-delay: 1.5s;
+  }
 }
 
 @keyframes floatSide {
@@ -959,25 +977,14 @@ const mobileMenuOpen = ref(false)
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-12px);
+    transform: translateY(-10px);
   }
-}
-
-.float-icon {
-  font-size: 24px;
-  margin-bottom: 6px;
-}
-
-.float-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--c-ink-soft);
 }
 
 /* ========== 数据统计带 ========== */
 .stats-band {
-  background: var(--c-ink);
-  padding: 56px 32px;
+  background: var(--color-bg-muted);
+  padding: var(--space-12) var(--space-8);
 }
 
 .stats-inner {
@@ -985,7 +992,7 @@ const mobileMenuOpen = ref(false)
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 32px;
+  gap: var(--space-8);
   text-align: center;
 }
 
@@ -995,334 +1002,225 @@ const mobileMenuOpen = ref(false)
   &:not(:last-child)::after {
     content: '';
     position: absolute;
-    right: -16px;
+    right: calc(var(--space-8) / -2);
     top: 50%;
     transform: translateY(-50%);
     width: 1px;
     height: 40px;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--color-border);
   }
 }
 
 .stat-value {
-  font-size: 42px;
-  font-weight: 800;
-  background: linear-gradient(135deg, #4096ff, #1677ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.03em;
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text);
+  letter-spacing: -0.02em;
 }
 
 .stat-label {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.6);
-  margin-top: 8px;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-2);
 }
 
 /* ========== 通用 section ========== */
 .features,
 .templates,
 .faq {
-  padding: 110px 32px;
+  padding: 100px var(--space-8);
   max-width: 1200px;
   margin: 0 auto;
 }
 
 .section-head {
   text-align: center;
-  margin-bottom: 60px;
+  margin-bottom: var(--space-12);
 }
 
 .eyebrow {
   display: block;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--c-primary);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  margin-bottom: 14px;
+  // 中文界面：去掉 uppercase 宽字距，13px→14px 提升可读性，仅靠主色区分
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--color-primary);
+  margin-bottom: var(--space-3);
 }
 
 .section-title {
-  font-size: clamp(30px, 4vw, 44px);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  margin-bottom: 14px;
+  font-family: var(--font-display);
+  // 随全站字号上调：36→40 上限，负字距保持 -0.01em
+  font-size: clamp(28px, 3.2vw, 40px);
+  font-weight: var(--font-bold);
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+  margin-bottom: var(--space-3);
 }
 
 .section-sub {
-  font-size: 16px;
-  color: var(--c-muted);
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
 }
 
-/* ========== 功能区交错布局 ========== */
+/* ========== 功能区（单列纵向）========== */
 .feature-list {
   display: flex;
   flex-direction: column;
-  gap: 80px;
+  gap: 0;
+  max-width: 760px;
+  margin: 0 auto;
 }
 
 .feature-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
-  align-items: center;
+  grid-template-columns: 56px 1fr;
+  gap: var(--space-6);
+  padding: var(--space-8) 0;
+  border-bottom: 1px solid var(--color-border);
 
-  &.reverse {
-    .feature-text {
-      order: 2;
-    }
-    .feature-visual {
-      order: 1;
-    }
+  &:last-child {
+    border-bottom: none;
   }
 }
 
 .feature-icon-wrap {
-  --accent: #6366f1;
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--accent) 12%, white);
+  width: 48px;
+  height: 48px;
+  background: var(--color-primary-bg);
+  border: 1px solid var(--color-primary-border);
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 22px;
 }
 
 .feature-icon {
-  font-size: 26px;
+  font-size: 22px;
 }
 
 .feature-title {
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  margin-bottom: 12px;
+  font-family: var(--font-display);
+  // 列表行标题从 24px 降到 20px：与 section-title(36px) 拉开层级，避免喧宾夺主
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+  margin-bottom: var(--space-3);
 }
 
 .feature-desc {
-  font-size: 15px;
-  color: var(--c-muted);
-  line-height: 1.75;
-  margin-bottom: 20px;
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-4);
 }
 
 .feature-points {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .point-chip {
-  padding: 5px 12px;
-  background: #f1f5f9;
-  color: var(--c-ink-soft);
-  border-radius: 100px;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.feature-visual {
-  --accent: #6366f1;
-  position: relative;
-  height: 280px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.visual-blob {
-  position: absolute;
-  width: 200px;
-  height: 200px;
-  background: linear-gradient(
-    135deg,
-    var(--accent),
-    color-mix(in srgb, var(--accent) 50%, white)
-  );
-  border-radius: 40% 60% 70% 30% / 40% 50% 50% 60%;
-  filter: blur(2px);
-  opacity: 0.25;
-  animation: morph 8s ease-in-out infinite;
-}
-
-@keyframes morph {
-  0%,
-  100% {
-    border-radius: 40% 60% 70% 30% / 40% 50% 50% 60%;
-  }
-  50% {
-    border-radius: 60% 40% 30% 70% / 50% 60% 40% 50%;
-  }
-}
-
-.visual-ring {
-  position: absolute;
-  width: 160px;
-  height: 160px;
-  border: 3px solid var(--accent);
-  border-radius: 50%;
-  opacity: 0.2;
-}
-
-.visual-dots {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: center;
-  align-content: center;
-  padding: 40px;
-
-  span {
-    width: 8px;
-    height: 8px;
-    background: var(--accent);
-    border-radius: 50%;
-    opacity: 0.3;
-    animation: dotPulse 3s ease-in-out infinite;
-
-    &:nth-child(1) {
-      animation-delay: 0s;
-    }
-    &:nth-child(2) {
-      animation-delay: 0.2s;
-    }
-    &:nth-child(3) {
-      animation-delay: 0.4s;
-    }
-    &:nth-child(4) {
-      animation-delay: 0.6s;
-    }
-    &:nth-child(5) {
-      animation-delay: 0.8s;
-    }
-    &:nth-child(6) {
-      animation-delay: 1s;
-    }
-  }
-}
-
-@keyframes dotPulse {
-  0%,
-  100% {
-    opacity: 0.15;
-    transform: scale(0.8);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(1.2);
-  }
-}
-
-.templates .section-head,
-.faq .section-head {
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
+  padding: 4px var(--space-3);
+  background: var(--color-bg-muted);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
 }
 
 /* ========== 模板横向滚动 ========== */
 .template-scroll {
   display: flex;
-  gap: 20px;
+  gap: var(--space-5);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  padding: 8px 32px 24px;
+  padding: var(--space-2) var(--space-8) var(--space-6);
   max-width: 1200px;
   margin: 0 auto;
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
 }
 
 .tpl-card {
-  --c: #1677ff;
-  flex: 0 0 240px;
+  // 270px = 缩略图宽 238（794×0.3）+ 左右内边距 32，避免横向裁切
+  flex: 0 0 270px;
   scroll-snap-align: start;
-  background: white;
-  border: 1px solid var(--c-border);
-  border-radius: 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
   cursor: pointer;
   transition:
-    transform 0.3s,
-    box-shadow 0.3s;
+    border-color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out);
 
   &:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+    border-color: var(--color-primary-border);
+    box-shadow: var(--shadow-md);
 
-    .tpl-cover {
-      height: 200px;
+    .tpl-arrow {
+      transform: translateX(4px);
+      color: var(--color-primary);
     }
   }
 }
 
 .tpl-cover {
-  height: 170px;
-  background: var(--c);
-  position: relative;
+  width: 100%;
+  // 高度自适应：scale 0.3 时完整 A4 缩放高度约 337px，不写死避免上下裁切
+  display: flex;
+  justify-content: center;
+  padding: var(--space-4);
+  background: var(--color-bg-muted);
   overflow: hidden;
-  transition: height 0.3s;
-}
-
-.tpl-pattern {
-  position: absolute;
-  inset: 0;
-  background:
-    repeating-linear-gradient(
-      45deg,
-      transparent 0 10px,
-      rgba(255, 255, 255, 0.08) 10px 11px
-    ),
-    radial-gradient(
-      circle at 70% 30%,
-      rgba(255, 255, 255, 0.15),
-      transparent 50%
-    );
-}
-
-.tpl-tag {
-  position: absolute;
-  bottom: 12px;
-  left: 12px;
-  padding: 3px 10px;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(4px);
-  color: white;
-  border-radius: 100px;
-  font-size: 11px;
-  font-weight: 600;
 }
 
 .tpl-meta {
-  padding: 16px;
+  padding: var(--space-4);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--space-2);
+  // flex 子项避免撑破父容器
+  min-width: 0;
+
+  // 直接子 div 包裹 name + tag，设 flex:1 + min-width:0 防止被箭头挤爆
+  > div {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
 .tpl-name {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--color-text);
+  margin-bottom: 2px;
+  // 标题过长省略，不撑宽
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tpl-tag {
+  font-size: var(--text-lg);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  // 1 行省略，不换行撑高
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  // flex 子项防溢出
+  min-width: 0;
+  flex: 1;
 }
 
 .tpl-arrow {
-  color: var(--c-muted);
+  color: var(--color-text-tertiary);
   font-size: 18px;
-  transition: transform 0.2s;
-}
-
-.tpl-card:hover .tpl-arrow {
-  transform: translateX(4px);
-  color: var(--c);
+  transition: all var(--duration-base) var(--ease-out);
+  flex-shrink: 0;
 }
 
 /* ========== FAQ ========== */
@@ -1331,51 +1229,47 @@ const mobileMenuOpen = ref(false)
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
 }
 
 .faq-item {
-  background: white;
-  border: 1px solid var(--c-border);
-  border-radius: 12px;
-  overflow: hidden;
-  transition: border-color 0.2s;
+  border-bottom: 1px solid var(--color-border);
 
-  &:hover {
-    border-color: rgba(22, 119, 255, 0.3);
+  &:first-child {
+    border-top: 1px solid var(--color-border);
   }
 }
 
 .faq-q {
   width: 100%;
-  padding: 20px 24px;
+  padding: var(--space-5) 0;
   background: none;
   border: none;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--c-ink);
+  font-size: var(--text-xl);
+  font-weight: var(--font-medium);
+  color: var(--color-text);
   cursor: pointer;
   text-align: left;
-  transition: color 0.2s;
+  transition: color var(--duration-base) var(--ease-out);
 
   &.open {
-    color: var(--c-primary);
+    color: var(--color-primary);
   }
 }
 
 .faq-arrow {
-  color: var(--c-muted);
+  color: var(--color-text-tertiary);
   flex-shrink: 0;
   transition:
-    transform 0.3s,
-    color 0.3s;
+    transform var(--duration-slow) var(--ease-out),
+    color var(--duration-base) var(--ease-out);
 
   &.open {
     transform: rotate(180deg);
-    color: var(--c-primary);
+    color: var(--color-primary);
   }
 }
 
@@ -1384,8 +1278,8 @@ const mobileMenuOpen = ref(false)
   max-height: 0;
   opacity: 0;
   transition:
-    max-height 0.35s ease,
-    opacity 0.25s ease;
+    max-height var(--duration-slow) var(--ease-out),
+    opacity var(--duration-base) var(--ease-out);
 
   &.open {
     max-height: 400px;
@@ -1393,16 +1287,16 @@ const mobileMenuOpen = ref(false)
   }
 
   p {
-    padding: 0 24px 20px;
-    font-size: 14px;
-    color: var(--c-muted);
-    line-height: 1.8;
+    padding: 0 0 var(--space-5);
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
   }
 }
 
 /* ========== CTA ========== */
 .cta {
-  padding: 80px 32px 100px;
+  padding: 80px var(--space-8) 100px;
   max-width: 1100px;
   margin: 0 auto;
 }
@@ -1410,60 +1304,42 @@ const mobileMenuOpen = ref(false)
 .cta-box {
   position: relative;
   text-align: center;
-  padding: 72px 32px;
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  border-radius: 28px;
+  padding: 72px var(--space-8);
+  background: var(--color-primary-bg);
+  border: 1px solid var(--color-primary-border);
+  border-radius: var(--radius-2xl);
   overflow: hidden;
 }
 
-.cta-deco {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(
-      circle at 20% 20%,
-      rgba(22, 119, 255, 0.25) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 80% 80%,
-      rgba(99, 102, 241, 0.2) 0%,
-      transparent 45%
-    );
-}
-
 .cta-title {
-  position: relative;
-  font-size: clamp(28px, 3.5vw, 40px);
-  font-weight: 800;
-  color: white;
-  letter-spacing: -0.02em;
-  margin-bottom: 14px;
+  font-family: var(--font-display);
+  font-size: clamp(28px, 3vw, 36px);
+  font-weight: var(--font-bold);
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+  margin-bottom: var(--space-3);
 }
 
 .cta-desc {
-  position: relative;
-  font-size: 15px;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 32px;
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-8);
 }
 
 .cta-box .btn-primary {
-  position: relative;
-  background: white;
-  color: var(--c-ink);
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
 
   &:hover {
-    background: #f0f5ff;
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3);
+    background: var(--color-primary-hover);
   }
 }
 
 /* ========== Footer ========== */
 .footer {
-  background: #0f172a;
+  background: var(--color-text);
   color: rgba(255, 255, 255, 0.6);
-  padding: 48px 32px 24px;
+  padding: 48px var(--space-8) var(--space-6);
 }
 
 .footer-inner {
@@ -1472,56 +1348,52 @@ const mobileMenuOpen = ref(false)
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding-bottom: 28px;
+  padding-bottom: var(--space-6);
   flex-wrap: wrap;
-  gap: 24px;
+  gap: var(--space-6);
 }
 
-.footer-left .brand-name {
-  color: white;
+.footer-left .nav-brand {
+  cursor: default;
+
+  img {
+    height: 28px;
+    filter: brightness(0) invert(1);
+  }
+
+  .brand-name {
+    color: #fff;
+  }
 }
 
 .footer-slogan {
-  font-size: 13px;
-  margin-top: 10px;
+  font-size: var(--text-xs);
+  margin-top: var(--space-2);
   color: rgba(255, 255, 255, 0.5);
 }
 
 .footer-bottom {
   max-width: 1100px;
   margin: 0 auto;
-  padding-top: 24px;
+  padding-top: var(--space-6);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   text-align: center;
-  font-size: 13px;
+  font-size: var(--text-xs);
   color: rgba(255, 255, 255, 0.4);
 }
 
 /* ========== 响应式 ========== */
 @media (max-width: 768px) {
-  .nav-links {
-    display: none;
-
-    &.open {
-      display: flex;
-      flex-direction: column;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: white;
-      padding: 20px 32px;
-      gap: 16px;
-      border-bottom: 1px solid var(--c-border);
-    }
-  }
-
-  .btn-ghost {
+  .nav-actions .btn-ghost {
     display: none;
   }
 
   .menu-toggle {
     display: flex;
+  }
+
+  .hero {
+    padding: 100px var(--space-5) 60px;
   }
 
   .hero-grid {
@@ -1531,33 +1403,22 @@ const mobileMenuOpen = ref(false)
 
   .hero-visual {
     height: 320px;
+    order: -1;
   }
 
   .stats-inner {
     grid-template-columns: repeat(2, 1fr);
-    gap: 32px;
+    gap: var(--space-6);
 
     .stat-item:nth-child(2)::after {
       display: none;
     }
   }
 
-  .feature-row {
-    grid-template-columns: 1fr;
-    gap: 30px;
-
-    &.reverse {
-      .feature-text {
-        order: 1;
-      }
-      .feature-visual {
-        order: 2;
-      }
-    }
-  }
-
-  .feature-visual {
-    height: 200px;
+  .features,
+  .templates,
+  .faq {
+    padding: 60px var(--space-5);
   }
 
   .hero-btns {

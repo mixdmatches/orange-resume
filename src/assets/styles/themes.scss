@@ -1,0 +1,115 @@
+// =====================================================================
+// themes.scss
+// 橘子简历 主题语义层
+// 通过 [data-theme='light'/'dark'] 切换语义变量
+// 组件直接用 var(--color-xxx) 引用，无需写 @include themify
+// =====================================================================
+
+// @use 有模块作用域，原始色板变量（$gray-* / $blue-* 等）必须显式引入
+// as * 表示免命名空间直接引用；同模块多次 @use 时 CSS 只输出一次，不会重复
+@use './design-tokens.scss' as *;
+
+// ============ Light Theme（默认）============
+:root,
+[data-theme='light'] {
+  // 背景层
+  --color-bg: #{$gray-0}; // 最底层页面背景
+  --color-bg-subtle: #{$gray-50}; // 微弱区分的背景
+  --color-bg-muted: #{$gray-100}; // 卡片底色 / 编辑区
+  --color-surface: #{$gray-0}; // 卡片/弹层表面
+  --color-surface-hover: #{$gray-50}; // 卡片 hover 表面
+
+  // 边框
+  --color-border: #{$gray-200}; // 默认 1px 边框
+  --color-border-strong: #{$gray-300}; // 强调边框（输入框 focus 等）
+
+  // 文字
+  --color-text: #{$gray-900}; // 主文字
+  --color-text-secondary: #{$gray-600}; // 次要文字
+  --color-text-tertiary: #{$gray-400}; // 占位/禁用
+  --color-text-inverse: #{$gray-0}; // 深色背景上的文字
+
+  // 主色
+  --color-primary: #{$blue-500};
+  --color-primary-hover: #{$blue-600};
+  --color-primary-pressed: #{$blue-700};
+  --color-primary-bg: #{$blue-50}; // 主色浅底（按钮 hover bg、tag bg）
+  --color-primary-border: #{$blue-200};
+
+  // 功能色
+  --color-success: #{$green-500};
+  --color-success-bg: #{$green-500}14; // 8% alpha
+  --color-warning: #{$amber-500};
+  --color-warning-bg: #{$amber-500}14;
+  --color-danger: #{$red-500};
+  --color-danger-bg: #{$red-500}14;
+  --color-info: #{$blue-500};
+  --color-info-bg: #{$blue-50};
+
+  // 阴影（苹果风极轻）
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.1);
+
+  // 焦点环
+  --focus-ring: 0 0 0 3px rgba(22, 119, 255, 0.18);
+}
+
+// ============ Dark Theme ============
+[data-theme='dark'] {
+  // 背景层（纯黑底，更接近苹果暗色）
+  --color-bg: #000;
+  --color-bg-subtle: #0a0a0a;
+  --color-bg-muted: #171717;
+  --color-surface: #0a0a0a;
+  --color-surface-hover: #171717;
+
+  // 边框
+  --color-border: #262626;
+  --color-border-strong: #404040;
+
+  // 文字
+  --color-text: #fafafa;
+  --color-text-secondary: #a3a3a3;
+  --color-text-tertiary: #525252;
+  --color-text-inverse: #171717;
+
+  // 主色（暗色保持主色不变，但浅底改为半透明）
+  --color-primary: #{$blue-500};
+  --color-primary-hover: #{$blue-400};
+  --color-primary-pressed: #{$blue-600};
+  --color-primary-bg: rgba(22, 119, 255, 0.12);
+  --color-primary-border: rgba(22, 119, 255, 0.35);
+
+  // 功能色（暗色稍提亮）
+  --color-success: #{$green-500};
+  --color-success-bg: rgba(34, 197, 94, 0.15);
+  --color-warning: #{$amber-500};
+  --color-warning-bg: rgba(245, 158, 11, 0.15);
+  --color-danger: #{$red-500};
+  --color-danger-bg: rgba(239, 68, 68, 0.15);
+  --color-info: #{$blue-500};
+  --color-info-bg: rgba(22, 119, 255, 0.15);
+
+  // 阴影（暗色用更深的黑）
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.65);
+  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.7);
+
+  // 焦点环
+  --focus-ring: 0 0 0 3px rgba(22, 119, 255, 0.35);
+}
+
+// ============ 过渡：主题切换时颜色平滑变化 ============
+// 仅对主题相关属性应用，避免影响动画性能
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    transition:
+      background-color var(--duration-slow) var(--ease-out),
+      color var(--duration-slow) var(--ease-out);
+  }
+}

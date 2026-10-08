@@ -1,0 +1,130 @@
+// =====================================================================
+// design-tokens.scss
+// 橘子简历 设计令牌系统 · 原始层（Primitives）
+// 仅定义无语义的色板、字体、间距、圆角、阴影、动效等基础变量
+// 语义层映射见 themes.scss
+// =====================================================================
+
+// ============ Color Primitives（原始色板，不带语义）============
+// 蓝色主色阶
+$blue-50: #eff6ff;
+$blue-100: #dbeafe;
+$blue-200: #bae0fd;
+$blue-300: #91caff;
+$blue-400: #69b1ff;
+$blue-500: #1677ff; // 主色
+$blue-600: #0958d9; // 主色 hover
+$blue-700: #003eb3; // 主色 pressed
+
+// 灰色阶（苹果风偏冷的中性灰）
+$gray-0: #ffffff;
+$gray-50: #fafafa;
+$gray-100: #f5f5f5;
+$gray-200: #e5e5e5;
+$gray-300: #d4d4d4;
+$gray-400: #a3a3a3;
+$gray-500: #737373;
+$gray-600: #525252;
+$gray-700: #404040;
+$gray-800: #262626;
+$gray-900: #171717;
+
+// 功能色
+$green-500: #22c55e;
+$green-600: #16a34a;
+$amber-500: #f59e0b;
+$amber-600: #d97706;
+$red-500: #ef4444;
+$red-600: #dc2626;
+
+// =====================================================================
+// 静态 Token（非主题切换的常量，直接定义为 CSS 变量供组件引用）
+// 主题切换的语义变量在 themes.scss 中按 [data-theme] 切换
+// =====================================================================
+:root {
+  // ============ Typography ============
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC',
+    'Microsoft YaHei', 'Segoe UI', sans-serif;
+  --font-display:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC',
+    'Microsoft YaHei', sans-serif;
+  --font-mono:
+    'SF Mono', 'JetBrains Mono', Consolas, 'Liberation Mono', monospace;
+
+  // 字号阶 · 4px 网格体系（px ÷ 16 = rem，全部落在 1/8 整数倍，心算友好）
+  // 中文可读性基准：辅助最小 14px，次要 16px，正文 18px（汉字笔画密，小字易糊）
+  // 换算口诀：14→0.875 · 16→1 · 18→1.125 · 20→1.25 · 24→1.5 · 28→1.75 · 32→2 · 40→2.5 · 48→3
+  --text-xs: 0.875rem; // 14px - 辅助信息（时间戳、提示、标签）
+  --text-sm: 1rem; // 16px - 次要文本（副标题、描述、表单标签、导航）
+  --text-base: 1.125rem; // 18px - 正文 / 区块标题
+  --text-lg: 1.25rem; // 20px - 强调正文
+  --text-xl: 1.5rem; // 24px - 卡片大标题 / 功能标题
+  --text-2xl: 1.75rem; // 28px - 页面标题
+  --text-3xl: 2rem; // 32px - 统计数字
+  --text-4xl: 2.5rem; // 40px - 大数字
+  --text-5xl: 3rem; // 48px - hero 标题
+
+  // 字重
+  --font-regular: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-extrabold: 800;
+
+  // 行高
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  // 字距
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.06em;
+
+  // ============ Spacing（4 倍数节奏）============
+  --space-1: 0.25rem; // 4px
+  --space-2: 0.5rem; // 8px
+  --space-3: 0.75rem; // 12px
+  --space-4: 1rem; // 16px
+  --space-5: 1.25rem; // 20px
+  --space-6: 1.5rem; // 24px
+  --space-8: 2rem; // 32px
+  --space-10: 2.5rem; // 40px
+  --space-12: 3rem; // 48px
+  --space-16: 4rem; // 64px
+  --space-24: 6rem; // 96px
+
+  // ============ Radius ============
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 28px;
+  --radius-full: 9999px;
+
+  // ============ Motion ============
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); // 苹果常用 ease-out
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 500ms;
+
+  // ============ Layout ============
+  --header-height: 56px;
+  --content-max-width: 1200px;
+  --content-padding-x: 2rem;
+  --sidebar-width: 240px;
+
+  // ============ Z-Index 层级 ============
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 1000;
+  --z-modal: 1100;
+  --z-popover: 1200;
+  --z-tooltip: 1300;
+}

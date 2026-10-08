@@ -259,57 +259,94 @@ const syncText = computed(() => {
 </template>
 
 <style scoped lang="scss">
+/* ============ 编辑容器 ============ */
 .edit-container {
-  @include themify(
-    (
-      background-color: $layout-bg-color,
-    )
-  );
-}
-.edit-resume {
-  margin-top: 1rem;
-  width: 100%;
-  height: calc(100vh - $site-header-height - 1rem);
+  height: 100vh;
   display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+}
 
-  .line {
-    width: 8px;
-    height: 100%;
-    margin: 0 0.2rem;
-    border-radius: 4px;
-    cursor: col-resize;
-    background-color: transparent;
-    position: relative;
-  }
-  .line::before {
+.edit-resume {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ============ 拖拽分隔条 ============ */
+.line {
+  flex: none;
+  width: 6px;
+  cursor: col-resize;
+  position: relative;
+  background: transparent;
+  transition: background-color var(--duration-fast) var(--ease-out);
+
+  /* 中央 1px 竖线 */
+  &::before {
     content: '';
     position: absolute;
-    inset: 0;
-    margin: auto;
-    width: 2px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1px;
     height: 100%;
-    background-color: var(--border-color-mode, #d9d9d9);
-    border-radius: 2px;
+    background: var(--color-border);
+    transition: background-color var(--duration-fast) var(--ease-out);
+  }
+
+  /* 中央三个小点装饰（增强可拖拽的视觉提示） */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 4px;
+    border-radius: var(--radius-full);
+    background: var(--color-text-tertiary);
+    box-shadow:
+      0 -6px 0 var(--color-text-tertiary),
+      0 6px 0 var(--color-text-tertiary);
+    opacity: 0;
+    transition: opacity var(--duration-fast) var(--ease-out);
+  }
+
+  /* hover 时显示主色与三个点提示 */
+  &:hover::before,
+  &:active::before {
+    background: var(--color-primary);
+  }
+
+  &:hover::after,
+  &:active::after {
+    opacity: 1;
+    background: var(--color-primary);
+    box-shadow:
+      0 -6px 0 var(--color-primary),
+      0 6px 0 var(--color-primary);
   }
 }
 
-/* 云端同步状态指示器 */
+/* ============ 云端同步状态指示器 ============ */
 .sync-indicator {
   position: fixed;
-  right: 20px;
-  bottom: 20px;
-  z-index: 1000;
+  right: var(--space-5);
+  bottom: var(--space-5);
+  z-index: var(--z-fixed);
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  font-size: 12px;
-  border-radius: 16px;
-  color: #fff;
-  background-color: rgba(0, 0, 0, 0.6);
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  border-radius: var(--radius-full);
+  color: var(--color-text-inverse);
+  background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(8px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
+  box-shadow: var(--shadow-md);
+  transition: all var(--duration-base) var(--ease-out);
   user-select: none;
   pointer-events: none;
 
@@ -319,23 +356,49 @@ const syncText = computed(() => {
 
   /* 各状态对应配色 */
   &.status-synced {
-    background-color: rgba(82, 196, 26, 0.85);
+    background: rgba(34, 197, 94, 0.9);
   }
-
   &.status-syncing {
-    background-color: rgba(24, 144, 255, 0.85);
+    background: rgba(22, 119, 255, 0.9);
   }
-
   &.status-pending {
-    background-color: rgba(250, 173, 20, 0.85);
+    background: rgba(245, 158, 11, 0.9);
   }
-
   &.status-offline {
-    background-color: rgba(114, 114, 114, 0.85);
+    background: rgba(115, 115, 115, 0.9);
+  }
+  &.status-error {
+    background: rgba(239, 68, 68, 0.9);
+  }
+}
+
+@media (max-width: 768px) {
+  .edit-resume {
+    flex-direction: column;
   }
 
-  &.status-error {
-    background-color: rgba(245, 34, 45, 0.85);
+  .line {
+    width: 100%;
+    height: 6px;
+    cursor: row-resize;
+
+    &::before {
+      width: 100%;
+      height: 1px;
+    }
+
+    &::after {
+      box-shadow:
+        -6px 0 0 var(--color-text-tertiary),
+        6px 0 0 var(--color-text-tertiary);
+
+      &:hover::after,
+      &:active::after {
+        box-shadow:
+          -6px 0 0 var(--color-primary),
+          6px 0 0 var(--color-primary);
+      }
+    }
   }
 }
 </style>
