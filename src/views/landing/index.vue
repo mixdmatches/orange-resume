@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { motion } from 'motion-v'
@@ -145,8 +145,8 @@ const mobileMenuOpen = ref(false)
             <svg viewBox="0 0 40 40" width="36" height="36">
               <defs>
                 <linearGradient id="navGrad" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#FF9F43" />
-                  <stop offset="100%" stop-color="#FF6B00" />
+                  <stop offset="0%" stop-color="#4096ff" />
+                  <stop offset="100%" stop-color="#0958d9" />
                 </linearGradient>
               </defs>
               <circle cx="20" cy="22" r="14" fill="url(#navGrad)" />
@@ -355,7 +355,7 @@ const mobileMenuOpen = ref(false)
       <div class="template-scroll">
         <motion.div
           v-for="(t, i) in [
-            { name: '经典', color: '#FF7A00', tag: 'Traditional' },
+            { name: '经典', color: '#1677ff', tag: 'Traditional' },
             { name: '极简', color: '#0F172A', tag: 'Minimalist' },
             { name: '画报', color: '#EC4899', tag: 'Magazine' },
             { name: '瑞士风', color: '#0EA5E9', tag: 'Swiss' },
@@ -473,8 +473,8 @@ const mobileMenuOpen = ref(false)
           <div class="nav-brand">
             <div class="brand-mark">
               <svg viewBox="0 0 40 40" width="32" height="32">
-                <circle cx="20" cy="22" r="14" fill="#FF7A00" opacity="0.15" />
-                <circle cx="20" cy="22" r="10" fill="#FF7A00" />
+                <circle cx="20" cy="22" r="14" fill="#1677ff" opacity="0.15" />
+                <circle cx="20" cy="22" r="10" fill="#1677ff" />
               </svg>
             </div>
             <span class="brand-name">橘子简历</span>
@@ -497,8 +497,9 @@ const mobileMenuOpen = ref(false)
 <style scoped lang="scss">
 /* ========== 设计令牌（写在 .landing 上，避免 scoped :root 不生效） ========== */
 .landing {
-  --c-orange: #ff7a00;
-  --c-orange-light: #ff9f43;
+  --c-primary: #1677ff;
+  --c-primary-light: #4096ff;
+  --c-primary-dark: #0958d9;
   --c-ink: #0f172a;
   --c-ink-soft: #334155;
   --c-muted: #64748b;
@@ -642,7 +643,7 @@ const mobileMenuOpen = ref(false)
   padding: 140px 32px 100px;
   display: flex;
   align-items: center;
-  background: linear-gradient(180deg, #fff7f0 0%, #fafbfd 60%);
+  background: linear-gradient(180deg, #f0f5ff 0%, #fafbfd 60%);
   overflow-x: clip;
 }
 
@@ -674,7 +675,7 @@ const mobileMenuOpen = ref(false)
 .shape-2 {
   width: 360px;
   height: 360px;
-  background: radial-gradient(circle, rgba(255, 122, 0, 0.12), transparent 70%);
+  background: radial-gradient(circle, rgba(22, 119, 255, 0.12), transparent 70%);
   bottom: 10%;
   left: -60px;
   animation: drift 25s ease-in-out infinite reverse;
@@ -730,18 +731,18 @@ const mobileMenuOpen = ref(false)
   padding: 8px 16px 8px 12px;
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 122, 0, 0.2);
+  border: 1px solid rgba(22, 119, 255, 0.2);
   border-radius: 100px;
   font-size: 13px;
   font-weight: 500;
-  color: #c45a00;
+  color: #0958d9;
   margin-bottom: 28px;
 }
 
 .pill-dot {
   width: 8px;
   height: 8px;
-  background: var(--c-orange);
+  background: var(--c-primary);
   border-radius: 50%;
   animation: pulse 2s ease-in-out infinite;
 }
@@ -749,10 +750,10 @@ const mobileMenuOpen = ref(false)
 @keyframes pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(255, 122, 0, 0.4);
+    box-shadow: 0 0 0 0 rgba(22, 119, 255, 0.4);
   }
   50% {
-    box-shadow: 0 0 0 6px rgba(255, 122, 0, 0);
+    box-shadow: 0 0 0 6px rgba(22, 119, 255, 0);
   }
 }
 
@@ -765,7 +766,7 @@ const mobileMenuOpen = ref(false)
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #ff7a00 0%, #ff9f43 50%, #ffb347 100%);
+  background: linear-gradient(135deg, #1677ff 0%, #4096ff 50%, #69b1ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -882,7 +883,7 @@ const mobileMenuOpen = ref(false)
 
 .card-strip {
   height: 4px;
-  background: linear-gradient(90deg, #ff7a00, #6366f1);
+  background: linear-gradient(90deg, #1677ff, #6366f1);
   border-radius: 2px;
   margin-bottom: 20px;
 }
@@ -897,7 +898,7 @@ const mobileMenuOpen = ref(false)
 .vc-avatar {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #ff9f43, #ff7a00);
+  background: linear-gradient(135deg, #4096ff, #1677ff);
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -928,8 +929,8 @@ const mobileMenuOpen = ref(false)
 
 .vc-tag {
   padding: 4px 10px;
-  background: #fff7f0;
-  color: #c45a00;
+  background: #f0f5ff;
+  color: #0958d9;
   border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
@@ -1007,7 +1008,7 @@ const mobileMenuOpen = ref(false)
 .stat-value {
   font-size: 42px;
   font-weight: 800;
-  background: linear-gradient(135deg, #ff9f43, #ff7a00);
+  background: linear-gradient(135deg, #4096ff, #1677ff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -1038,7 +1039,7 @@ const mobileMenuOpen = ref(false)
   display: block;
   font-size: 13px;
   font-weight: 700;
-  color: var(--c-orange);
+  color: var(--c-primary);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   margin-bottom: 14px;
@@ -1243,7 +1244,7 @@ const mobileMenuOpen = ref(false)
 }
 
 .tpl-card {
-  --c: #ff7a00;
+  --c: #1677ff;
   flex: 0 0 240px;
   scroll-snap-align: start;
   background: white;
@@ -1342,7 +1343,7 @@ const mobileMenuOpen = ref(false)
   transition: border-color 0.2s;
 
   &:hover {
-    border-color: rgba(255, 122, 0, 0.3);
+    border-color: rgba(22, 119, 255, 0.3);
   }
 }
 
@@ -1362,7 +1363,7 @@ const mobileMenuOpen = ref(false)
   transition: color 0.2s;
 
   &.open {
-    color: var(--c-orange);
+    color: var(--c-primary);
   }
 }
 
@@ -1375,7 +1376,7 @@ const mobileMenuOpen = ref(false)
 
   &.open {
     transform: rotate(180deg);
-    color: var(--c-orange);
+    color: var(--c-primary);
   }
 }
 
@@ -1422,7 +1423,7 @@ const mobileMenuOpen = ref(false)
   background:
     radial-gradient(
       circle at 20% 20%,
-      rgba(255, 122, 0, 0.25) 0%,
+      rgba(22, 119, 255, 0.25) 0%,
       transparent 50%
     ),
     radial-gradient(
@@ -1454,7 +1455,7 @@ const mobileMenuOpen = ref(false)
   color: var(--c-ink);
 
   &:hover {
-    background: #fff7f0;
+    background: #f0f5ff;
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3);
   }
 }
