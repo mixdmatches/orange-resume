@@ -9,7 +9,12 @@ import { ref } from 'vue'
  * - offline：离线，无法同步
  * - error：同步失败（重试上限）
  */
-type CloudSyncStatus = 'synced' | 'syncing' | 'pending' | 'offline' | 'error'
+export type CloudSyncStatus =
+  | 'synced'
+  | 'syncing'
+  | 'pending'
+  | 'offline'
+  | 'error'
 
 /**
  * 同步状态管理 Store

@@ -32,6 +32,9 @@ const hasInitializedHistory = ref(false)
 let historyTimer: ReturnType<typeof setTimeout> | null = null
 let lastSavedHistorySnapshot = ''
 
+/** 最后保存时间戳（毫秒），用于在工具栏显示保存状态 */
+const lastSaveTime = ref<number | null>(null)
+
 const resume = reactive<Resume>({ ...DEFAULT_RESUME, id: '' })
 
 /**
@@ -43,6 +46,8 @@ const getResume = async () => {
   const resumeData = await getResumeById(id)
   if (resumeData) {
     Object.assign(resume, resumeData)
+    // 用已有更新时间初始化显示（优先 updatedAt，没有则用 createdAt）
+    lastSaveTime.value = resumeData.updatedAt ?? resumeData.createdAt
   }
   resumeHistory.initialize(id, resume)
   lastSavedHistorySnapshot = JSON.stringify(resume)
@@ -128,9 +133,20 @@ watch(
 
     scheduleHistoryPush()
 
+    // 保存前先记下旧时间戳，万一这次写入失败可以回滚
+    const previousSaveTime = lastSaveTime.value
     const plainResume = JSON.parse(JSON.stringify(newValue))
-    // 走 Repository：先写本地 IDB，再入同步队列异步上云
-    await updateResume(plainResume)
+
+    try {
+      // 走 Repository：先写本地 IDB，再入同步队列异步上云
+      await updateResume(plainResume)
+      // 保存成功后更新时间戳，触发工具栏显示更新
+      lastSaveTime.value = Date.now()
+    } catch (err) {
+      // 本地写入失败：回滚时间戳，保持"未保存"状态，避免误导用户
+      lastSaveTime.value = previousSaveTime
+      console.warn('[edit-resume] 本地保存失败', err)
+    }
   },
   { deep: true },
 )
@@ -219,6 +235,8 @@ const syncText = computed(() => {
       v-model:resume-mode="resumeMode"
       :can-undo="canUndo"
       :can-redo="canRedo"
+      :last-save-time="lastSaveTime"
+      :cloud-status="syncStore.cloudStatus"
       @undo="handleUndo"
       @redo="handleRedo"
     ></tool-head>

@@ -17,15 +17,20 @@ import GrammarCheck from './GrammarCheck.vue'
 import SelfIntro from './SelfIntro.vue'
 import JobMatch from './JobMatch.vue'
 import { message } from 'ant-design-vue'
+import dayjs from 'dayjs'
 import { computed, inject, ref } from 'vue'
 import { resumeToText } from '@/utils/resumeToText'
 import type { Resume } from '@/types/resume'
 import templates from '@/template'
 import previewImage from '@/assets/images/classic.fcafadcb.svg'
+import type { CloudSyncStatus } from '@/stores/sync'
 
 const props = defineProps<{
   canUndo: boolean
   canRedo: boolean
+  /** 最后保存时间戳（毫秒），null 表示尚未保存 */
+  lastSaveTime: number | null
+  cloudStatus: CloudSyncStatus
 }>()
 
 const emit = defineEmits<{
@@ -37,6 +42,33 @@ const resume: Resume = inject('resume') as Resume
 
 /** 当前简历的纯文本形式（传给 AI 助手供 Agent 工具调用） */
 const resumeText = computed(() => resumeToText(resume))
+
+/**
+ * 根据云端同步状态返回保存位置前缀：
+ * - synced：本地写入 + 云端同步完成 → "云端已上传"
+ * - syncing / pending / offline / error：本地写入但云端未完成 → "本地保存"
+ */
+const saveLocation = computed(() => {
+  if (props.cloudStatus === 'synced') return '云端已上传'
+  return '本地保存'
+})
+
+/** 格式化日期为中文：2026年10月08日 14:30 */
+const formatChineseDate = (timestamp: number) => {
+  return dayjs(timestamp).format('YYYY年MM月DD日 HH:mm')
+}
+
+/** 工具栏主文案：位置 + 时间，例如 "云端已上传 2026年10月08日 14:30" */
+const saveDisplay = computed(() => {
+  if (!props.lastSaveTime) return '尚未保存'
+  return `${saveLocation.value} ${formatChineseDate(props.lastSaveTime)}`
+})
+
+/** 完整时间，hover 时在 title 中显示精确到秒 */
+const fullSaveTime = computed(() => {
+  if (!props.lastSaveTime) return '尚未保存'
+  return `${saveLocation.value} ${dayjs(props.lastSaveTime).format('YYYY-MM-DD HH:mm:ss')}`
+})
 
 const handleDownloadJson = () => {
   const json = JSON.stringify(resume)
@@ -147,6 +179,9 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
             <RedoOutlined />
           </a-button>
         </a-tooltip>
+      </div>
+      <div class="last-save-time" :title="fullSaveTime">
+        {{ saveDisplay }}
       </div>
     </div>
     <div class="tools">
@@ -293,6 +328,16 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
     .update-time {
       font-size: 1.2rem;
       white-space: nowrap;
+      @include themify(
+        (
+          color: $text-color,
+        )
+      );
+    }
+    .last-save-time {
+      font-size: 1.2rem;
+      white-space: nowrap;
+      opacity: 0.6;
       @include themify(
         (
           color: $text-color,
