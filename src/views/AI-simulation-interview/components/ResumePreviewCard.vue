@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import { provide } from 'vue'
 import type { Resume } from '@/types/resume'
 import TemplateThumb from '@/components/TemplateThumb.vue'
 
-const props = defineProps({
+defineProps({
   resume: {
     type: Object as () => Resume | null,
     required: true,
   },
 })
-
-provide('resume', props.resume)
 </script>
 
 <template>
@@ -23,16 +20,16 @@ provide('resume', props.resume)
       <a-tag color="blue">当前简历</a-tag>
     </div>
 
-    <div v-if="!props.resume" class="empty-state">
+    <div v-if="!resume" class="empty-state">
       <a-empty description="请先选择一份简历" />
     </div>
 
     <div class="preview-content">
       <!-- 用 TemplateThumb 统一缩略图渲染：自带 padding 页面边距 + 居中缩放 -->
       <TemplateThumb
-        v-if="props.resume?.templateId"
-        :template-id="props.resume.templateId"
-        :resume="props.resume"
+        v-if="resume?.templateId"
+        :template-id="resume.templateId"
+        :resume="resume"
         :scale="0.54"
       />
     </div>

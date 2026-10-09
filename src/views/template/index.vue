@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, provide } from 'vue'
+import { ref, computed } from 'vue'
 import { templates } from '@/template/index'
 import { DEFAULT_RESUME } from '@/config/init-resume-data'
 import type { Resume } from '@/types/resume'
@@ -19,8 +19,6 @@ const previewResume: Resume = {
   templateId: '',
   title: '预览简历',
 }
-
-provide('resume', previewResume)
 
 // 预览模态框状态
 const previewVisible = ref(false)

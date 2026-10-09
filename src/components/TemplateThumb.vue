@@ -33,8 +33,11 @@ const props = withDefaults(
   },
 )
 
-// 通过 provide 把 resume 数据传给内部挂载的模板组件
-provide('resume', props.resume)
+// Vue 的 provide 只在 setup 时执行一次，不响应 props 变化；
+// 放在 watchEffect 里确保 props.resume 引用切换时，子组件 inject 能拿到最新值
+watchEffect(() => {
+  provide('resume', props.resume)
+})
 
 // 模板原始页高（A4 @96dpi = 1123px）
 const PAGE_HEIGHT = 1123
@@ -90,11 +93,6 @@ const viewWidth = computed(() => Math.round(props.pageWidth * finalScale.value))
 const viewHeight = computed(
   () => props.viewHeight ?? Math.round(PAGE_HEIGHT * finalScale.value),
 )
-
-// 监听 resume 引用变化，确保响应性
-watchEffect(() => {
-  void props.resume
-})
 </script>
 
 <template>
