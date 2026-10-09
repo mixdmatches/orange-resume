@@ -54,8 +54,12 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-  aiEditor && aiEditor.destroy()
+  // 销毁编辑器并置空引用：库内部会级联清理 ProseMirror 视图、
+  // 插件级 window 监听、tippy 弹层与事件总线，置空防止悬垂引用
+  if (aiEditor) {
+    aiEditor.destroy()
+    aiEditor = null
+  }
 })
 </script>
 
