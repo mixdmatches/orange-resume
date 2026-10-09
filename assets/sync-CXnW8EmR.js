@@ -1,0 +1,1 @@
+import{aU as o,i as n}from"./index-Do12D6sN.js";const a=o("sync",()=>{const e=n("synced"),s=n(0);return{cloudStatus:e,cloudPending:s,setCloudStatus:t=>{e.value=t},setCloudPending:t=>{s.value=t}}});export{a as useSyncStore};
