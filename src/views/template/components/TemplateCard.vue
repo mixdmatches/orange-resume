@@ -16,12 +16,12 @@ const emit = defineEmits<{
 
 <template>
   <article class="tpl-card">
-    <!-- 实时渲染真实模板预览 -->
+    <!-- 实时渲染真实模板预览（fit="width" 自适应卡片宽度）-->
     <div class="tpl-cover" @click="emit('preview', props.template.id)">
       <TemplateThumb
         :template-id="props.template.id"
         :resume="props.previewResume"
-        :scale="0.32"
+        fit="width"
       />
     </div>
 

@@ -148,7 +148,7 @@ const handleClose = () => {
             v-if="currentTemplateId"
             :template-id="currentTemplateId"
             :resume="previewResume"
-            :scale="0.5"
+            :scale="0.45"
           />
         </div>
       </div>

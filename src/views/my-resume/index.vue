@@ -414,12 +414,12 @@ const formatTime = (t?: number) => {
         :style="{ animationDelay: `${i * 50}ms` }"
         @click="handleCardClick(item)"
       >
-        <!-- 缩略图：实时渲染该简历对应模板 -->
+        <!-- 缩略图：实时渲染该简历对应模板（fit="width" 自适应卡片宽度）-->
         <div class="card-thumb">
           <TemplateThumb
             :template-id="item.templateId"
             :resume="item"
-            :scale="0.3"
+            fit="width"
           />
         </div>
 

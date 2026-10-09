@@ -1,13 +1,12 @@
 <script setup lang="ts">
-/**
- * TemplateThumb · 简历模板实时缩略图
- *
- * 用途：在 my-resume 卡片、template 中心 cover、a-modal 大预览中复用
- * 实现：挂载真实模板组件 + transform: scale() 缩小到目标视窗
- *
- * 数据流：props.resume → provide('resume') → 模板组件 inject('resume')
- */
-import { computed, provide, watchEffect } from 'vue'
+import {
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  provide,
+  ref,
+  watchEffect,
+} from 'vue'
 import { templates } from '@/template/index'
 import type { Resume } from '@/types/resume'
 
@@ -17,29 +16,30 @@ const props = withDefaults(
     templateId: string
     /** 渲染用简历数据 */
     resume: Resume
-    /** 缩放比例，默认 0.3（卡片缩略图）；1 表示 1:1 真实尺寸（a-modal 预览用）*/
+    /** 显式缩放比例（优先于 fit）。0.3=卡片缩略图，1=1:1 真实尺寸 */
     scale?: number
+    /** 自适应模式：'width' 根据父容器宽度自动计算 scale（与 scale 互斥，scale 优先）*/
+    fit?: 'width' | null
     /** 模板原始页宽（A4 @96dpi = 794px）*/
     pageWidth?: number
     /** 视窗固定高度（px）。若不传，按 pageWidth × 比例自动算 */
     viewHeight?: number
   }>(),
   {
-    scale: 0.3,
+    scale: undefined,
+    fit: null,
     pageWidth: 794,
     viewHeight: undefined,
   },
 )
 
 // 通过 provide 把 resume 数据传给内部挂载的模板组件
-// 用 watchEffect + toRef 风格确保 resume 变化时模板能响应（provide 默认不响应式）
-// 这里直接传 props.resume 引用，模板内部用 toRefs/inject 解构响应
 provide('resume', props.resume)
 
-// 模板原始页高（A4 @96dpi = 1123px），用于计算视窗高度
+// 模板原始页高（A4 @96dpi = 1123px）
 const PAGE_HEIGHT = 1123
 
-// 从 resume 取页面边距，兜底 20px（与编辑器 ResumePreview 一致）
+// 从 resume 取页面边距，兜底 20px
 const pagePadding = computed(
   () => props.resume?.globalConfiguration?.basePagePadding ?? 20,
 )
@@ -50,21 +50,56 @@ const templateComponent = computed(() => {
   return found?.component
 })
 
+/** 父容器 DOM 引用（用于 ResizeObserver 测宽）*/
+const parentRef = ref<HTMLElement | null>(null)
+
+/** 父容器实际可用宽度（px），由 ResizeObserver 更新 */
+const parentWidth = ref(0)
+
+/** ResizeObserver 实例 */
+let observer: ResizeObserver | null = null
+
+onMounted(() => {
+  // 找最近的有宽度约束的祖先元素（TemplateThumb 自身是 content，
+  // 宽度由外层容器决定，需要测量外层的实际渲染宽度）
+  const el = parentRef.value?.parentElement
+  if (el) {
+    parentWidth.value = el.clientWidth
+    observer = new ResizeObserver(entries => {
+      parentWidth.value = entries[0].contentRect.width
+    })
+    observer.observe(el)
+  }
+})
+
+onBeforeUnmount(() => {
+  observer?.disconnect()
+})
+
+/** 最终使用的 scale：显式 prop 优先，其次 fit 自适应，兜底 0.3 */
+const finalScale = computed(() => {
+  if (props.scale != null) return props.scale
+  if (props.fit === 'width' && parentWidth.value > 0) {
+    return parentWidth.value / props.pageWidth
+  }
+  return 0.3 // 兜底
+})
+
 // 视窗尺寸（缩放后的最终展示尺寸）
-const viewWidth = computed(() => Math.round(props.pageWidth * props.scale))
+const viewWidth = computed(() => Math.round(props.pageWidth * finalScale.value))
 const viewHeight = computed(
-  () => props.viewHeight ?? Math.round(PAGE_HEIGHT * props.scale),
+  () => props.viewHeight ?? Math.round(PAGE_HEIGHT * finalScale.value),
 )
 
-// 监听 resume 引用变化，重新 provide（虽然 provide 一次即可，但确保响应性）
+// 监听 resume 引用变化，确保响应性
 watchEffect(() => {
-  // 触发响应依赖
   void props.resume
 })
 </script>
 
 <template>
   <div
+    ref="parentRef"
     class="thumb-viewport"
     :style="{
       width: viewWidth + 'px',
@@ -74,7 +109,7 @@ watchEffect(() => {
     <div
       class="thumb-stage"
       :style="{
-        transform: `translateX(-50%) scale(${scale})`,
+        transform: `translateX(-50%) scale(${finalScale})`,
         transformOrigin: 'top center',
         width: pageWidth + 'px',
         height: PAGE_HEIGHT + 'px',
@@ -95,25 +130,24 @@ watchEffect(() => {
   overflow: hidden;
   background: var(--color-surface);
   border-radius: inherit;
-  pointer-events: none; // 缩略图只看不动，防止误触
+  pointer-events: none;
   user-select: none;
+  // 让 ResizeObserver 能正确测量父容器宽度
+  display: block;
 }
 
 .thumb-stage {
   position: absolute;
   top: 0;
-  left: 50%; // 配合 translateX(-50%) + transform-origin: top center 实现水平居中
-  // 居中缩放：避免 transform-origin: top left 时 viewport 与 stage 宽度不整除
-  // 导致右侧被裁切、左右 padding 视觉不一致
+  left: 50%;
   transform-origin: top center;
   background: #fff; // A4 白纸底板
   box-shadow: none;
-  // GPU 加速，改善 sub-pixel rendering
   will-change: transform;
 }
 
-// 模拟编辑器 ResumePreview 的 .preview-card：白底 + padding 页面边距
-// 让缩略图能明显看到"白纸内边距"，模板内容不贴边
+// A4 纸内部的页面边距区域
+// 极淡内边框勾勒模板内容边界，避免模板根元素白底与 A4 纸底板融为一体
 .thumb-content {
   width: 100%;
   height: 100%;
@@ -121,6 +155,8 @@ watchEffect(() => {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  // 内边框勾勒模板内容边界（极淡，不影响 A4 纸的纯白感）
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
 .thumb-empty {
