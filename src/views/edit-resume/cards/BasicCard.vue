@@ -31,7 +31,6 @@ const handleHideImg = () => {
     :show-delete="false"
     :show-add="false"
     :show-actions="false"
-    :show-sort="false"
     @change-hide-img="handleHideImg"
   >
   </DataCard>

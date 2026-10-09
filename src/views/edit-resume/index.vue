@@ -159,7 +159,8 @@ provide('resume', resume)
 const resumeMode = ref('edit')
 
 const splitterContainer = ref<HTMLElement | null>(null)
-const leftWidth = ref(50)
+const MAX_LEFT_WIDTH = 47
+const leftWidth = ref(MAX_LEFT_WIDTH)
 const isDragging = ref(false)
 let startX = 0
 let startWidth = 0
@@ -179,7 +180,7 @@ const handleDividerMouseMove = (event: MouseEvent) => {
   const deltaX = event.clientX - startX
   const newWidth =
     (((startWidth / 100) * rect.width + deltaX) / rect.width) * 100
-  leftWidth.value = Math.min(50, Math.max(30, newWidth))
+  leftWidth.value = Math.min(MAX_LEFT_WIDTH, Math.max(30, newWidth))
 }
 
 const handleDividerMouseUp = () => {
@@ -391,14 +392,21 @@ const syncText = computed(() => {
       box-shadow:
         -6px 0 0 var(--color-text-tertiary),
         6px 0 0 var(--color-text-tertiary);
-
-      &:hover::after,
-      &:active::after {
-        box-shadow:
-          -6px 0 0 var(--color-primary),
-          6px 0 0 var(--color-primary);
-      }
     }
+  }
+
+  /* 移动端 hover/active 时三点与横线变主色 */
+  .line:hover::before,
+  .line:active::before {
+    background: var(--color-primary);
+  }
+
+  .line:hover::after,
+  .line:active::after {
+    background: var(--color-primary);
+    box-shadow:
+      -6px 0 0 var(--color-primary),
+      6px 0 0 var(--color-primary);
   }
 }
 </style>

@@ -60,5 +60,17 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="divRef" style="height: 300px" />
+  <div ref="divRef" class="ai-editor-box" style="height: 300px" />
 </template>
+
+<style scoped>
+.ai-editor-box {
+  width: 100%;
+  max-width: 100%;
+}
+
+.ai-editor-box :deep(.aie-container),
+.ai-editor-box :deep(.aie-resize-wrapper) {
+  max-width: 100% !important;
+}
+</style>

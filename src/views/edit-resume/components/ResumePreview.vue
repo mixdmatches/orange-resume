@@ -135,23 +135,31 @@ const currentTemplate = computed(() => {
 <style scoped lang="scss">
 .view-content {
   display: flex;
-  justify-content: center;
   height: 100%;
-  border-radius: 0.5rem;
-  padding: 1rem;
+  padding: var(--space-2);
+  background: var(--color-bg-muted); // 灰色画布，衬托白色纸面
+  /* 纸面宽于可视区时横向滚动查看，纸面宽度恒定不变形 */
+  overflow: auto;
+  min-width: 0;
   @include themify(
     (
       color: $text-color,
     )
   );
-  overflow-y: auto;
 }
 
 .preview-wrapper {
   width: 210mm;
+  flex: none; /* 禁止 flex 收缩，窗口变窄不压缩 A4 纸面宽度 */
   min-height: 297mm; /* A4 高度 */
+  min-width: 210mm;
   position: relative;
+  align-self: flex-start; // 纸面高度跟随内容，不被拉伸至画布满高
+  /* 用 auto 外边距居中：宽度足够时居中，溢出时可完整横向滚动 */
+  margin-inline: auto;
   background-color: #fff;
+  border-radius: 2px;
+  box-shadow: var(--shadow-lg); // 纸张悬浮阴影，营造实体感
 }
 
 .preview-card {
@@ -160,8 +168,8 @@ const currentTemplate = computed(() => {
   display: flex;
   flex-direction: column;
   background-color: #fff;
-  cursor: pointer;
   position: relative;
+  border-radius: inherit;
 }
 
 /* 分页标识 */

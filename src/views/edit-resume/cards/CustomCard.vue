@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Resume } from '@/types/resume'
 import DataCard from '@/components/DataCard.vue'
-import { inject } from 'vue'
+import { computed, inject } from 'vue'
 import { generateUUID } from '@/utils/uuid'
 import type { FieldConfig } from '@/types/form'
 
@@ -13,6 +13,28 @@ const props = defineProps({
 })
 
 const resume: Resume = inject('resume') as Resume
+
+/** 卡片展示标题：优先取 menuSections 中的模块名，避免头部直接显示 "custom-0" 原始 id */
+const displayTitle = computed(() => {
+  const section = resume.menuSections.find(
+    section => section.id === props.customName,
+  )
+  return section?.title || '自定义模块'
+})
+
+/**
+ * 编辑模块名称：回写 menuSections 中对应 section 的 title，
+ * 左侧导航与右侧预览均实时跟随更新
+ * @param title - 新的模块名称
+ */
+const handleTitleChange = (title: string) => {
+  const section = resume.menuSections.find(
+    section => section.id === props.customName,
+  )
+  if (section) {
+    section.title = title
+  }
+}
 
 const customFields: FieldConfig[] = [
   {
@@ -71,9 +93,11 @@ const handleDeleteModel = () => {
 
 <template>
   <DataCard
-    :title="customName"
+    :title="displayTitle"
+    editable-title
     :items="resume.customData[customName]"
     :fields="customFields"
+    @title-change="handleTitleChange"
     @add="handleAdd"
     @delete-model="handleDeleteModel"
     @delete="handleDelete"

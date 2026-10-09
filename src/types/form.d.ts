@@ -6,8 +6,6 @@ export interface FieldConfig {
   type?: 'input' | 'textarea' | 'select' | 'editor' | 'date' | 'img' // 字段类型
   placeholder?: string // 占位符
   options?: string[] // 下拉选项（仅 select 类型）
-  span?: number // 占用列数，默认 12
-  style?: string // 样式
 }
 
 export interface ResumeFormProps {
@@ -20,8 +18,7 @@ export interface ResumeFormProps {
   showTitleEye?: boolean // 是否显示标题隐藏按钮
   showAdd?: boolean // 是否显示添加按钮
   showActions?: boolean // 是否显示操作按钮
-  showSort?: boolean
-  labelWidth?: string // 标签宽度
+  editableTitle?: boolean // 标题是否可编辑（自定义模块用）
   addText?: string // 添加按钮文本
 }
 
@@ -30,6 +27,6 @@ export interface ResumeFormEmits {
   (e: 'delete', id: string): void // 删除事件
   (e: 'deleteModel'): void // 删除模块事件
   (e: 'hide', id: string): void // 隐藏事件
-  (e: 'update', payload: { index: number; field: string; value: any }): void // 更新事件
+  (e: 'titleChange', title: string): void // 标题编辑事件
   (e: 'changeHideImg'): void // 隐藏img事件
 }

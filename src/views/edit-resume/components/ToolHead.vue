@@ -155,11 +155,18 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
 
 <template>
   <div class="tool-head">
+    <!-- ============ 左侧：返回 / 标题 / 撤销重做 / 保存状态 ============ -->
     <div class="tool-head-left">
-      <button class="icon-btn" title="返回" @click="$router.back()">
-        <line-md-arrow-small-left />
-      </button>
+      <a-tooltip title="返回">
+        <button class="icon-btn" @click="$router.back()">
+          <line-md-arrow-small-left />
+        </button>
+      </a-tooltip>
+
+      <span class="divider-v"></span>
+
       <a-input v-model:value="resume.title" class="title-input" />
+
       <div class="undo-redo-group">
         <a-tooltip title="撤销 (Ctrl+Z)">
           <button
@@ -180,10 +187,16 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
           </button>
         </a-tooltip>
       </div>
-      <div class="last-save-time" :title="fullSaveTime">
+
+      <span class="divider-v"></span>
+
+      <div class="save-status" :title="fullSaveTime">
+        <span class="status-dot" :class="`dot-${props.cloudStatus}`"></span>
         {{ saveDisplay }}
       </div>
     </div>
+
+    <!-- ============ 右侧：模板 / 分析 / AI 工具 / 导出 / 主题 ============ -->
     <div class="tools">
       <a-tooltip title="切换模板">
         <button class="icon-btn" @click="handleChangeTemplate">
@@ -195,11 +208,14 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
           <BarChartOutlined />
         </button>
       </a-tooltip>
+
+      <span class="divider-v"></span>
+
       <a-dropdown>
-        <a-button>
-          <RobotOutlined style="margin-right: 0.2rem" />
+        <a-button class="ghost-btn">
+          <RobotOutlined />
           AI 工具
-          <DownOutlined style="margin-left: 0.2rem" />
+          <DownOutlined class="btn-caret" />
         </a-button>
         <template #overlay>
           <a-menu>
@@ -216,11 +232,13 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
           </a-menu>
         </template>
       </a-dropdown>
+
       <a-dropdown>
-        <a-button type="primary" class="tool-download">
-          <line-md-arrow-close-down style="margin-right: 0.2rem" />
-          导出<DownOutlined
-        /></a-button>
+        <a-button type="primary" class="primary-btn">
+          <line-md-arrow-close-down />
+          导出
+          <DownOutlined class="btn-caret" />
+        </a-button>
         <template #overlay>
           <a-menu>
             <a-menu-item @click="handleDownloadPDF"> PDF </a-menu-item>
@@ -228,11 +246,17 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
           </a-menu>
         </template>
       </a-dropdown>
-      <button class="icon-btn">
-        <theme-icon></theme-icon>
-      </button>
+
+      <span class="divider-v"></span>
+
+      <a-tooltip title="切换主题">
+        <button class="icon-btn">
+          <theme-icon></theme-icon>
+        </button>
+      </a-tooltip>
     </div>
   </div>
+
   <a-drawer
     v-model:open="drawerOpen"
     title="选择模板"
@@ -313,9 +337,10 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-3);
   width: 100%;
   height: var(--header-height);
-  padding: 0 var(--space-6);
+  padding: 0 var(--space-4);
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
 }
@@ -323,13 +348,85 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
 .tool-head-left {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
   min-width: 0;
 }
 
+/* 功能分组之间的细分隔线 */
+.divider-v {
+  flex: none;
+  width: 1px;
+  height: 20px;
+  margin: 0 var(--space-1);
+  background: var(--color-border);
+}
+
+/* ============ 统一图标按钮 ============ */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--color-bg-muted);
+    color: var(--color-text);
+  }
+
+  &:active:not(:disabled) {
+    background: var(--color-bg-muted);
+    color: var(--color-primary);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
+/* ============ 标题输入：ghost 样式，hover/focus 才显形 ============ */
 .title-input {
-  width: 220px;
+  width: 240px;
+  height: 34px;
+  padding: 0 var(--space-2);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
   font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-text);
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+
+  &:hover {
+    background: var(--color-bg-muted);
+  }
+
+  &:focus {
+    background: var(--color-surface);
+    border-color: var(--color-primary);
+    box-shadow: var(--focus-ring);
+    outline: none;
+  }
 }
 
 .undo-redo-group {
@@ -338,20 +435,78 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
   gap: var(--space-1);
 }
 
-.last-save-time {
+/* ============ 保存状态：状态点 + 文案 ============ */
+.save-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   font-size: var(--text-xs);
   color: var(--color-text-tertiary);
   white-space: nowrap;
 }
 
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-text-tertiary);
+  flex: none;
+
+  &.dot-synced {
+    background: var(--color-success);
+  }
+
+  &.dot-syncing {
+    background: var(--color-primary);
+    animation: dot-pulse 1.2s var(--ease-in-out) infinite;
+  }
+
+  &.dot-pending {
+    background: var(--color-warning);
+  }
+
+  &.dot-offline,
+  &.dot-error {
+    background: var(--color-danger);
+  }
+}
+
+@keyframes dot-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* 减弱动效偏好：停用状态点脉冲 */
+@media (prefers-reduced-motion: reduce) {
+  .status-dot.dot-syncing {
+    animation: none;
+  }
+}
+
+/* ============ 右侧工具组 ============ */
 .tools {
   display: flex;
   align-items: center;
   gap: var(--space-2);
 
-  .tool-download {
+  /* 下拉按钮统一圆角与内边距 */
+  :deep(.ant-btn) {
     display: inline-flex;
     align-items: center;
+    gap: var(--space-1);
+    height: 32px;
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-md);
+
+    .btn-caret {
+      font-size: 10px;
+      opacity: 0.6;
+    }
   }
 }
 
@@ -410,7 +565,8 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
     width: 140px;
   }
 
-  .last-save-time {
+  .save-status,
+  .divider-v {
     display: none;
   }
 
