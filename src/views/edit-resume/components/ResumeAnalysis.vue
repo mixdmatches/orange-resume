@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, inject, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { motion } from 'motion-v'
@@ -286,7 +286,7 @@ const handleStartAiScore = async () => {
 
           <template v-if="totalIssueCount === 0">
             <div class="empty-state">
-              <CheckCircleFilled style="font-size: 3rem; color: #52c41a" />
+              <CheckCircleFilled style="font-size: 30px; color: #52c41a" />
               <p>恭喜！你的简历已完整，可以放心投递。</p>
             </div>
           </template>
@@ -506,7 +506,7 @@ const handleStartAiScore = async () => {
 }
 
 .card-title {
-  font-size: 1.5rem;
+  font-size: var(--text-base);
   font-weight: 600;
   margin-bottom: 1rem;
   display: flex;
@@ -519,7 +519,7 @@ const handleStartAiScore = async () => {
   );
 
   .perfect-tip {
-    font-size: 1.2rem;
+    font-size: var(--text-xs);
     font-weight: 500;
     display: inline-flex;
     align-items: center;
@@ -534,7 +534,7 @@ const handleStartAiScore = async () => {
   margin-bottom: 1rem;
 
   .overview-title {
-    font-size: 1.5rem;
+    font-size: var(--text-base);
     font-weight: 600;
     @include themify(
       (
@@ -545,7 +545,7 @@ const handleStartAiScore = async () => {
 
   .grade-badge {
     padding: 0.3rem 0.8rem;
-    font-size: 1.3rem;
+    font-size: var(--text-sm);
     font-weight: 600;
     border: 1px solid;
     border-radius: 0.4rem;
@@ -567,13 +567,13 @@ const handleStartAiScore = async () => {
     justify-content: center;
 
     .progress-num {
-      font-size: 2.4rem;
+      font-size: var(--text-xl);
       font-weight: 700;
       color: #1677ff;
     }
 
     .progress-unit {
-      font-size: 1.2rem;
+      font-size: var(--text-xs);
       color: #8c8c8c;
       margin-left: 0.2rem;
     }
@@ -583,7 +583,7 @@ const handleStartAiScore = async () => {
     flex: 1;
 
     .grade-text {
-      font-size: 1.5rem;
+      font-size: var(--text-base);
       font-weight: 500;
       margin: 0 0 0.5rem 0;
       @include themify(
@@ -594,7 +594,7 @@ const handleStartAiScore = async () => {
     }
 
     .issue-summary {
-      font-size: 1.3rem;
+      font-size: var(--text-sm);
       color: #8c8c8c;
       margin: 0;
 
@@ -622,7 +622,7 @@ const handleStartAiScore = async () => {
     margin-bottom: 0.4rem;
 
     .section-name {
-      font-size: 1.3rem;
+      font-size: var(--text-sm);
       @include themify(
         (
           color: $text-color,
@@ -631,7 +631,7 @@ const handleStartAiScore = async () => {
     }
 
     .section-count {
-      font-size: 1.2rem;
+      font-size: var(--text-xs);
       color: #8c8c8c;
     }
   }
@@ -651,7 +651,7 @@ const handleStartAiScore = async () => {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 1.4rem;
+    font-size: var(--text-sm);
     font-weight: 600;
     margin-bottom: 0.6rem;
 
@@ -663,7 +663,7 @@ const handleStartAiScore = async () => {
       height: 22px;
       padding: 0 6px;
       border-radius: 11px;
-      font-size: 1.1rem;
+      font-size: var(--text-xs);
       color: #fff;
     }
   }
@@ -673,7 +673,7 @@ const handleStartAiScore = async () => {
     padding-left: 1.6rem;
 
     li {
-      font-size: 1.3rem;
+      font-size: var(--text-sm);
       line-height: 1.8;
       color: #595959;
       list-style: disc;
@@ -690,7 +690,7 @@ const handleStartAiScore = async () => {
   gap: 1rem;
 
   p {
-    font-size: 1.4rem;
+    font-size: var(--text-sm);
     color: #8c8c8c;
     margin: 0;
   }
@@ -720,7 +720,7 @@ const handleStartAiScore = async () => {
 }
 
 .card-title {
-  font-size: 1.5rem;
+  font-size: var(--text-base);
   font-weight: 600;
   margin-bottom: 1rem;
   display: flex;
@@ -740,7 +740,7 @@ const handleStartAiScore = async () => {
     margin-bottom: 1rem;
 
     .total-title {
-      font-size: 1.5rem;
+      font-size: var(--text-base);
       font-weight: 600;
       @include themify(
         (
@@ -751,7 +751,7 @@ const handleStartAiScore = async () => {
 
     .grade-badge {
       padding: 0.3rem 1rem;
-      font-size: 1.6rem;
+      font-size: var(--text-base);
       font-weight: 700;
       border: 2px solid;
       border-radius: 0.6rem;
@@ -773,13 +773,13 @@ const handleStartAiScore = async () => {
       justify-content: center;
 
       .score-num {
-        font-size: 2.6rem;
+        font-size: var(--text-2xl);
         font-weight: 700;
         color: $primary-color;
       }
 
       .score-unit {
-        font-size: 1.3rem;
+        font-size: var(--text-sm);
         color: #8c8c8c;
         margin-left: 0.2rem;
       }
@@ -787,7 +787,7 @@ const handleStartAiScore = async () => {
 
     .total-comment {
       flex: 1;
-      font-size: 1.35rem;
+      font-size: var(--text-sm);
       line-height: 1.8;
       color: #595959;
     }
@@ -809,7 +809,7 @@ const handleStartAiScore = async () => {
       margin-bottom: 0.3rem;
 
       .dim-name {
-        font-size: 1.3rem;
+        font-size: var(--text-sm);
         @include themify(
           (
             color: $text-color,
@@ -818,14 +818,14 @@ const handleStartAiScore = async () => {
       }
 
       .dim-score {
-        font-size: 1.3rem;
+        font-size: var(--text-sm);
         font-weight: 600;
       }
     }
 
     .dim-comment {
       margin-top: 0.4rem;
-      font-size: 1.2rem;
+      font-size: var(--text-xs);
       color: #8c8c8c;
       line-height: 1.6;
     }
@@ -845,7 +845,7 @@ const handleStartAiScore = async () => {
     padding-left: 1.8rem;
 
     li {
-      font-size: 1.3rem;
+      font-size: var(--text-sm);
       line-height: 1.8;
       color: #595959;
       list-style: disc;
@@ -853,7 +853,7 @@ const handleStartAiScore = async () => {
   }
 
   .no-data {
-    font-size: 1.3rem;
+    font-size: var(--text-sm);
     color: #bfbfbf;
   }
 }

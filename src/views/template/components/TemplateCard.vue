@@ -1,11 +1,4 @@
 <script setup lang="ts">
-/**
- * TemplateCard · 单个模板卡片
- *
- * 苹果 App Store 风格：cover 实时渲染真实模板（TemplateThumb）+ 底部信息与操作
- * - cover 用 TemplateThumb 挂载真实模板组件 + scale 缩放
- * - hover 仅 border 变色，无弹跳
- */
 import type { TemplateInfo } from '@/template/index'
 import type { Resume } from '@/types/resume'
 import TemplateThumb from '@/components/TemplateThumb.vue'
@@ -106,7 +99,7 @@ const emit = defineEmits<{
 }
 
 .tpl-name {
-  font-size: var(--text-xl);
+  font-size: var(--text-sm);
   font-weight: var(--font-semibold);
   color: var(--color-text);
   margin-bottom: var(--space-1);
@@ -117,7 +110,7 @@ const emit = defineEmits<{
 }
 
 .tpl-desc {
-  font-size: var(--text-lg);
+  font-size: var(--text-xs);
   color: var(--color-text-secondary);
   line-height: var(--leading-normal);
   // 用 min-height 锁定描述区高度，1 行和 2 行时卡片等高

@@ -16,6 +16,7 @@ import {
   CloseOutlined,
   MinusOutlined,
   StopOutlined,
+  EditOutlined
 } from '@ant-design/icons-vue'
 import ChatInput from '@/components/ChatInput.vue'
 import MarkdownIt from 'markdown-it'
@@ -651,7 +652,7 @@ const refreshSessionList = async () => {
   cursor: move;
 
   .panel-title {
-    font-size: 1.5rem;
+    font-size: var(--text-base);
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -716,7 +717,7 @@ const refreshSessionList = async () => {
     .session-title {
       flex: 1;
       min-width: 0;
-      font-size: 1.2rem;
+      font-size: var(--text-xs);
       white-space: nowrap;
       text-overflow: ellipsis;
       @include themify(
@@ -772,12 +773,12 @@ const refreshSessionList = async () => {
   gap: 0.6rem;
 
   .welcome-icon {
-    font-size: 3.5rem;
+    font-size: var(--text-4xl);
     color: $primary-color;
   }
 
   .welcome-title {
-    font-size: 1.6rem;
+    font-size: var(--text-base);
     font-weight: 600;
     margin: 0;
     @include themify(
@@ -788,7 +789,7 @@ const refreshSessionList = async () => {
   }
 
   .welcome-desc {
-    font-size: 1.3rem;
+    font-size: var(--text-sm);
     color: #8c8c8c;
     margin: 0;
     line-height: 1.6;
@@ -812,7 +813,7 @@ const refreshSessionList = async () => {
     max-width: 100%;
     padding: 0.7rem 1rem;
     border-radius: 0.8rem;
-    font-size: 1.3rem;
+    font-size: var(--text-xs);
     line-height: 1.7;
     word-break: break-word;
   }
@@ -856,7 +857,7 @@ const refreshSessionList = async () => {
     align-items: center;
     gap: 0.3rem;
     margin-top: 0.4rem;
-    font-size: 1.2rem;
+    font-size: var(--text-xs);
     @include themify(
       (
         color: (
@@ -893,7 +894,7 @@ const refreshSessionList = async () => {
   :deep(code) {
     padding: 0.1rem 0.3rem;
     border-radius: 0.3rem;
-    font-size: 1.2rem;
+    font-size: var(--text-xs);
     background: rgba(0, 0, 0, 0.08);
   }
   :deep(blockquote) {
@@ -919,12 +920,12 @@ const refreshSessionList = async () => {
   gap: 0.5rem;
   padding: 0.4rem 0.7rem;
   border-radius: 0.5rem;
-  font-size: 1.2rem;
+  font-size: var(--text-xs);
   background: rgba(22, 119, 255, 0.06);
   border: 1px solid rgba(22, 119, 255, 0.12);
 
   .tool-icon {
-    font-size: 1.3rem;
+    font-size: var(--text-sm);
     flex-shrink: 0;
   }
 
@@ -939,7 +940,7 @@ const refreshSessionList = async () => {
 
   .tool-status-text {
     margin-left: auto;
-    font-size: 1.1rem;
+    font-size: var(--text-xs);
     color: #8c8c8c;
   }
 

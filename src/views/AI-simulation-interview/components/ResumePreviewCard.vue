@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { computed, provide } from 'vue'
+import { provide } from 'vue'
 import type { Resume } from '@/types/resume'
-import templates from '@/template'
 import TemplateThumb from '@/components/TemplateThumb.vue'
 
 const props = defineProps({
@@ -12,12 +11,6 @@ const props = defineProps({
 })
 
 provide('resume', props.resume)
-
-// 当前选中的模板组件
-const currentTemplate = computed(() => {
-  const template = templates.find(t => t.id === props.resume?.templateId)
-  return template?.component
-})
 </script>
 
 <template>

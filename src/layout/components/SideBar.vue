@@ -1,16 +1,11 @@
-<script lang="ts" setup>
-/**
- * SideBar.vue（实为顶部 SiteHeader，保留文件名以免破坏 import）
- *
- * 苹果官网导航风格：左 logo + 居中文字菜单 + 右极简操作
- * 移除 a-menu（默认样式平庸），改原生 <nav> + <a> 自定义
- * 高度 56px，纯白底，1px 底边
- */
-import { computed, ref, watch } from 'vue'
+<script setup lang="ts">
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { header_routes } from '@/router'
+import { header_nav_items } from '@/router'
+import type { HeaderNavItem } from '@/router'
 import LineMdGithub from '~icons/line-md/github'
 import ThemeIcon from '@/components/ThemeIcon.vue'
+import NavDropdown from './NavDropdown.vue'
 
 const router = useRouter()
 
@@ -26,15 +21,7 @@ watch(
   { immediate: true },
 )
 
-/** 菜单项数据（基于 header_routes 派生）*/
-const navItems = computed(() =>
-  header_routes.map(item => ({
-    path: item.path,
-    title: item.meta?.title as string,
-  })),
-)
-
-/** 点击菜单项发起导航 */
+/** 点击普通菜单项发起导航 */
 const handleClick = (path: string) => {
   router.push(path)
 }
@@ -43,6 +30,20 @@ const handleClick = (path: string) => {
 const goToGithub = () => {
   window.location.href = 'https://github.com/mixdmatches/orange-resume'
 }
+
+/** 下拉项类型守卫 */
+const isDropdown = (
+  item: HeaderNavItem,
+): item is HeaderNavItem & {
+  type: 'dropdown'
+  children: NonNullable<HeaderNavItem['children']>
+} => item.type === 'dropdown'
+
+/** 普通项类型守卫 */
+const isItem = (
+  item: HeaderNavItem,
+): item is HeaderNavItem & { type: 'item'; path: string } =>
+  item.type === 'item' && !!item.path
 </script>
 
 <template>
@@ -58,17 +59,35 @@ const goToGithub = () => {
         <span class="brand-name">橘子简历</span>
       </div>
 
-      <!-- 中间：横向导航菜单（原生 nav，自定义样式）-->
-      <nav class="header-nav">
-        <a
-          v-for="item in navItems"
-          :key="item.path"
-          class="nav-item"
-          :class="{ active: activePath === item.path }"
-          @click="handleClick(item.path)"
+      <!-- 中间：横向导航菜单 -->
+      <nav class="header-nav" aria-label="主导航">
+        <template
+          v-for="item in header_nav_items"
+          :key="item.type === 'dropdown' ? `dd-${item.label}` : item.path"
         >
-          {{ item.title }}
-        </a>
+          <!-- 下拉分组 -->
+          <nav-dropdown
+            v-if="isDropdown(item)"
+            :label="item.label"
+            :icon="item.icon"
+            :items="item.children"
+            :active-path="activePath"
+          />
+
+          <!-- 普通按钮 -->
+          <button
+            v-else-if="isItem(item)"
+            type="button"
+            class="nav-item"
+            :class="{ active: activePath === item.path }"
+            @click="handleClick(item.path)"
+          >
+            <span class="nav-icon">
+              <component :is="item.icon()" />
+            </span>
+            <span class="nav-label">{{ item.label }}</span>
+          </button>
+        </template>
       </nav>
 
       <!-- 右侧：操作区 -->
@@ -107,7 +126,7 @@ const goToGithub = () => {
   @media (max-width: 768px) {
     padding: 0 var(--space-5);
     gap: var(--space-4);
-    // 移动端隐藏导航文字，仅保留 logo + 操作
+
     .header-nav {
       display: none;
     }
@@ -130,7 +149,7 @@ const goToGithub = () => {
 
   .brand-name {
     font-family: var(--font-display);
-    font-size: var(--text-3xl);
+    font-size: var(--text-lg);
     font-weight: var(--font-semibold);
     letter-spacing: var(--tracking-tight);
     color: var(--color-text);
@@ -145,43 +164,52 @@ const goToGithub = () => {
 .header-nav {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  gap: var(--space-4);
 }
 
 .nav-item {
-  position: relative;
-  padding: 0 var(--space-3);
-  height: var(--header-height);
   display: inline-flex;
   align-items: center;
-  // 导航高频交互入口，24px
-  font-size: var(--text-xl);
+  gap: 6px;
+  height: 36px;
+  padding: 0 var(--space-3);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--text-xs);
   font-weight: var(--font-medium);
   color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: color var(--duration-base) var(--ease-out);
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
 
   &:hover {
+    background: var(--color-bg-muted);
     color: var(--color-text);
   }
 
   &.active {
-    color: var(--color-text);
+    background: var(--color-primary-bg);
+    color: var(--color-primary);
+    font-weight: var(--font-semibold);
 
-    // 苹果风：底部 2px 主色指示条
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: -1px; // 覆盖 header 底边
-      left: var(--space-3);
-      right: var(--space-3);
-      height: 2px;
-      background: var(--color-primary);
-      border-radius: var(--radius-full);
+    .nav-icon {
+      color: var(--color-primary);
     }
+  }
+
+  .nav-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: var(--color-text-tertiary);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .nav-label {
+    line-height: 1;
   }
 }
 
@@ -205,11 +233,11 @@ const goToGithub = () => {
   cursor: pointer;
   color: var(--color-text-secondary);
   transition:
-    background var(--duration-base) var(--ease-out),
-    color var(--duration-base) var(--ease-out);
+    background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
 
   &:hover {
-    background: var(--color-surface-hover);
+    background: var(--color-bg-muted);
     color: var(--color-text);
   }
 }

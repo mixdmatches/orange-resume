@@ -1,15 +1,4 @@
 <script setup lang="ts">
-/**
- * MyResume · 我的简历列表
- *
- * 苹果 Findr 风格：PageHeader + 卡片网格，卡片简洁、信息分层清晰
- * - 弃用 a-card，自定义 .resume-card
- * - 卡片缩略图实时渲染真实模板（TemplateThumb）
- * - 移除 v-motion 弹簧，改 CSS fade-up
- * - 网格 auto-fill 响应式
- *
- * 不动功能：所有 handleXxx、a-modal、importPDF/importJSON、a-empty、批量删除
- */
 import { DEFAULT_RESUME } from '@/config/init-resume-data'
 import {
   createResume,
@@ -436,7 +425,7 @@ const formatTime = (t?: number) => {
 
         <div class="card-body">
           <h3 class="card-title">{{ item.title }}</h3>
-          <p class="card-meta">更新于 {{ formatTime(item.updatedAt) }}</p>
+          <p class="card-meta">更新于 {{ formatTime(item.updatedAt || 0) }}</p>
         </div>
 
         <div class="card-actions">
@@ -468,10 +457,6 @@ const formatTime = (t?: number) => {
 </template>
 
 <style scoped lang="scss">
-.page-my-resume {
-  // 继承 .page 基础 padding
-}
-
 /* ============ 批量操作栏 ============ */
 .batch-bar {
   display: flex;
@@ -559,8 +544,7 @@ const formatTime = (t?: number) => {
 }
 
 .card-title {
-  // 卡片主标题 24px，与 meta(20px) 靠字重+颜色拉开层级
-  font-size: var(--text-xl);
+  font-size: var(--text-sm);
   font-weight: var(--font-semibold);
   color: var(--color-text);
   margin-bottom: 4px;
@@ -570,7 +554,7 @@ const formatTime = (t?: number) => {
 }
 
 .card-meta {
-  font-size: var(--text-lg);
+  font-size: var(--text-xs);
   color: var(--color-text-tertiary);
 }
 

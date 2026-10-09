@@ -168,7 +168,6 @@ onMounted(loadResume)
 
 <template>
   <div class="interview-room">
-    <!-- 极简 header：56px 高，左返回 + 标题，右计时器 + 结束 -->
     <header class="room-header">
       <div class="header-left">
         <button class="icon-btn" title="返回" @click="handleBack">
@@ -670,7 +669,7 @@ onMounted(loadResume)
   white-space: pre-wrap;
   word-break: break-word;
   line-height: var(--leading-relaxed);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
 }
 
 .interviewer-bubble {

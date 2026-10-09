@@ -48,8 +48,8 @@ const textareaRef = ref<HTMLTextAreaElement | null>(null)
 
 /** 行高（需与样式中的 line-height 保持一致） */
 const LINE_HEIGHT = 1.6
-/** 字号（rem，需与样式中的 font-size 保持一致，1rem = 10px） */
-const FONT_SIZE = 1.4
+/** 字号（rem，需与样式中的 font-size 保持一致，1rem = 16px） */
+const FONT_SIZE = 0.8
 /** 单行高度（rem） */
 const rowHeight = LINE_HEIGHT * FONT_SIZE
 
@@ -215,7 +215,7 @@ watch(
   outline: none;
   background: transparent;
   resize: none;
-  font-size: 1.4rem;
+  font-size: var(--text-xs);
   line-height: 1.6;
   overflow-y: auto;
   word-break: break-word;
@@ -266,7 +266,7 @@ watch(
 
 /* 字数统计 */
 .char-count {
-  font-size: 1.2rem;
+  font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
   @include themify(
     (
@@ -287,7 +287,7 @@ watch(
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
+  font-size: var(--text-xs);
   cursor: pointer;
   transition:
     background-color 0.2s ease,
@@ -351,7 +351,7 @@ watch(
 .chat-input-hint {
   margin-top: 0.6rem;
   text-align: center;
-  font-size: 1.2rem;
+  font-size: var(--text-xs);
   @include themify(
     (
       color: (

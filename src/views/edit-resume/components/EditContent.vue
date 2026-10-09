@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, h, inject, ref } from 'vue'
 import { motion } from 'motion-v'
 import BasicCard from '@/views/edit-resume/cards/BasicCard.vue'
@@ -404,7 +404,7 @@ const showDivider = computed(() =>
 
   .model-title {
     color: $primary-color;
-    font-size: 1.6rem;
+    font-size: var(--text-base);
     font-weight: 600;
     margin-bottom: 1rem;
     display: flex;
@@ -469,7 +469,7 @@ const showDivider = computed(() =>
     margin-bottom: 0.4rem;
   }
   .layout-desc {
-    font-size: 1.3rem;
+    font-size: var(--text-sm);
     color: #8c8c8c;
   }
 }

@@ -762,7 +762,7 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
   .brand-name {
     font-family: var(--font-display);
     font-weight: var(--font-semibold);
-    font-size: var(--text-3xl);
+    font-size: var(--text-xl);
     letter-spacing: var(--tracking-tight);
     color: var(--color-text);
   }
@@ -779,7 +779,7 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
   background: none;
   border: none;
   color: var(--color-text-secondary);
-  font-size: var(--text-xl);
+  font-size: var(--text-base);
   font-weight: var(--font-medium);
   cursor: pointer;
   border-radius: var(--radius-md);
@@ -797,7 +797,7 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
   color: var(--color-text-inverse);
   border: none;
   border-radius: var(--radius-md);
-  font-size: var(--text-xl);
+  font-size: var(--text-sm);
   font-weight: var(--font-medium);
   cursor: pointer;
   transition: all var(--duration-base) var(--ease-out);
@@ -854,7 +854,7 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
   background: var(--color-primary-bg);
   border: 1px solid var(--color-primary-border);
   border-radius: var(--radius-full);
-  font-size: var(--text-base);
+  font-size: var(--text-xs);
   font-weight: var(--font-medium);
   color: var(--color-primary-pressed);
   margin-bottom: var(--space-6);
@@ -880,8 +880,8 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
 
 .hero-title {
   font-family: var(--font-display);
-  // 收敛 hero 尺寸：64px 对中文偏大，上限 56px；负字距 -0.04em 汉字显挤，减半
-  font-size: clamp(36px, 5vw, 56px);
+  // 收敛 hero 尺寸：整体字号下调两档，上限 44px；负字距 -0.04em 汉字显挤，减半
+  font-size: clamp(28px, 4vw, 44px);
   font-weight: var(--font-bold);
   line-height: 1.15;
   letter-spacing: -0.02em;
@@ -894,7 +894,7 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
 }
 
 .hero-desc {
-  font-size: clamp(14px, 1.4vw, 16px);
+  font-size: clamp(12px, 1.1vw, 13px);
   color: var(--color-text-secondary);
   line-height: var(--leading-relaxed);
   margin-bottom: var(--space-8);
@@ -914,7 +914,7 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
   color: var(--color-text-inverse);
   border: none;
   border-radius: var(--radius-md);
-  font-size: var(--text-xl);
+  font-size: var(--text-base);
   font-weight: var(--font-medium);
   cursor: pointer;
   transition: all var(--duration-base) var(--ease-out);
@@ -925,7 +925,7 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
 
   &.btn-lg {
     padding: var(--space-4) var(--space-8);
-    font-size: var(--text-lg);
+    font-size: var(--text-sm);
   }
 }
 
@@ -935,7 +935,7 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
   color: var(--color-text);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  font-size: var(--text-base);
+  font-size: var(--text-xs);
   font-weight: var(--font-medium);
   cursor: pointer;
   transition: all var(--duration-base) var(--ease-out);
@@ -1013,7 +1013,7 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
 
 .stat-value {
   font-family: var(--font-display);
-  font-size: var(--text-4xl);
+  font-size: var(--text-2xl);
   font-weight: var(--font-bold);
   color: var(--color-text);
   letter-spacing: -0.02em;
@@ -1041,8 +1041,8 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
 
 .eyebrow {
   display: block;
-  // 中文界面：去掉 uppercase 宽字距，13px→14px 提升可读性，仅靠主色区分
-  font-size: var(--text-xl);
+  // 中文界面：去掉 uppercase 宽字距，仅靠主色区分
+  font-size: var(--text-base);
   font-weight: var(--font-semibold);
   color: var(--color-primary);
   margin-bottom: var(--space-3);
@@ -1050,8 +1050,8 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
 
 .section-title {
   font-family: var(--font-display);
-  // 随全站字号上调：36→40 上限，负字距保持 -0.01em
-  font-size: clamp(28px, 3.2vw, 40px);
+  // 随整体字号下调两档：上限 32px，负字距保持 -0.01em
+  font-size: clamp(22px, 2.5vw, 32px);
   font-weight: var(--font-bold);
   letter-spacing: -0.01em;
   color: var(--color-text);
@@ -1059,7 +1059,7 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
 }
 
 .section-sub {
-  font-size: var(--text-base);
+  font-size: var(--text-xs);
   color: var(--color-text-secondary);
 }
 
@@ -1096,13 +1096,13 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
 }
 
 .feature-icon {
-  font-size: 22px;
+  font-size: 16px;
 }
 
 .feature-title {
   font-family: var(--font-display);
-  // 列表行标题从 24px 降到 20px：与 section-title(36px) 拉开层级，避免喧宾夺主
-  font-size: var(--text-xl);
+  // 与 section-title(32px) 拉开层级，避免喧宾夺主
+  font-size: var(--text-base);
   font-weight: var(--font-semibold);
   color: var(--color-text);
   letter-spacing: -0.01em;
@@ -1110,7 +1110,7 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
 }
 
 .feature-desc {
-  font-size: var(--text-base);
+  font-size: var(--text-xs);
   color: var(--color-text-secondary);
   line-height: var(--leading-relaxed);
   margin-bottom: var(--space-4);
@@ -1127,7 +1127,7 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
   background: var(--color-bg-muted);
   color: var(--color-text-secondary);
   border-radius: var(--radius-full);
-  font-size: var(--text-xs);
+  font-size: 12px;
   font-weight: var(--font-medium);
 }
 
@@ -1193,7 +1193,7 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
 }
 
 .tpl-name {
-  font-size: var(--text-xl);
+  font-size: var(--text-base);
   font-weight: var(--font-semibold);
   color: var(--color-text);
   margin-bottom: 2px;
@@ -1204,7 +1204,7 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
 }
 
 .tpl-tag {
-  font-size: var(--text-lg);
+  font-size: var(--text-sm);
   color: var(--color-text-secondary);
   line-height: 1.4;
   // 1 行省略，不换行撑高
@@ -1218,7 +1218,7 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
 
 .tpl-arrow {
   color: var(--color-text-tertiary);
-  font-size: 18px;
+  font-size: 14px;
   transition: all var(--duration-base) var(--ease-out);
   flex-shrink: 0;
 }
@@ -1248,7 +1248,7 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: var(--text-xl);
+  font-size: var(--text-base);
   font-weight: var(--font-medium);
   color: var(--color-text);
   cursor: pointer;
@@ -1313,7 +1313,7 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
 
 .cta-title {
   font-family: var(--font-display);
-  font-size: clamp(28px, 3vw, 36px);
+  font-size: clamp(22px, 2.4vw, 28px);
   font-weight: var(--font-bold);
   color: var(--color-text);
   letter-spacing: -0.01em;
@@ -1321,7 +1321,7 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
 }
 
 .cta-desc {
-  font-size: var(--text-base);
+  font-size: var(--text-xs);
   color: var(--color-text-secondary);
   margin-bottom: var(--space-8);
 }
@@ -1367,7 +1367,7 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
 }
 
 .footer-slogan {
-  font-size: var(--text-xs);
+  font-size: 12px;
   margin-top: var(--space-2);
   color: rgba(255, 255, 255, 0.5);
 }
@@ -1378,7 +1378,7 @@ const previewResume = { ...DEFAULT_RESUME, id: '1' }
   padding-top: var(--space-6);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   text-align: center;
-  font-size: var(--text-xs);
+  font-size: 12px;
   color: rgba(255, 255, 255, 0.4);
 }
 

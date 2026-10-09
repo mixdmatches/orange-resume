@@ -1,13 +1,4 @@
 <script setup lang="ts">
-/**
- * Auth · 登录/注册页
- *
- * 苹果风克制设计：
- * - 左 50% 品牌区：纯深色背景 + 极简 SVG 几何线条（圆/网格）
- * - 右 50% 表单区：白底卡片化，max-width 400px 居中
- *
- * 不动功能：表单校验、authStore.login/register、initRepository、redirectAfterAuth 全保留
- */
 import { onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message, type FormInstance } from 'ant-design-vue'

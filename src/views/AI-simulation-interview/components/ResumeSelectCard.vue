@@ -211,7 +211,7 @@ const handleDragLeave = () => {
 
   p {
     margin: 0;
-    font-size: var(--text-sm);
+    font-size: var(--text-xs);
     color: var(--color-text-secondary);
     line-height: var(--leading-normal);
   }
@@ -250,6 +250,10 @@ const handleDragLeave = () => {
     font-size: 15px;
   }
 
+  .tab-label {
+    font-size: var(--text-xs);
+  }
+
   &:hover {
     color: var(--color-text);
   }
@@ -283,7 +287,7 @@ const handleDragLeave = () => {
 .summary-line {
   display: flex;
   gap: var(--space-2);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   line-height: var(--leading-relaxed);
 }
 

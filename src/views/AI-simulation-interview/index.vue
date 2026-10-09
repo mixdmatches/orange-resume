@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { h } from 'vue'
 import { useRouter } from 'vue-router'
-import { message, Modal } from 'ant-design-vue'
+import { message } from 'ant-design-vue'
 import { SettingOutlined, FileTextOutlined } from '@ant-design/icons-vue'
 import ResumeSelectCard from './components/ResumeSelectCard.vue'
 import ResumePreviewCard from './components/ResumePreviewCard.vue'
-import InterviewHistoryList from './components/InterviewHistoryList.vue'
-import InterviewDetailDrawer from './components/InterviewDetailDrawer.vue'
 import { getAllResumesIDB } from '@/service/resumeIDB'
 import { useInterviewStore } from '@/stores/interview'
 import {
@@ -16,17 +14,7 @@ import {
   QUESTION_COUNT_MAX,
   QUESTION_COUNT_MIN,
 } from '@/stores/interview'
-import type {
-  InterviewCategory,
-  InterviewDifficulty,
-  InterviewDetail,
-  InterviewSession,
-} from '@/types/interview'
-import {
-  deleteInterviewApi,
-  getInterviewDetailApi,
-  listInterviewsApi,
-} from '@/api/interview'
+import type { InterviewCategory, InterviewDifficulty } from '@/types/interview'
 import type { Resume } from '@/types/resume'
 
 const router = useRouter()
@@ -71,95 +59,6 @@ const jobTypeOptions = [
 const selectedResume = computed(
   () => resumes.value.find(item => item.id === selectedResumeId.value) ?? null,
 )
-
-// ========= 历史面试列表 =========
-
-/** 历史面试列表 */
-const historyList = ref<InterviewSession[]>([])
-/** 历史列表加载中 */
-const historyLoading = ref(false)
-/** 详情抽屉是否打开 */
-const detailVisible = ref(false)
-/** 详情抽屉的面试详情数据 */
-const detailData = ref<InterviewDetail | null>(null)
-/** 详情抽屉加载中 */
-const detailLoading = ref(false)
-/** 分页信息 */
-const pagination = reactive({
-  currentPage: 1,
-  pageSize: 5,
-  total: 0,
-})
-
-/**
- * 加载历史面试列表
- */
-const loadHistory = async () => {
-  historyLoading.value = true
-  try {
-    const res = await listInterviewsApi({
-      page: pagination.currentPage,
-      pageSize: pagination.pageSize,
-    })
-    pagination.total = res.total
-    historyList.value = res.list
-  } catch {
-    message.error('加载历史面试失败')
-  } finally {
-    historyLoading.value = false
-  }
-}
-
-const handleCurrentChange = (current: number) => {
-  pagination.currentPage = current
-  loadHistory()
-}
-
-const handlePageSizeChange = (_current: number, size: number) => {
-  pagination.currentPage = 1
-  pagination.pageSize = size
-  loadHistory()
-}
-
-/**
- * 打开面试详情抽屉
- * @param id 面试会话 ID
- */
-const handleOpenDetail = async (id: string) => {
-  detailVisible.value = true
-  detailData.value = null
-  detailLoading.value = true
-  try {
-    detailData.value = await getInterviewDetailApi(id)
-  } catch {
-    message.error('加载面试详情失败')
-  } finally {
-    detailLoading.value = false
-  }
-}
-
-/**
- * 删除面试会话（二次确认）
- * @param session 面试会话对象
- */
-const handleDeleteInterview = (session: InterviewSession) => {
-  Modal.confirm({
-    title: '删除该面试记录？',
-    content: `将删除「${session.title}」，此操作不可恢复。`,
-    okText: '删除',
-    okType: 'danger',
-    cancelText: '取消',
-    onOk: async () => {
-      try {
-        await deleteInterviewApi(session.id)
-        message.success('已删除')
-        await loadHistory()
-      } catch {
-        message.error('删除失败')
-      }
-    },
-  })
-}
 
 // ========= 简历加载 =========
 
@@ -215,7 +114,6 @@ const handleEnterRoom = () => {
 
 onMounted(() => {
   loadResumes()
-  loadHistory()
 })
 </script>
 
@@ -351,30 +249,6 @@ onMounted(() => {
         >
       </div>
     </section>
-
-    <!-- ============ 历史面试区块 ============ -->
-    <section class="section-block">
-      <h2 class="block-title">历史面试</h2>
-      <interview-history-list
-        :list="historyList"
-        :loading="historyLoading"
-        :total="pagination.total"
-        :current-page="pagination.currentPage"
-        :page-size="pagination.pageSize"
-        @open-detail="handleOpenDetail"
-        @page-size="handlePageSizeChange"
-        @current-page="handleCurrentChange"
-        @delete="handleDeleteInterview"
-        @refresh="loadHistory"
-      />
-    </section>
-
-    <!-- 面试详情抽屉 -->
-    <interview-detail-drawer
-      v-model:open="detailVisible"
-      :detail="detailData"
-      :loading="detailLoading"
-    />
   </div>
 </template>
 
@@ -413,7 +287,7 @@ onMounted(() => {
 }
 
 .form-label {
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   font-weight: var(--font-medium);
   color: var(--color-text);
 }

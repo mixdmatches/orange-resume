@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, inject, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { CopyOutlined, ReloadOutlined } from '@ant-design/icons-vue'
@@ -217,7 +217,7 @@ const handleCopy = async () => {
     .form-label {
       flex-shrink: 0;
       width: 3rem;
-      font-size: 1.3rem;
+      font-size: var(--text-sm);
       font-weight: 500;
       @include themify(
         (
@@ -251,14 +251,14 @@ const handleCopy = async () => {
     padding: 0.4rem 0;
 
     .word-count {
-      font-size: 1.2rem;
+      font-size: var(--text-xs);
       color: #8c8c8c;
     }
   }
 
   .markdown-body {
     padding: 1rem 1.2rem;
-    font-size: 1.4rem;
+    font-size: var(--text-sm);
     line-height: 1.9;
     border: 1px solid;
     border-radius: 0.6rem;

@@ -1,45 +1,105 @@
 <script setup lang="ts">
+import { DeleteOutlined, EyeOutlined } from '@ant-design/icons-vue'
+import type { InterviewDetail, InterviewSession } from '@/types/interview'
 import {
-  DeleteOutlined,
-  EyeOutlined,
-  ReloadOutlined,
-} from '@ant-design/icons-vue'
-import type { InterviewSession } from '@/types/interview'
+  listInterviewsApi,
+  deleteInterviewApi,
+  getInterviewDetailApi,
+} from '@/api'
+import { message, Modal } from 'ant-design-vue'
+import { ref, reactive, onMounted } from 'vue'
 
-/** 历史面试列表组件 Props */
-const props = defineProps<{
-  /** 面试会话列表 */
-  list: InterviewSession[]
-  /** 是否正在加载 */
-  loading: boolean
-  /** 总页数 */
-  total: number
-  /** 当前页 */
-  currentPage: number
-  /** 每页数量 */
-  pageSize: number
-}>()
+/** 历史面试列表 */
+const historyList = ref<InterviewSession[]>([])
+/** 历史列表加载中 */
+const historyLoading = ref(false)
 
-/** 历史面试列表组件 Emits */
-const emit = defineEmits<{
-  /** 点击列表项打开详情 */
-  (e: 'open-detail', id: string): void
-  /** 删除面试会话 */
-  (e: 'delete', session: InterviewSession): void
-  /** 刷新列表 */
-  (e: 'refresh'): void
-  /** 分页改变 */
-  (e: 'page-size', current: number, size: number): void
-  /** 当前页改变 */
-  (e: 'current-page', current: number): void
-}>()
+/** 分页信息 */
+const pagination = reactive({
+  currentPage: 1,
+  pageSize: 5,
+  total: 0,
+})
 
-const handleCurrentChange = (current: number) => {
-  emit('current-page', current)
+/**
+ * 加载历史面试列表
+ */
+const loadHistory = async () => {
+  historyLoading.value = true
+  try {
+    const res = await listInterviewsApi({
+      page: pagination.currentPage,
+      pageSize: pagination.pageSize,
+    })
+    pagination.total = res.total
+    historyList.value = res.list
+  } catch {
+    message.error('加载历史面试失败')
+  } finally {
+    historyLoading.value = false
+  }
 }
 
-const handlePageSizeChange = (current: number, size: number) => {
-  emit('page-size', current, size)
+const handleCurrentChange = (current: number) => {
+  pagination.currentPage = current
+  loadHistory()
+}
+
+const handlePageSizeChange = (_current: number, size: number) => {
+  pagination.currentPage = 1
+  pagination.pageSize = size
+  loadHistory()
+}
+
+/**
+ * 删除面试会话（二次确认）
+ * @param session 面试会话对象
+ */
+const handleDeleteInterview = (session: InterviewSession) => {
+  Modal.confirm({
+    title: '删除该面试记录？',
+    content: `将删除「${session.title}」，此操作不可恢复。`,
+    okText: '删除',
+    okType: 'danger',
+    cancelText: '取消',
+    onOk: async () => {
+      try {
+        await deleteInterviewApi(session.id)
+        message.success('已删除')
+        await loadHistory()
+      } catch {
+        message.error('删除失败')
+      }
+    },
+  })
+}
+
+onMounted(() => {
+  loadHistory()
+})
+
+/** 详情抽屉是否打开 */
+const detailVisible = ref(false)
+/** 详情抽屉的面试详情数据 */
+const detailData = ref<InterviewDetail | null>(null)
+/** 详情抽屉加载中 */
+const detailLoading = ref(false)
+
+/**
+ * 打开面试详情抽屉
+ * @param id 面试会话 ID
+ */
+const handleOpenDetail = async (id: string) => {
+  detailVisible.value = true
+  detailData.value = null
+  detailLoading.value = true
+  try {
+    detailData.value = await getInterviewDetailApi(id)
+  } catch {
+    message.error('加载面试详情失败')
+  } finally {
+    detailLoading.value = false
+  }
 }
 
 /**
@@ -95,37 +155,21 @@ const formatTime = (t?: string) => {
 
 <template>
   <a-card class="history-card" bordered>
-    <div class="card-header">
-      <h3>历史面试</h3>
-      <a-button
-        type="text"
-        size="small"
-        :loading="loading"
-        @click="emit('refresh')"
-      >
-        <template #icon><reload-outlined /></template>
-        刷新
-      </a-button>
-    </div>
-
     <a-empty
-      v-if="!list.length && !loading"
+      v-if="!historyList.length && !historyLoading"
       description="还没有面试记录"
       class="empty-state"
     />
 
     <a-list
       v-else
-      :data-source="list"
-      :loading="loading"
+      :data-source="historyList"
+      :loading="historyLoading"
       item-layout="horizontal"
     >
       <template #renderItem="{ item }">
         <a-dropdown :trigger="['contextmenu']">
-          <a-list-item
-            class="history-item"
-            @click="emit('open-detail', item.id)"
-          >
+          <a-list-item class="history-item" @click="handleOpenDetail(item.id)">
             <a-list-item-meta>
               <template #title>
                 <span class="item-title">{{ item.title }}</span>
@@ -158,7 +202,7 @@ const formatTime = (t?: string) => {
                 type="text"
                 danger
                 size="small"
-                @click.stop="emit('delete', item)"
+                @click.stop="handleDeleteInterview(item)"
               >
                 <template #icon><delete-outlined /></template>
               </a-button>
@@ -166,11 +210,11 @@ const formatTime = (t?: string) => {
           </a-list-item>
           <template #overlay>
             <a-menu>
-              <a-menu-item @click="emit('open-detail', item.id)">
+              <a-menu-item @click="handleOpenDetail(item.id)">
                 <eye-outlined />
                 查看详情
               </a-menu-item>
-              <a-menu-item danger @click="emit('delete', item)">
+              <a-menu-item danger @click="handleDeleteInterview(item)">
                 <delete-outlined />
                 删除
               </a-menu-item>
@@ -181,16 +225,22 @@ const formatTime = (t?: string) => {
     </a-list>
 
     <a-pagination
-      v-if="total > 0"
-      :page-size="pageSize"
-      :current="currentPage"
-      :total="total"
+      v-if="historyList.length > 0"
+      :page-size="pagination.pageSize"
+      :current="pagination.currentPage"
+      :total="pagination.total"
       :page-size-options="[5, 10, 20]"
       show-size-changer
       @change="handleCurrentChange"
       @show-size-change="handlePageSizeChange"
     />
   </a-card>
+  <!-- 面试详情抽屉 -->
+  <interview-detail-drawer
+    v-model:open="detailVisible"
+    :detail="detailData"
+    :loading="detailLoading"
+  />
 </template>
 
 <style scoped lang="scss">
@@ -208,18 +258,6 @@ const formatTime = (t?: string) => {
       ),
     )
   );
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.8rem;
-}
-
-.card-header h3 {
-  margin: 0;
-  font-size: 1.4rem;
 }
 
 .empty-state {

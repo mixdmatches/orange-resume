@@ -9,45 +9,144 @@ import {
   ShopOutlined,
   HeatMapOutlined,
   UserOutlined,
+  ToolOutlined,
+  TranslationOutlined,
+  EditOutlined,
+  FundOutlined,
 } from '@ant-design/icons-vue'
 import { ACCESS_TOKEN_KEY } from '@/utils/request'
 import { storage } from '@/utils/storage'
 
-export const header_routes: RouteRecordRaw[] = [
+/** 导航项类型：普通按钮 or 下拉分组 */
+export type NavItemType = 'item' | 'dropdown'
+
+/** 统一的 header 导航配置（包含普通项和下拉分组）*/
+export interface HeaderNavItem {
+  /** 类型：普通按钮 或 下拉分组 */
+  type: NavItemType
+  /** 显示文字 */
+  label: string
+  /** 图标渲染函数 */
+  icon: () => any
+  /** 按钮类型的路由路径（type='item' 时使用）*/
+  path?: string
+  /** 下拉分组的子项（type='dropdown' 时使用）*/
+  children?: NavDropdownChild[]
+}
+
+/** 下拉子项 */
+export interface NavDropdownChild {
+  path: string
+  title: string
+  icon: () => any
+}
+
+/** AI 工具子路由（下拉菜单）*/
+export const ai_tools_routes: RouteRecordRaw[] = [
   {
-    path: '/my-resume',
-    name: 'my-resume',
+    path: '/ai-tools/translate',
+    name: 'ai-translate',
     meta: {
-      title: '我的简历',
-      icon: () => h(FileTextOutlined),
+      title: 'AI 翻译简历',
+      icon: () => h(TranslationOutlined),
+      group: 'ai-tools',
     },
-    component: () => import('@/views/my-resume/index.vue'),
+    component: () => import('@/views/ai-tools/translate/index.vue'),
   },
   {
-    path: '/template',
-    name: 'template',
+    path: '/ai-tools/polish',
+    name: 'ai-polish',
     meta: {
-      title: '模板中心',
-      icon: () => h(ShopOutlined),
+      title: 'AI 润色简历',
+      icon: () => h(EditOutlined),
+      group: 'ai-tools',
     },
-    component: () => import('@/views/template/index.vue'),
+    component: () => import('@/views/ai-tools/polish/index.vue'),
+  },
+  {
+    path: '/ai-tools/analyze',
+    name: 'ai-analyze',
+    meta: {
+      title: 'AI 简历分析',
+      icon: () => h(FundOutlined),
+      group: 'ai-tools',
+    },
+    component: () => import('@/views/ai-tools/analyze/index.vue'),
   },
   {
     path: '/ai-interview',
     name: 'ai-interview',
     meta: {
-      title: '模拟面试',
+      title: 'AI 模拟面试',
       icon: () => h(HeatMapOutlined),
+      group: 'ai-tools',
     },
     component: () => import('@/views/AI-simulation-interview/index.vue'),
+  },
+]
+
+/** Header 导航统一数据源 */
+export const header_nav_items: HeaderNavItem[] = [
+  {
+    type: 'item',
+    label: '我的简历',
+    icon: () => h(FileTextOutlined),
+    path: '/my-resume',
+  },
+  {
+    type: 'item',
+    label: '模板中心',
+    icon: () => h(ShopOutlined),
+    path: '/template',
+  },
+  {
+    type: 'dropdown',
+    label: 'AI 工具',
+    icon: () => h(ToolOutlined),
+    children: ai_tools_routes.map(r => ({
+      path: r.path,
+      title: r.meta?.title as string,
+      icon: (r.meta?.icon as () => any) ?? (() => h(ToolOutlined)),
+    })),
+  },
+  {
+    type: 'item',
+    label: '证件照制作',
+    icon: () => h(HeatMapOutlined),
+    path: '/id-card',
+  },
+  {
+    type: 'item',
+    label: '个人中心',
+    icon: () => h(UserOutlined),
+    path: '/profile',
+  },
+]
+
+/** 普通路由 */
+export const header_routes: RouteRecordRaw[] = [
+  {
+    path: '/my-resume',
+    name: 'my-resume',
+    meta: { title: '我的简历', icon: () => h(FileTextOutlined) },
+    component: () => import('@/views/my-resume/index.vue'),
+  },
+  {
+    path: '/template',
+    name: 'template',
+    meta: { title: '模板中心', icon: () => h(ShopOutlined) },
+    component: () => import('@/views/template/index.vue'),
+  },
+  {
+    path: '/id-card',
+    name: 'id-card',
+    meta: { title: '证件照制作', icon: () => h(HeatMapOutlined) },
+    component: () => import('@/views/id-card/index.vue'),
   },
   {
     path: '/profile',
     name: 'profile',
-    meta: {
-      title: '个人中心',
-      icon: () => h(UserOutlined),
-    },
+    meta: { title: '个人中心', icon: () => h(UserOutlined) },
     component: () => import('@/views/profile/index.vue'),
   },
 ]
@@ -71,7 +170,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/layout/index.vue'),
     redirect: '/my-resume',
     meta: { requiresAuth: true },
-    children: header_routes,
+    children: [...header_routes, ...ai_tools_routes],
   },
   {
     path: '/edit-resume/:id',

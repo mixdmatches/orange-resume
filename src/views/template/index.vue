@@ -1,14 +1,4 @@
 <script setup lang="ts">
-/**
- * Template · 模板中心
- *
- * 苹果 App Store 风格：PageHeader + 网格模板卡
- * - 卡片 cover 实时渲染真实模板（TemplateThumb）
- * - 网格 auto-fill 响应式
- * - 入场动画用 CSS fade-up，移除 v-motion 弹簧
- *
- * 不动功能：handlePreview / handleUse / handleUseTemplate / a-modal / router.push
- */
 import { ref, computed, provide } from 'vue'
 import { templates } from '@/template/index'
 import { DEFAULT_RESUME } from '@/config/init-resume-data'
