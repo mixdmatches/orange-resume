@@ -66,6 +66,8 @@ const handleDeleteModel = () => {
     title="教育经历"
     :items="resume.educations"
     :fields="educationFields"
+    entry-title-prop="school"
+    sortable
     @add="handleAddEducation"
     @delete="handleDeleteEducation"
     @hide="handleHideEducation"

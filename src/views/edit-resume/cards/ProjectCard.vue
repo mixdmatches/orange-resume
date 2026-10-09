@@ -62,6 +62,8 @@ const handleDeleteModel = () => {
     title="项目经历"
     :items="resume.projects"
     :fields="projectFields"
+    entry-title-prop="name"
+    sortable
     @hide="handleHideProject"
     @delete="handleDeleteProject"
     @add="handleAddProject"

@@ -57,6 +57,8 @@ const handleDeleteModel = () => {
     title="实习经历"
     :items="resume.internships"
     :fields="internshipFields"
+    entry-title-prop="companyName"
+    sortable
     @add="handleAddInternship"
     @delete="handleDeleteInternship"
     @hide="handleHideInternship"

@@ -20,6 +20,8 @@ export interface ResumeFormProps {
   showActions?: boolean // 是否显示操作按钮
   editableTitle?: boolean // 标题是否可编辑（自定义模块用）
   addText?: string // 添加按钮文本
+  entryTitleProp?: string // 条目摘要字段名（条目头显示的标题取该字段值）
+  sortable?: boolean // 条目是否支持拖拽排序
 }
 
 export interface ResumeFormEmits {

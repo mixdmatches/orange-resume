@@ -97,6 +97,8 @@ const handleDeleteModel = () => {
     editable-title
     :items="resume.customData[customName]"
     :fields="customFields"
+    entry-title-prop="title"
+    sortable
     @title-change="handleTitleChange"
     @add="handleAdd"
     @delete-model="handleDeleteModel"

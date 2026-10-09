@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, h, nextTick } from 'vue'
+import { ref, h, nextTick, onMounted, onUnmounted } from 'vue'
 import type { ResumeFormProps, ResumeFormEmits } from '@/types/form.d.ts'
 import {
   DownOutlined,
@@ -10,7 +10,9 @@ import {
   EditOutlined,
   CheckOutlined,
   CloseOutlined,
+  HolderOutlined,
 } from '@ant-design/icons-vue'
+import Sortable, { type SortableEvent } from 'sortablejs'
 import AiEditor from '@/components/AiEditor.vue'
 import ImgDrawer from '@/components/ImgDrawer.vue'
 
@@ -22,6 +24,8 @@ const props = withDefaults(defineProps<ResumeFormProps>(), {
   showAdd: true,
   showActions: true,
   editableTitle: false,
+  entryTitleProp: '',
+  sortable: false,
 })
 
 const emit = defineEmits<ResumeFormEmits>()
@@ -62,6 +66,59 @@ const cancelTitleEdit = () => {
   isEditingTitle.value = false
   titleDraft.value = ''
 }
+
+// ============ 条目折叠/展开 ============
+/** 条目折叠状态表：key 为条目 id，缺省为展开 */
+const collapsedEntries = ref<Record<string, boolean>>({})
+
+/** 切换条目折叠/展开 */
+const toggleEntry = (id: string) => {
+  collapsedEntries.value[id] = !collapsedEntries.value[id]
+}
+
+/** 查询条目是否处于折叠态 */
+const isEntryCollapsed = (id: string) => !!collapsedEntries.value[id]
+
+/** 条目摘要：取 entryTitleProp 指定字段的文本值，未配置或为空返回空串 */
+const entrySummary = (item: any) => {
+  if (!props.entryTitleProp) return ''
+  const value = item?.[props.entryTitleProp]
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+// ============ 条目拖拽排序（sortablejs） ============
+const entriesRef = ref<HTMLElement | null>(null)
+let entrySortable: Sortable | null = null
+
+onMounted(() => {
+  if (!props.sortable || !entriesRef.value) return
+  entrySortable = Sortable.create(entriesRef.value, {
+    draggable: '.entry',
+    handle: '.entry-grip',
+    animation: 150,
+    ghostClass: 'ghost',
+    onEnd: (evt: SortableEvent) => {
+      // 拖拽结束后一次性回写数组顺序，v-for 与 DOM 保持一致
+      const { oldIndex, newIndex } = evt
+      const list = props.items
+      if (
+        oldIndex == null ||
+        newIndex == null ||
+        oldIndex === newIndex ||
+        !list
+      ) {
+        return
+      }
+      const [moved] = list.splice(oldIndex, 1)
+      list.splice(newIndex, 0, moved)
+    },
+  })
+})
+
+onUnmounted(() => {
+  entrySortable?.destroy()
+  entrySortable = null
+})
 
 /** 触发添加条目 */
 const handleAdd = () => {
@@ -211,95 +268,126 @@ const isDeleteModel = ref(false) // 是否删除的是模块还是条目
 
     <!-- 模块内容：条目列表 + 添加按钮 -->
     <div v-show="isExpand || !showExpand" class="module-body">
-      <template v-for="(item, index) in items" :key="item.id">
-        <div class="entry" :class="{ 'is-hidden': item.visible === false }">
-          <!-- 条目头：序号 + 条目级操作 -->
-          <div v-if="showActions" class="entry-head">
-            <span class="entry-index">{{
-              String(index + 1).padStart(2, '0')
-            }}</span>
-            <span class="entry-actions">
+      <div ref="entriesRef" class="entries-list">
+        <template v-for="(item, index) in items" :key="item.id">
+          <div class="entry" :class="{ 'is-hidden': item.visible === false }">
+            <!-- 条目头：序号 + 摘要 + 条目级操作 + 折叠箭头，点击整行折叠/展开 -->
+            <div
+              v-if="showActions"
+              class="entry-head"
+              @click="toggleEntry(item.id)"
+            >
+              <span class="entry-index">{{
+                String(index + 1).padStart(2, '0')
+              }}</span>
               <span
-                v-if="showEye"
-                class="entry-action"
-                :title="item.visible !== false ? '隐藏该条目' : '显示该条目'"
-                @click="handleHide(item.id)"
+                class="entry-summary"
+                :class="{ 'is-empty': !entrySummary(item) }"
+                >{{ entrySummary(item) || '未命名条目' }}</span
               >
-                <EyeInvisibleOutlined v-if="item.visible !== false" />
-                <EyeOutlined v-else />
+              <span class="entry-actions">
+                <span
+                  v-if="sortable"
+                  class="entry-action entry-grip"
+                  title="拖拽排序"
+                  @click.stop
+                >
+                  <HolderOutlined />
+                </span>
+                <span
+                  v-if="showEye"
+                  class="entry-action"
+                  :title="item.visible !== false ? '隐藏该条目' : '显示该条目'"
+                  @click.stop="handleHide(item.id)"
+                >
+                  <EyeInvisibleOutlined v-if="item.visible !== false" />
+                  <EyeOutlined v-else />
+                </span>
+                <span
+                  v-if="showDelete"
+                  class="entry-action danger"
+                  title="删除该条目"
+                  @click.stop="handleDelete(item.id)"
+                >
+                  <DeleteOutlined />
+                </span>
+                <span
+                  class="chevron"
+                  :class="{ 'is-open': !isEntryCollapsed(item.id) }"
+                >
+                  <DownOutlined />
+                </span>
               </span>
-              <span
-                v-if="showDelete"
-                class="entry-action danger"
-                title="删除该条目"
-                @click="handleDelete(item.id)"
-              >
-                <DeleteOutlined />
-              </span>
-            </span>
-          </div>
+            </div>
 
-          <!-- 表单：2 列网格，label 置顶，编辑器通栏 -->
-          <div class="form-grid">
-            <template v-for="field in fields" :key="field.prop">
-              <!-- 富文本编辑器：通栏 -->
-              <div v-if="field.type === 'editor'" class="form-field field-full">
-                <label class="field-label">{{ field.label }}</label>
-                <AiEditor v-model="item[field.prop]" />
-              </div>
-              <!-- 下拉选择 -->
-              <div v-else-if="field.type === 'select'" class="form-field">
-                <label class="field-label">{{ field.label }}</label>
-                <a-select
-                  v-model:value="item[field.prop]"
-                  :placeholder="field.placeholder || `请选择${field.label}`"
-                  :options="
-                    (field.options || []).map(option => ({
-                      label: option,
-                      value: option,
-                    }))
-                  "
-                />
-              </div>
-              <!-- 证件照：通栏 + 调节/显隐按钮 -->
-              <div
-                v-else-if="field.type === 'img'"
-                class="form-field field-full"
-              >
-                <label class="field-label">{{ field.label }}</label>
-                <div class="img-input-group">
-                  <a-input
+            <!-- 表单：2 列网格，label 置顶，编辑器通栏；折叠时隐藏（保留编辑器实例状态） -->
+            <div
+              v-show="!showActions || !isEntryCollapsed(item.id)"
+              class="form-grid"
+            >
+              <template v-for="field in fields" :key="field.prop">
+                <!-- 富文本编辑器：通栏 -->
+                <div
+                  v-if="field.type === 'editor'"
+                  class="form-field field-full"
+                >
+                  <label class="field-label">{{ field.label }}</label>
+                  <AiEditor v-model="item[field.prop]" />
+                </div>
+                <!-- 下拉选择 -->
+                <div v-else-if="field.type === 'select'" class="form-field">
+                  <label class="field-label">{{ field.label }}</label>
+                  <a-select
                     v-model:value="item[field.prop]"
-                    class="img-url-input"
-                    :placeholder="
-                      field.placeholder || `请输入${field.label}url`
+                    :placeholder="field.placeholder || `请选择${field.label}`"
+                    :options="
+                      (field.options || []).map(option => ({
+                        label: option,
+                        value: option,
+                      }))
                     "
                   />
-                  <a-button @click="handleChangeImg">调节</a-button>
-                  <a-button
-                    :icon="
-                      h(
-                        items?.[0].photoConfig.visible !== false
-                          ? EyeInvisibleOutlined
-                          : EyeOutlined,
-                      )
-                    "
-                    @click="handleHideImg"
-                  ></a-button>
                 </div>
-              </div>
-              <!-- 普通输入框 -->
-              <div v-else class="form-field">
-                <label class="field-label">{{ field.label }}</label>
-                <a-input
-                  v-model:value="item[field.prop]"
-                  :placeholder="field.placeholder || `请输入${field.label}`"
-                />
-              </div>
-            </template>
+                <!-- 证件照：通栏 + 调节/显隐按钮 -->
+                <div
+                  v-else-if="field.type === 'img'"
+                  class="form-field field-full"
+                >
+                  <label class="field-label">{{ field.label }}</label>
+                  <div class="img-input-group">
+                    <a-input
+                      v-model:value="item[field.prop]"
+                      class="img-url-input"
+                      :placeholder="
+                        field.placeholder || `请输入${field.label}url`
+                      "
+                    />
+                    <a-button @click="handleChangeImg">调节</a-button>
+                    <a-button
+                      :icon="
+                        h(
+                          items?.[0].photoConfig.visible !== false
+                            ? EyeInvisibleOutlined
+                            : EyeOutlined,
+                        )
+                      "
+                      @click="handleHideImg"
+                    ></a-button>
+                  </div>
+                </div>
+                <!-- 普通输入框 -->
+                <div v-else class="form-field">
+                  <label class="field-label">{{ field.label }}</label>
+                  <a-input
+                    v-model:value="item[field.prop]"
+                    :placeholder="field.placeholder || `请输入${field.label}`"
+                  />
+                </div>
+              </template>
+            </div>
           </div>
-        </div>
-      </template>
+        </template>
+      </div>
 
       <!-- 添加条目：轻量幽灵按钮 -->
       <button
@@ -318,6 +406,9 @@ const isDeleteModel = ref(false) // 是否删除的是模块还是条目
 <style scoped lang="scss">
 /* ============ 模块卡片容器 ============ */
 .module-card {
+  /* 禁止 flex 收缩：overflow:hidden 的 flex 子项 min-height 会被解析为 0，
+     内容超高时卡片被压扁、底部条目被裁切且外层不出现滚动条 */
+  flex: none;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -517,16 +608,27 @@ const isDeleteModel = ref(false) // 是否删除的是模块还是条目
   &.is-hidden {
     opacity: 0.5;
   }
+
+  /* 拖拽中的幽灵占位：明确放置位置 */
+  &.ghost {
+    opacity: 0.4;
+    background: var(--color-primary-bg);
+    border-radius: var(--radius-md);
+  }
 }
 
 .entry-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-2);
   margin-bottom: var(--space-3);
+  cursor: pointer;
+  user-select: none;
 }
 
 .entry-index {
+  flex: none;
   font-size: var(--text-xs);
   font-weight: var(--font-semibold);
   color: var(--color-text-tertiary);
@@ -534,10 +636,37 @@ const isDeleteModel = ref(false) // 是否删除的是模块还是条目
   letter-spacing: 0.02em;
 }
 
+/* 条目摘要：显示 entryTitleProp 字段值，可判断当前条目身份 */
+.entry-summary {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &.is-empty {
+    color: var(--color-text-tertiary);
+  }
+}
+
 .entry-actions {
   display: flex;
   align-items: center;
   gap: var(--space-1);
+  flex: none;
+}
+
+/* 条目拖拽把手：hover 淡入，与模块导航把手一致的克制风格 */
+.entry-grip {
+  cursor: grab;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.entry-head:hover .entry-grip {
+  opacity: 0.7;
 }
 
 .entry-action {
