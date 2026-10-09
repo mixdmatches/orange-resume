@@ -1,37 +1,38 @@
 <script setup lang="ts">
+/**
+ * Layout · 应用壳
+ * 顶部 56px SiteHeader + 主内容区（贴边，子页面自控 padding）
+ * 路由切换过渡：fade（200ms 苹果式淡入）
+ */
 import SideBar from './components/SideBar.vue'
-import SiteHeader from './components/SiteHeader.vue'
 </script>
 
 <template>
-  <div class="container">
-    <side-bar></side-bar>
-    <div class="main-content">
-      <site-header></site-header>
+  <div class="app-shell">
+    <side-bar />
+    <main class="app-main">
       <router-view v-slot="{ Component }">
-        <transition name="slide">
+        <transition name="fade" mode="out-in">
           <component :is="Component" />
         </transition>
       </router-view>
-    </div>
+    </main>
   </div>
 </template>
 
 <style scoped lang="scss">
-.container {
+.app-shell {
   display: flex;
+  flex-direction: column;
   height: 100vh;
+  background: var(--color-bg);
+}
 
-  .main-content {
-    overflow-x: hidden;
-    flex: 1;
-    border-left: 1px solid $border-color;
-    padding: 2rem;
-    @include themify(
-      (
-        border-color: $border-color-mode,
-      )
-    );
-  }
+.app-main {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  // 移除外层 padding，子页面通过 .page 类自控
+  // 这样避免 layout padding 与子页面 padding 双重叠加
 }
 </style>

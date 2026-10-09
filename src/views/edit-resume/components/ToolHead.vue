@@ -22,7 +22,7 @@ import { computed, inject, ref } from 'vue'
 import { resumeToText } from '@/utils/resumeToText'
 import type { Resume } from '@/types/resume'
 import templates from '@/template'
-import previewImage from '@/assets/images/classic.fcafadcb.svg'
+import TemplateThumb from '@/components/TemplateThumb.vue'
 import type { CloudSyncStatus } from '@/stores/sync'
 
 const props = defineProps<{
@@ -156,28 +156,28 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
 <template>
   <div class="tool-head">
     <div class="tool-head-left">
-      <line-md-arrow-small-left @click="$router.back()" />
-      <a-input v-model:value="resume.title" class="title"></a-input>
+      <button class="icon-btn" title="返回" @click="$router.back()">
+        <line-md-arrow-small-left />
+      </button>
+      <a-input v-model:value="resume.title" class="title-input" />
       <div class="undo-redo-group">
         <a-tooltip title="撤销 (Ctrl+Z)">
-          <a-button
-            size="small"
+          <button
+            class="icon-btn"
             :disabled="!props.canUndo"
-            class="icon-button"
             @click="emit('undo')"
           >
             <UndoOutlined />
-          </a-button>
+          </button>
         </a-tooltip>
         <a-tooltip title="还原 (Ctrl+Shift+Z)">
-          <a-button
-            size="small"
+          <button
+            class="icon-btn"
             :disabled="!props.canRedo"
-            class="icon-button"
             @click="emit('redo')"
           >
             <RedoOutlined />
-          </a-button>
+          </button>
         </a-tooltip>
       </div>
       <div class="last-save-time" :title="fullSaveTime">
@@ -186,14 +186,14 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
     </div>
     <div class="tools">
       <a-tooltip title="切换模板">
-        <a-button @click="handleChangeTemplate"
-          ><line-md-arrows-horizontal
-        /></a-button>
+        <button class="icon-btn" @click="handleChangeTemplate">
+          <line-md-arrows-horizontal />
+        </button>
       </a-tooltip>
       <a-tooltip title="数据分析">
-        <a-button @click="handleOpenAnalysis">
+        <button class="icon-btn" @click="handleOpenAnalysis">
           <BarChartOutlined />
-        </a-button>
+        </button>
       </a-tooltip>
       <a-dropdown>
         <a-button>
@@ -228,14 +228,13 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
           </a-menu>
         </template>
       </a-dropdown>
-      <theme-icon></theme-icon>
+      <button class="icon-btn">
+        <theme-icon></theme-icon>
+      </button>
     </div>
   </div>
   <a-drawer
     v-model:open="drawerOpen"
-    class="custom-class"
-    root-class-name="root-class-name"
-    :root-style="{ color: 'blue' }"
     title="选择模板"
     width="700px"
     placement="left"
@@ -250,8 +249,16 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
           v-for="template in templates"
           :key="template.id"
           class="template-box"
+          :class="{ 'template-box-active': resume.templateId === template.id }"
         >
-          <img :src="previewImage" alt="" />
+          <!-- 实时渲染真实模板预览 -->
+          <div class="template-thumb">
+            <TemplateThumb
+              :template-id="template.id"
+              :resume="resume"
+              :scale="0.22"
+            />
+          </div>
           <a-radio :value="template.id">{{ template.name }}</a-radio>
         </div>
       </div>
@@ -300,114 +307,119 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
 </template>
 
 <style scoped lang="scss">
+/* ============ 工具栏 ============ */
 .tool-head {
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  height: $site-header-height;
-  padding: 1rem 2rem;
-  font-size: 2rem;
-  border-bottom: 1px solid;
-  @include themify(
-    (
-      color: $text-color,
-      background-color: $bg-color,
-      border-color: $border-color-mode,
-    )
-  );
-  &-left {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    .undo-redo-group {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .update-time {
-      font-size: 1.2rem;
-      white-space: nowrap;
-      @include themify(
-        (
-          color: $text-color,
-        )
-      );
-    }
-    .last-save-time {
-      font-size: 1.2rem;
-      white-space: nowrap;
-      opacity: 0.6;
-      @include themify(
-        (
-          color: $text-color,
-        )
-      );
-    }
-    .tool-mode {
-      display: flex;
-      gap: 1rem;
-      span {
-        padding: 4px 6px;
-        border-radius: 4px;
-        font-size: 1.4rem;
-        cursor: pointer;
-        text-wrap: nowrap;
-        &.active {
-          // color: $primary-color;
-          @include themify(
-            (
-              background-color: $layout-bg-color,
-            )
-          );
-        }
-      }
-    }
-  }
-  .tools {
-    display: flex;
-    gap: 2rem;
-    .tool-download {
-      display: flex;
-      align-items: center;
-    }
-  }
+  height: var(--header-height);
+  padding: 0 var(--space-6);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
 
-  .undo-redo-group {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
+.tool-head-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
 
-  .icon-button {
-    width: 34px;
-    height: 34px;
-    padding: 0;
+.title-input {
+  width: 220px;
+  font-size: var(--text-sm);
+}
+
+.undo-redo-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.last-save-time {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+
+  .tool-download {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
   }
 }
+
+/* ============ 模板选择抽屉 ============ */
 .template-container {
   width: 100%;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  .template-box {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    border-radius: 10px;
-    border: 1px solid transparent;
-    padding: 10px;
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 10px;
-    }
+  gap: var(--space-3);
+}
+
+.template-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+
+  &:hover {
+    border-color: var(--color-primary-border);
+  }
+
+  &.template-box-active {
+    border-color: var(--color-primary);
+    background: var(--color-primary-bg);
+  }
+}
+
+.template-thumb {
+  width: 100%;
+  // 高度自适应：scale 0.22 时完整 A4 缩放高度约 247px，不写死避免裁切
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-muted);
+  display: flex;
+  justify-content: center;
+  padding: var(--space-2);
+}
+
+/* ============ 响应式 ============ */
+@media (max-width: 768px) {
+  .tool-head {
+    padding: 0 var(--space-3);
+    flex-wrap: wrap;
+    height: auto;
+    min-height: var(--header-height);
+    padding-top: var(--space-1);
+    padding-bottom: var(--space-1);
+  }
+
+  .title-input {
+    width: 140px;
+  }
+
+  .last-save-time {
+    display: none;
+  }
+
+  .tools {
+    gap: var(--space-1);
+  }
+
+  .template-container {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>

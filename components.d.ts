@@ -18,6 +18,7 @@ declare module 'vue' {
     PhotoImg: typeof import('./src/components/PhotoImg.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    TemplateThumb: typeof import('./src/components/TemplateThumb.vue')['default']
     ThemeIcon: typeof import('./src/components/ThemeIcon.vue')['default']
   }
 }

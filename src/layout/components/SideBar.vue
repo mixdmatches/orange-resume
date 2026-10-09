@@ -1,120 +1,244 @@
-<script lang="ts" setup>
-import { reactive, ref, VueElement, watch } from 'vue'
+<script setup lang="ts">
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { header_routes } from '@/router'
-import { MenuUnfoldOutlined, MenuFoldOutlined } from '@ant-design/icons-vue'
-import type { MenuProps, ItemType } from 'ant-design-vue'
+import { header_nav_items } from '@/router'
+import type { HeaderNavItem } from '@/router'
+import LineMdGithub from '~icons/line-md/github'
+import ThemeIcon from '@/components/ThemeIcon.vue'
+import NavDropdown from './NavDropdown.vue'
 
 const router = useRouter()
 
-const selectedKeys = ref<string[]>([])
+/** 当前激活的菜单项路径（基于 router.currentRoute.value.path 计算）*/
+const activePath = ref<string>('')
 
-function getItem(
-  label: VueElement | string,
-  key: string,
-  icon?: VueElement,
-  children?: ItemType[],
-  type?: 'group',
-): ItemType {
-  return {
-    key,
-    icon,
-    children,
-    label,
-    type,
-  } as ItemType
-}
-
-const generateItems = () => {
-  return header_routes.map(item =>
-    getItem(
-      item.meta?.title as string,
-      item.path,
-      item.meta?.icon as VueElement,
-    ),
-  )
-}
-
-const items: ItemType[] = reactive(generateItems())
-
-// 点击仅发起导航；高亮统一由路由变化驱动，导航被守卫拦截时高亮不会误更新
-const handleClick: MenuProps['onClick'] = e => {
-  router.push(e.key as string)
-}
-
+/** 路由变化时同步激活菜单项 */
 watch(
   () => router.currentRoute.value.path,
   newVal => {
-    selectedKeys.value = [newVal as string]
+    activePath.value = newVal as string
   },
   { immediate: true },
 )
 
-const toggleCollapsed = () => {
-  collapsed.value = !collapsed.value
+/** 点击普通菜单项发起导航 */
+const handleClick = (path: string) => {
+  router.push(path)
 }
 
-const collapsed = ref(false)
+/** 跳转 GitHub 仓库 */
+const goToGithub = () => {
+  window.location.href = 'https://github.com/mixdmatches/orange-resume'
+}
+
+/** 下拉项类型守卫 */
+const isDropdown = (
+  item: HeaderNavItem,
+): item is HeaderNavItem & {
+  type: 'dropdown'
+  children: NonNullable<HeaderNavItem['children']>
+} => item.type === 'dropdown'
+
+/** 普通项类型守卫 */
+const isItem = (
+  item: HeaderNavItem,
+): item is HeaderNavItem & { type: 'item'; path: string } =>
+  item.type === 'item' && !!item.path
 </script>
 
 <template>
-  <div class="side-bar">
-    <div class="logo">
-      <img src="~@/assets/images/logo.png" alt="fan-resume" />
-      <img
-        v-if="!collapsed"
-        src="~@/assets/images/logo-text.png"
-        alt="fan-resume"
-      />
+  <header class="site-header">
+    <div class="header-inner">
+      <!-- 左侧：品牌区（logo + 文字）-->
+      <div class="header-brand" @click="router.push('/')">
+        <img
+          class="brand-logo"
+          src="~@/assets/images/logo.png"
+          alt="橘子简历"
+        />
+        <span class="brand-name">橘子简历</span>
+      </div>
+
+      <!-- 中间：横向导航菜单 -->
+      <nav class="header-nav" aria-label="主导航">
+        <template
+          v-for="item in header_nav_items"
+          :key="item.type === 'dropdown' ? `dd-${item.label}` : item.path"
+        >
+          <!-- 下拉分组 -->
+          <nav-dropdown
+            v-if="isDropdown(item)"
+            :label="item.label"
+            :icon="item.icon"
+            :items="item.children"
+            :active-path="activePath"
+          />
+
+          <!-- 普通按钮 -->
+          <button
+            v-else-if="isItem(item)"
+            type="button"
+            class="nav-item"
+            :class="{ active: activePath === item.path }"
+            @click="handleClick(item.path)"
+          >
+            <span class="nav-icon">
+              <component :is="item.icon()" />
+            </span>
+            <span class="nav-label">{{ item.label }}</span>
+          </button>
+        </template>
+      </nav>
+
+      <!-- 右侧：操作区 -->
+      <div class="header-actions">
+        <button class="icon-btn" title="GitHub 仓库" @click="goToGithub">
+          <line-md-github class="action-icon" />
+        </button>
+        <div class="icon-btn">
+          <theme-icon />
+        </div>
+      </div>
     </div>
-    <a-menu
-      :selected-keys="selectedKeys"
-      class="menu"
-      mode="inline"
-      :items="items"
-      :inline-collapsed="collapsed"
-      @click="handleClick"
-    ></a-menu>
-    <div class="menu-btn">
-      <a-button
-        type="primary"
-        style="margin-bottom: 16px"
-        @click="toggleCollapsed"
-      >
-        <MenuUnfoldOutlined v-if="collapsed" />
-        <MenuFoldOutlined v-else />
-      </a-button>
-    </div>
-  </div>
+  </header>
 </template>
 
 <style lang="scss" scoped>
-.side-bar {
-  display: flex;
-  flex-direction: column;
+.site-header {
+  height: var(--header-height);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
 }
-.menu {
+
+.header-inner {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
   height: 100%;
-}
-.ant-menu-root {
-  border-inline-end: none !important;
-}
-.logo {
+  padding: 0 var(--space-8);
   display: flex;
-  height: $site-header-height;
   align-items: center;
-  justify-content: center;
-  img:nth-child(1) {
-    height: 90%;
+  justify-content: space-between;
+  gap: var(--space-6);
+
+  @media (max-width: 768px) {
+    padding: 0 var(--space-5);
+    gap: var(--space-4);
+
+    .header-nav {
+      display: none;
+    }
   }
-  img:nth-child(2) {
-    width: 15rem;
+}
+
+/* ============ 品牌区 ============ */
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  flex-shrink: 0;
+
+  .brand-logo {
+    height: 32px;
+    width: auto;
     object-fit: contain;
   }
+
+  .brand-name {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-text);
+  }
+
+  &:hover .brand-name {
+    color: var(--color-primary);
+  }
 }
-.menu-btn {
-  padding: 1rem;
+
+/* ============ 导航 ============ */
+.header-nav {
   display: flex;
-  justify-content: right;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 var(--space-3);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  color: var(--color-text-secondary);
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+
+  &:hover {
+    background: var(--color-bg-muted);
+    color: var(--color-text);
+  }
+
+  &.active {
+    background: var(--color-primary-bg);
+    color: var(--color-primary);
+    font-weight: var(--font-semibold);
+
+    .nav-icon {
+      color: var(--color-primary);
+    }
+  }
+
+  .nav-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: var(--color-text-tertiary);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .nav-label {
+    line-height: 1;
+  }
+}
+
+/* ============ 操作区 ============ */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+
+  &:hover {
+    background: var(--color-bg-muted);
+    color: var(--color-text);
+  }
 }
 </style>

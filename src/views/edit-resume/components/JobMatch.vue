@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { inject, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import {
@@ -282,7 +282,7 @@ const handleAnalyze = async () => {
   gap: 0.6rem;
 
   .area-title {
-    font-size: 1.4rem;
+    font-size: var(--text-sm);
     font-weight: 600;
     @include themify(
       (
@@ -292,7 +292,7 @@ const handleAnalyze = async () => {
   }
 
   .jd-textarea {
-    font-size: 1.3rem;
+    font-size: var(--text-sm);
   }
 
   .jd-actions {
@@ -335,12 +335,12 @@ const handleAnalyze = async () => {
     justify-content: center;
 
     .score-num {
-      font-size: 2.6rem;
+      font-size: var(--text-2xl);
       font-weight: 700;
     }
 
     .score-unit {
-      font-size: 1.3rem;
+      font-size: var(--text-sm);
       color: #8c8c8c;
       margin-left: 0.2rem;
     }
@@ -350,13 +350,13 @@ const handleAnalyze = async () => {
     flex: 1;
 
     .score-text {
-      font-size: 1.8rem;
+      font-size: var(--text-lg);
       font-weight: 600;
       margin-bottom: 0.4rem;
     }
 
     .score-desc {
-      font-size: 1.2rem;
+      font-size: var(--text-xs);
       color: #8c8c8c;
       line-height: 1.6;
     }
@@ -365,7 +365,7 @@ const handleAnalyze = async () => {
 
 /* 公共卡片标题 */
 .card-title {
-  font-size: 1.5rem;
+  font-size: var(--text-base);
   font-weight: 600;
   margin-bottom: 1rem;
   display: flex;
@@ -400,7 +400,7 @@ const handleAnalyze = async () => {
       display: flex;
       align-items: center;
       gap: 0.4rem;
-      font-size: 1.3rem;
+      font-size: var(--text-sm);
       font-weight: 500;
       margin-bottom: 0.6rem;
       @include themify(
@@ -417,7 +417,7 @@ const handleAnalyze = async () => {
     }
 
     .empty-text {
-      font-size: 1.2rem;
+      font-size: var(--text-xs);
       color: #bfbfbf;
     }
   }
@@ -456,13 +456,13 @@ const handleAnalyze = async () => {
     background: rgba(0, 0, 0, 0.03);
 
     .point-section {
-      font-size: 1.2rem;
+      font-size: var(--text-xs);
       font-weight: 600;
       color: #8c8c8c;
     }
 
     .point-text {
-      font-size: 1.3rem;
+      font-size: var(--text-sm);
       line-height: 1.6;
       @include themify(
         (
@@ -473,7 +473,7 @@ const handleAnalyze = async () => {
   }
 
   .empty-text {
-    font-size: 1.3rem;
+    font-size: var(--text-sm);
     color: #bfbfbf;
   }
 }
@@ -495,7 +495,7 @@ const handleAnalyze = async () => {
     padding-left: 1.8rem;
 
     li {
-      font-size: 1.3rem;
+      font-size: var(--text-sm);
       line-height: 1.8;
       color: #595959;
       margin-bottom: 0.4rem;
@@ -503,7 +503,7 @@ const handleAnalyze = async () => {
   }
 
   .empty-text {
-    font-size: 1.3rem;
+    font-size: var(--text-sm);
     color: #bfbfbf;
   }
 }

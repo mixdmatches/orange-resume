@@ -170,16 +170,19 @@ onMounted(loadResume)
   <div class="interview-room">
     <header class="room-header">
       <div class="header-left">
-        <a-button :icon="h(ArrowLeftOutlined)" @click="handleBack"
-          >返回</a-button
+        <button class="icon-btn" title="返回" @click="handleBack">
+          <arrow-left-outlined />
+        </button>
+        <h1 class="room-title">面试间</h1>
+        <span
+          v-if="phase === 'interviewing'"
+          class="phase-tag phase-tag-active"
         >
-        <h2>面试间</h2>
-        <a-tag v-if="phase === 'interviewing'" color="processing">
           第 {{ askedCount }} / {{ totalRounds }} 题
-        </a-tag>
-        <a-tag v-else-if="phase === 'finished'" color="success"
-          >面试已结束</a-tag
-        >
+        </span>
+        <span v-else-if="phase === 'finished'" class="phase-tag phase-tag-done">
+          已结束
+        </span>
       </div>
       <div v-if="phase !== 'idle'" class="header-right">
         <clock-circle-outlined class="timer-icon" />
@@ -194,35 +197,38 @@ onMounted(loadResume)
       </div>
     </header>
 
-    <!-- 欢迎页：面试配置摘要 + 开始按钮 -->
-    <a-card v-if="phase === 'idle'" class="welcome-card">
-      <div class="welcome">
-        <robot-outlined class="welcome-icon" />
-        <h3>准备开始模拟面试</h3>
+    <!-- 欢迎页：配置摘要 + 开始按钮（居中卡片） -->
+    <main v-if="phase === 'idle'" class="welcome-wrap">
+      <div class="welcome-card">
+        <div class="welcome-icon">
+          <robot-outlined />
+        </div>
+        <h2 class="welcome-title">准备开始模拟面试</h2>
         <p class="welcome-desc">
-          AI 面试官将基于你的简历{{ jobType ? '与目标岗位' : '' }}进行
-          多轮一对一模拟面试，结束后生成总结评价。
+          AI 面试官将基于你的简历{{
+            jobType ? '与目标岗位' : ''
+          }}进行多轮一对一模拟面试，结束后生成总结评价。
         </p>
 
         <div class="welcome-info">
           <div class="info-line">
-            <span class="label">简历：</span>
-            <span>{{ resume?.title || '加载中…' }}</span>
+            <span class="label">简历</span>
+            <span class="value">{{ resume?.title || '加载中…' }}</span>
           </div>
           <div class="info-line">
-            <span class="label">面试轮数：</span>
-            <span>{{ questionCount }} 轮（动态出题）</span>
+            <span class="label">轮数</span>
+            <span class="value">{{ questionCount }} 轮（动态出题）</span>
           </div>
           <div class="info-line">
-            <span class="label">目标岗位：</span>
-            <span>{{ jobType || '未指定' }}</span>
+            <span class="label">岗位</span>
+            <span class="value">{{ jobType || '未指定' }}</span>
           </div>
           <div class="info-line">
-            <span class="label">面试难度：</span>
-            <span>{{ difficultyLabel(difficulty) }}</span>
+            <span class="label">难度</span>
+            <span class="value">{{ difficultyLabel(difficulty) }}</span>
           </div>
-          <div v-if="hasJd" class="info-line jd-line">
-            <span class="label">岗位 JD：</span>
+          <div v-if="hasJd" class="info-line info-line-full">
+            <span class="label">岗位 JD</span>
             <pre class="jd-content">{{ jd }}</pre>
           </div>
         </div>
@@ -231,685 +237,726 @@ onMounted(loadResume)
           type="primary"
           size="large"
           :loading="thinking"
+          class="welcome-start"
           @click="handleStart"
           >开始面试</a-button
         >
       </div>
-    </a-card>
+    </main>
 
     <!-- 面试进行中 / 已结束：聊天流 + 输入区 -->
     <template v-else>
       <div ref="chatContainerRef" class="chat-flow">
-        <template v-for="msg in messages" :key="msg.id">
-          <!-- 面试官（AI）消息：流式输出中（streaming）且尚无内容时显示思考态 -->
-          <div v-if="msg.role === 'interviewer'" class="msg-row interviewer">
-            <div class="avatar ai">
-              <robot-outlined />
-            </div>
-            <!-- 纵向容器：气泡 + 可选的"手动停止"提示行 -->
-            <div class="msg-main">
-              <div
-                v-if="msg.streaming && !msg.content"
-                class="bubble interviewer-bubble thinking-bubble"
-              >
-                <a-spin size="small" />
+        <div class="chat-inner">
+          <template v-for="msg in messages" :key="msg.id">
+            <!-- 面试官（AI）消息 -->
+            <div v-if="msg.role === 'interviewer'" class="msg-row interviewer">
+              <div class="avatar ai">
+                <robot-outlined />
               </div>
-              <div v-else class="bubble interviewer-bubble">
-                {{ msg.content }}
-              </div>
-              <!-- 手动停止生成提示 -->
-              <div v-if="msg.stopped" class="stop-tip">
-                <stop-outlined />
-                <span>已手动停止生成</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 候选人（用户）消息 -->
-          <div v-else-if="msg.role === 'candidate'" class="msg-row candidate">
-            <div class="bubble candidate-bubble">{{ msg.content }}</div>
-            <div class="avatar user">
-              <user-outlined />
-            </div>
-          </div>
-
-          <!-- 单题评价卡片 -->
-          <div v-else-if="msg.role === 'evaluation'" class="msg-row evaluation">
-            <div class="avatar ai">
-              <robot-outlined />
-            </div>
-            <!-- 纵向容器：评价卡片 + 可选的"手动停止"提示行 -->
-            <div class="msg-main">
-              <div class="eval-card">
-                <div v-if="msg.streaming" class="eval-loading">
-                  <a-spin size="small" />
-                  <span>AI 正在评价你的回答…</span>
+              <div class="msg-main">
+                <!-- typing 三点动画（streaming 且无内容时） -->
+                <div
+                  v-if="msg.streaming && !msg.content"
+                  class="bubble interviewer-bubble thinking-bubble"
+                >
+                  <span class="typing-dots"> <i></i><i></i><i></i> </span>
                 </div>
-                <template v-else-if="msg.evaluation">
-                  <div class="eval-header">
-                    <span class="eval-round"
-                      >第 {{ msg.evaluation.round }} 题评价</span
-                    >
-                    <a-tag :color="scoreColor(msg.evaluation.score)">
-                      <trophy-outlined /> {{ msg.evaluation.score }} 分
-                    </a-tag>
-                  </div>
-                  <div class="eval-feedback">
-                    {{ msg.evaluation.feedback }}
-                  </div>
-                  <div
-                    v-if="msg.evaluation.strengths.length"
-                    class="eval-block eval-good"
-                  >
-                    <div class="eval-block-title">
-                      <check-circle-outlined /> 亮点
-                    </div>
-                    <ul>
-                      <li v-for="(s, i) in msg.evaluation.strengths" :key="i">
-                        {{ s }}
-                      </li>
-                    </ul>
-                  </div>
-                  <div
-                    v-if="msg.evaluation.weaknesses.length"
-                    class="eval-block eval-bad"
-                  >
-                    <div class="eval-block-title">
-                      <warning-outlined /> 不足
-                    </div>
-                    <ul>
-                      <li v-for="(s, i) in msg.evaluation.weaknesses" :key="i">
-                        {{ s }}
-                      </li>
-                    </ul>
-                  </div>
-                  <div
-                    v-if="msg.evaluation.suggestions.length"
-                    class="eval-block eval-tip"
-                  >
-                    <div class="eval-block-title"><bulb-outlined /> 建议</div>
-                    <ul>
-                      <li v-for="(s, i) in msg.evaluation.suggestions" :key="i">
-                        {{ s }}
-                      </li>
-                    </ul>
-                  </div>
-                </template>
+                <div v-else class="bubble interviewer-bubble">
+                  {{ msg.content }}
+                </div>
+                <div v-if="msg.stopped" class="stop-tip">
+                  <stop-outlined />
+                  <span>已手动停止生成</span>
+                </div>
               </div>
-              <!-- 手动停止生成提示 -->
+            </div>
+
+            <!-- 候选人（用户）消息 -->
+            <div v-else-if="msg.role === 'candidate'" class="msg-row candidate">
+              <div class="bubble candidate-bubble">{{ msg.content }}</div>
+              <div class="avatar user">
+                <user-outlined />
+              </div>
+            </div>
+
+            <!-- 单题评价卡片 -->
+            <div
+              v-else-if="msg.role === 'evaluation'"
+              class="msg-row evaluation"
+            >
+              <div class="avatar ai">
+                <robot-outlined />
+              </div>
+              <div class="msg-main">
+                <div class="eval-card">
+                  <!-- 评价生成中：typing 三点 -->
+                  <div v-if="msg.streaming" class="eval-loading">
+                    <span class="typing-dots"> <i></i><i></i><i></i> </span>
+                    <span>AI 正在评价你的回答</span>
+                  </div>
+                  <template v-else-if="msg.evaluation">
+                    <div class="eval-header">
+                      <span class="eval-round"
+                        >第 {{ msg.evaluation.round }} 题评价</span
+                      >
+                      <span
+                        class="eval-score"
+                        :class="scoreColor(msg.evaluation.score)"
+                      >
+                        <trophy-outlined /> {{ msg.evaluation.score }} 分
+                      </span>
+                    </div>
+                    <div class="eval-feedback">
+                      {{ msg.evaluation.feedback }}
+                    </div>
+                    <div
+                      v-if="msg.evaluation.strengths.length"
+                      class="eval-block eval-good"
+                    >
+                      <div class="eval-block-title">
+                        <check-circle-outlined /> 亮点
+                      </div>
+                      <ul>
+                        <li v-for="(s, i) in msg.evaluation.strengths" :key="i">
+                          {{ s }}
+                        </li>
+                      </ul>
+                    </div>
+                    <div
+                      v-if="msg.evaluation.weaknesses.length"
+                      class="eval-block eval-bad"
+                    >
+                      <div class="eval-block-title">
+                        <warning-outlined /> 不足
+                      </div>
+                      <ul>
+                        <li
+                          v-for="(s, i) in msg.evaluation.weaknesses"
+                          :key="i"
+                        >
+                          {{ s }}
+                        </li>
+                      </ul>
+                    </div>
+                    <div
+                      v-if="msg.evaluation.suggestions.length"
+                      class="eval-block eval-tip"
+                    >
+                      <div class="eval-block-title"><bulb-outlined /> 建议</div>
+                      <ul>
+                        <li
+                          v-for="(s, i) in msg.evaluation.suggestions"
+                          :key="i"
+                        >
+                          {{ s }}
+                        </li>
+                      </ul>
+                    </div>
+                  </template>
+                </div>
+                <div v-if="msg.stopped" class="stop-tip">
+                  <stop-outlined />
+                  <span>已手动停止生成</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 面试总结卡片 -->
+            <div v-else class="summary-card">
+              <div class="summary-title">
+                <robot-outlined />
+                <span>面试总结评价</span>
+                <span v-if="finalScore !== null" class="summary-score">
+                  <trophy-outlined /> 总分 {{ finalScore }}
+                </span>
+              </div>
+              <!-- 总结生成中：typing 三点 -->
+              <div v-if="msg.streaming && !msg.content" class="summary-loading">
+                <span class="typing-dots"> <i></i><i></i><i></i> </span>
+                <span>正在生成面试总结</span>
+              </div>
+              <div
+                v-else
+                class="summary-body"
+                v-html="renderMarkdown(msg.content)"
+              ></div>
               <div v-if="msg.stopped" class="stop-tip">
                 <stop-outlined />
                 <span>已手动停止生成</span>
               </div>
             </div>
-          </div>
-
-          <!-- 面试总结卡片 -->
-          <div v-else class="summary-card">
-            <div class="summary-title">
-              <robot-outlined />
-              <span>面试总结评价</span>
-              <a-tag
-                v-if="finalScore !== null"
-                color="gold"
-                class="summary-score"
-              >
-                <trophy-outlined /> 总分 {{ finalScore }}
-              </a-tag>
-            </div>
-            <!-- 流式输出中（streaming）且尚无内容时显示思考态 -->
-            <div v-if="msg.streaming && !msg.content" class="summary-loading">
-              <a-spin size="small" />
-              <span>正在生成面试总结…</span>
-            </div>
-            <!-- 内容为 AI 生成的 Markdown，经 markdown-it 渲染 -->
-            <div
-              v-else
-              class="summary-body"
-              v-html="renderMarkdown(msg.content)"
-            ></div>
-            <!-- 手动停止生成提示 -->
-            <div v-if="msg.stopped" class="stop-tip">
-              <stop-outlined />
-              <span>已手动停止生成</span>
-            </div>
-          </div>
-        </template>
+          </template>
+        </div>
       </div>
 
       <div class="input-bar">
-        <template v-if="phase === 'interviewing'">
-          <ChatInput
-            v-model:value="answerInput"
-            :loading="thinking"
-            :min-rows="2"
-            :max-rows="6"
-            :maxlength="2000"
-            placeholder="输入你的回答…"
-            hint="Enter 发送，Shift + Enter 换行"
-            :show-stop="false"
-            @send="handleSend"
-          />
-        </template>
+        <div class="input-inner">
+          <template v-if="phase === 'interviewing'">
+            <ChatInput
+              v-model:value="answerInput"
+              :loading="thinking"
+              :min-rows="2"
+              :max-rows="6"
+              :maxlength="2000"
+              placeholder="输入你的回答…"
+              hint="Enter 发送，Shift + Enter 换行"
+              :show-stop="false"
+              @send="handleSend"
+            />
+          </template>
 
-        <template v-else>
-          <div class="finished-bar">
-            <span class="finished-text"
-              >本次面试已结束，用时 {{ elapsedText }}</span
-            >
-            <a-space>
-              <a-button @click="handleRestart">重新面试</a-button>
-              <a-button type="primary" @click="handleBack">返回配置页</a-button>
-            </a-space>
-          </div>
-        </template>
+          <template v-else>
+            <div class="finished-bar">
+              <span class="finished-text"
+                >本次面试已结束，用时 {{ elapsedText }}</span
+              >
+              <a-space>
+                <a-button @click="handleRestart">重新面试</a-button>
+                <a-button type="primary" @click="handleBack"
+                  >返回配置页</a-button
+                >
+              </a-space>
+            </div>
+          </template>
+        </div>
       </div>
     </template>
   </div>
 </template>
 
 <style scoped lang="scss">
+/* ============ 全屏布局 ============ */
 .interview-room {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem;
-  box-sizing: border-box;
+  background: var(--color-bg-subtle);
 }
 
+/* ============ 极简 Header（56px） ============ */
 .room-header {
   flex: none;
+  height: var(--header-height);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
+  padding: 0 var(--space-6);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-3);
 }
 
-.header-left h2 {
+.room-title {
   margin: 0;
-  font-size: 1.6rem;
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--color-text);
+}
+
+.phase-tag {
+  font-size: var(--text-xs);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  font-variant-numeric: tabular-nums;
+
+  &.phase-tag-active {
+    color: var(--color-primary);
+    background: var(--color-primary-bg);
+  }
+
+  &.phase-tag-done {
+    color: var(--color-success);
+    background: var(--color-success-bg);
+  }
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 
 .timer-icon {
-  font-size: 1.1rem;
+  font-size: var(--text-base);
+  color: var(--color-text-tertiary);
 }
 
 .timer-text {
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  font-size: 1.15rem;
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin-right: var(--space-2);
 }
 
-/* ---------- 欢迎页 ---------- */
+/* ============ 欢迎页（居中卡片） ============ */
+.welcome-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-6);
+  overflow-y: auto;
+}
+
 .welcome-card {
-  margin: auto;
   width: 100%;
   max-width: 560px;
-  border-radius: 1rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  @include themify(
-    (
-      background: (
-        light: #fff,
-        dark: #111827,
-      ),
-      border-color: (
-        light: #f0f0f0,
-        dark: rgba(255, 255, 255, 0.12),
-      ),
-    )
-  );
-}
-
-.welcome {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-10) var(--space-8);
   text-align: center;
-  padding: 2.4rem 1.6rem;
+  animation: fade-up var(--duration-normal) var(--ease-out);
 }
 
 .welcome-icon {
-  font-size: 3.5rem;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
 }
 
-.welcome h3 {
-  margin: 0;
-  font-size: 1.5rem;
+.welcome-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text);
 }
 
 .welcome-desc {
-  margin: 0;
-  max-width: 520px;
-  color: rgba(0, 0, 0, 0.65);
-  @include themify(
-    (
-      color: (
-        light: rgba(0, 0, 0, 0.65),
-        dark: rgba(255, 255, 255, 0.65),
-      ),
-    )
-  );
+  margin: 0 0 var(--space-6);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  font-size: var(--text-sm);
 }
 
 .welcome-info {
   display: grid;
-  gap: 0.5rem;
-  max-width: 560px;
-  width: 100%;
-  padding: 1rem 1.2rem;
-  border-radius: 0.8rem;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
   text-align: left;
-  @include themify(
-    (
-      background: (
-        light: #f7f8fa,
-        dark: rgba(255, 255, 255, 0.06),
-      ),
-    )
-  );
+  padding: var(--space-5);
+  margin-bottom: var(--space-6);
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-lg);
 }
 
 .info-line {
   display: flex;
-  gap: 0.5rem;
-}
-
-.info-line .label {
-  color: rgba(0, 0, 0, 0.45);
-  flex: none;
-  @include themify(
-    (
-      color: (
-        light: rgba(0, 0, 0, 0.45),
-        dark: rgba(255, 255, 255, 0.45),
-      ),
-    )
-  );
-}
-
-.jd-line {
   flex-direction: column;
+  gap: 2px;
+
+  &.info-line-full {
+    grid-column: 1 / -1;
+  }
+
+  .label {
+    font-size: var(--text-xs);
+    color: var(--color-text-tertiary);
+  }
+
+  .value {
+    font-size: var(--text-sm);
+    color: var(--color-text);
+    font-weight: var(--font-medium);
+  }
 }
 
 .jd-content {
   margin: 0;
-  padding: 0.6rem 0.8rem;
-  border-radius: 0.6rem;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
   white-space: pre-wrap;
   word-break: break-word;
-  font-family: inherit;
-  line-height: 1.7;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: var(--leading-relaxed);
   max-height: 160px;
   overflow-y: auto;
-  @include themify(
-    (
-      background: (
-        light: #fff,
-        dark: rgba(255, 255, 255, 0.06),
-      ),
-      color: (
-        light: #333,
-        dark: rgba(255, 255, 255, 0.85),
-      ),
-    )
-  );
+  color: var(--color-text-secondary);
 }
 
-/* ---------- 聊天流 ---------- */
+.welcome-start {
+  min-width: 200px;
+}
+
+/* ============ 聊天流（居中 820px 容器） ============ */
 .chat-flow {
   flex: 1;
   overflow-y: auto;
-  padding: 1.2rem;
-  border-radius: 1rem;
-  @include themify(
-    (
-      background: (
-        light: #fff,
-        dark: #111827,
-      ),
-      border-color: (
-        light: #f0f0f0,
-        dark: rgba(255, 255, 255, 0.12),
-      ),
-    )
-  );
+  padding: var(--space-6) var(--space-6);
+}
+
+.chat-inner {
+  max-width: 820px;
+  margin: 0 auto;
 }
 
 .msg-row {
   display: flex;
-  gap: 0.6rem;
-  margin-bottom: 1rem;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  animation: fade-up var(--duration-normal) var(--ease-out);
+
+  &.interviewer,
+  &.evaluation {
+    justify-content: flex-start;
+  }
+
+  &.candidate {
+    justify-content: flex-end;
+  }
 }
 
-.msg-row.interviewer,
-.msg-row.evaluation {
-  justify-content: flex-start;
-}
-
-/* 气泡/卡片与停止提示行的纵向容器 */
 .msg-main {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   min-width: 0;
+  max-width: 76%;
 }
 
 /* 手动停止生成提示行 */
 .stop-tip {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  margin-top: 0.3rem;
-  font-size: 1.2rem;
-  @include themify(
-    (
-      color: (
-        light: rgba(0, 0, 0, 0.45),
-        dark: rgba(255, 255, 255, 0.45),
-      ),
-    )
-  );
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
 }
 
-.msg-row.candidate {
-  justify-content: flex-end;
-}
-
+/* 头像：AI 主色，用户 灰色 */
 .avatar {
   flex: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 1.1rem;
+  font-size: var(--text-base);
+
+  &.ai {
+    background: var(--color-primary);
+  }
+
+  &.user {
+    background: var(--color-text-tertiary);
+  }
 }
 
-.avatar.ai {
-  background: #1677ff;
-}
-
-.avatar.user {
-  background: #52c41a;
-}
-
+/* 气泡 */
 .bubble {
-  max-width: 72%;
-  padding: 0.7rem 1rem;
-  border-radius: 0.8rem;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
   white-space: pre-wrap;
   word-break: break-word;
-  line-height: 1.7;
+  line-height: var(--leading-relaxed);
+  font-size: var(--text-xs);
 }
 
 .interviewer-bubble {
-  @include themify(
-    (
-      background: (
-        light: #f4f5f7,
-        dark: rgba(255, 255, 255, 0.08),
-      ),
-      color: (
-        light: #333,
-        dark: rgba(255, 255, 255, 0.88),
-      ),
-    )
-  );
+  background: var(--color-bg-muted);
+  color: var(--color-text);
+  border-bottom-left-radius: var(--space-1);
 }
 
 .candidate-bubble {
-  @include themify(
-    (
-      background: (
-        light: #e6f4ff,
-        dark: rgba(22, 119, 255, 0.25),
-      ),
-      color: (
-        light: #1f2d3d,
-        dark: rgba(255, 255, 255, 0.92),
-      ),
-    )
-  );
+  background: var(--color-primary);
+  color: #fff;
+  border-bottom-right-radius: var(--space-1);
 }
 
 .thinking-bubble {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--space-2);
 }
 
-/* ---------- 题目元信息 ---------- */
-.q-meta {
-  display: flex;
-  gap: 0.4rem;
-  margin-bottom: 0.5rem;
-}
+/* typing 三点动画 */
+.typing-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 
-.ref-answer {
-  margin-top: 0.6rem;
+  i {
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-full);
+    background: currentColor;
+    opacity: 0.4;
+    animation: typing-bounce 1.4s infinite var(--ease-in-out);
 
-  :deep(.ant-collapse-header) {
-    padding: 0.3rem 0;
-    font-size: 0.85rem;
+    &:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    &:nth-child(3) {
+      animation-delay: 0.4s;
+    }
   }
 }
 
-/* ---------- 评价卡片 ---------- */
+@keyframes typing-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+/* ============ 评价卡片 ============ */
 .eval-card {
-  max-width: 72%;
-  padding: 0.8rem 1rem;
-  border-radius: 0.8rem;
-  border: 1px solid;
-  @include themify(
-    (
-      background: (
-        light: #fafafa,
-        dark: rgba(255, 255, 255, 0.04),
-      ),
-      border-color: (
-        light: #e8e8e8,
-        dark: rgba(255, 255, 255, 0.12),
-      ),
-    )
-  );
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  width: 100%;
 }
 
 .eval-loading {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  color: rgba(0, 0, 0, 0.65);
-  @include themify(
-    (
-      color: (
-        light: rgba(0, 0, 0, 0.65),
-        dark: rgba(255, 255, 255, 0.65),
-      ),
-    )
-  );
+  gap: var(--space-2);
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
 }
 
 .eval-header {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  margin-bottom: 0.5rem;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .eval-round {
-  font-weight: 600;
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+}
+
+.eval-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  margin-left: auto;
+
+  &.success {
+    color: var(--color-success);
+    background: var(--color-success-bg);
+  }
+  &.processing {
+    color: var(--color-primary);
+    background: var(--color-primary-bg);
+  }
+  &.error {
+    color: var(--color-danger);
+    background: var(--color-danger-bg);
+  }
 }
 
 .eval-feedback {
-  line-height: 1.7;
-  margin-bottom: 0.6rem;
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-3);
+  color: var(--color-text);
+  font-size: var(--text-sm);
 }
 
 .eval-block {
-  margin-top: 0.5rem;
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
 }
 
 .eval-block-title {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  font-weight: 600;
-  font-size: 0.9rem;
-  margin-bottom: 0.3rem;
+  gap: var(--space-1);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-1);
 }
 
 .eval-good .eval-block-title {
-  color: #52c41a;
+  color: var(--color-success);
 }
-
 .eval-bad .eval-block-title {
-  color: #ff4d4f;
+  color: var(--color-danger);
 }
-
 .eval-tip .eval-block-title {
-  color: #faad14;
+  color: var(--color-warning);
 }
 
 .eval-block ul {
   margin: 0;
-  padding-left: 1.2rem;
+  padding-left: var(--space-5);
 }
 
 .eval-block li {
-  margin: 0.2rem 0;
-  line-height: 1.6;
+  margin: var(--space-1) 0;
+  line-height: var(--leading-normal);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
 }
 
-/* ---------- 总结卡片 ---------- */
+/* ============ 总结卡片 ============ */
 .summary-card {
-  margin: 1.2rem 0;
-  padding: 1rem 1.2rem;
-  border-radius: 0.8rem;
-  border: 1px solid;
-  @include themify(
-    (
-      background: (
-        light: #f7f8fa,
-        dark: rgba(255, 255, 255, 0.06),
-      ),
-      border-color: (
-        light: #91caff,
-        dark: rgba(22, 119, 255, 0.45),
-      ),
-    )
-  );
+  margin: var(--space-5) 0;
+  padding: var(--space-5) var(--space-6);
+  border-radius: var(--radius-lg);
+  background: var(--color-primary-bg);
+  border: 1px solid var(--color-primary-border);
 }
 
 .summary-title {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-weight: 600;
-  font-size: 1.1rem;
-  margin-bottom: 0.5rem;
+  gap: var(--space-2);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  margin-bottom: var(--space-3);
 }
 
 .summary-score {
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+  padding: 2px var(--space-3);
+  border-radius: var(--radius-full);
+  color: var(--color-warning);
+  background: var(--color-warning-bg);
 }
 
 .summary-loading {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  color: rgba(0, 0, 0, 0.65);
-  @include themify(
-    (
-      color: (
-        light: rgba(0, 0, 0, 0.65),
-        dark: rgba(255, 255, 255, 0.65),
-      ),
-    )
-  );
+  gap: var(--space-2);
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
 }
 
 .summary-body {
-  line-height: 1.8;
+  line-height: var(--leading-relaxed);
   word-break: break-word;
+  color: var(--color-text);
+  font-size: var(--text-sm);
 
   :deep(h2) {
-    font-size: 1.1rem;
-    margin: 0.8rem 0 0.4rem;
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
+    margin: var(--space-3) 0 var(--space-2);
   }
 
   :deep(p) {
-    margin: 0.4rem 0;
+    margin: var(--space-2) 0;
   }
 
   :deep(ul) {
-    margin: 0.4rem 0;
-    padding-left: 1.4rem;
+    margin: var(--space-2) 0;
+    padding-left: var(--space-5);
   }
 
   :deep(li) {
-    margin: 0.2rem 0;
+    margin: var(--space-1) 0;
+  }
+
+  :deep(code) {
+    padding: 2px var(--space-1);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-muted);
+    font-family: var(--font-mono);
+    font-size: 0.9em;
   }
 }
 
-/* ---------- 输入区 ---------- */
+/* ============ 输入区（居中 820px） ============ */
 .input-bar {
   flex: none;
-  display: flex;
-  align-items: flex-end;
-  gap: 0.75rem;
+  padding: var(--space-3) var(--space-6) var(--space-5);
+  background: var(--color-bg-subtle);
+  border-top: 1px solid var(--color-border);
+}
+
+.input-inner {
+  max-width: 820px;
+  margin: 0 auto;
 }
 
 .finished-bar {
-  flex: 1;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-  padding: 0.7rem 1rem;
-  border-radius: 0.8rem;
-  @include themify(
-    (
-      background: (
-        light: #f4f5f7,
-        dark: rgba(255, 255, 255, 0.08),
-      ),
-    )
-  );
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-muted);
 }
 
 .finished-text {
-  color: rgba(0, 0, 0, 0.65);
-  @include themify(
-    (
-      color: (
-        light: rgba(0, 0, 0, 0.65),
-        dark: rgba(255, 255, 255, 0.65),
-      ),
-    )
-  );
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
 }
 
-@media screen and (max-width: 700px) {
-  .bubble,
-  .eval-card {
-    max-width: 86%;
+/* ============ 响应式 ============ */
+@media (max-width: 768px) {
+  .room-header {
+    padding: 0 var(--space-4);
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    height: auto;
+    min-height: var(--header-height);
+    padding-top: var(--space-2);
+    padding-bottom: var(--space-2);
+  }
+
+  .chat-flow {
+    padding: var(--space-4);
+  }
+
+  .input-bar {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .msg-main,
+  .bubble {
+    max-width: 100%;
+  }
+
+  .welcome-info {
+    grid-template-columns: 1fr;
+  }
+
+  .welcome-card {
+    padding: var(--space-6) var(--space-4);
   }
 }
 </style>

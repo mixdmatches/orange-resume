@@ -3,7 +3,6 @@ import type { APIManufacturer, AiConfigInput } from '@/types/ai-config'
 import { Modal, message } from 'ant-design-vue'
 import {
   DeleteOutlined,
-  KeyOutlined,
   PlusOutlined,
   SlidersOutlined,
 } from '@ant-design/icons-vue'
@@ -494,88 +493,78 @@ onBeforeRouteLeave(to => {
 </script>
 
 <template>
-  <!-- API key 设置 -->
-  <a-card>
-    <template #title>
-      <div class="setting-title">
-        <KeyOutlined :style="{ fontSize: '16px' }" /> API Key
-      </div>
-    </template>
-
-    <!-- 数据由后端异步加载，就绪前不渲染表单区，避免访问未初始化状态 -->
-    <div v-if="!loading" class="ai-settings-container">
-      <!-- 左侧厂商列表 -->
-      <div class="model-list">
-        <div
-          v-for="model in editingListView"
-          :key="model.providerId"
-          :class="[
-            'model-item',
-            {
-              active:
-                activeTab === 'provider' && currentEditId === model.providerId,
-            },
-          ]"
-          @click="handleSelect(model.providerId ?? '')"
-        >
-          <span class="model-icon">{{ model.icon }}</span>
-          <span class="model-name">{{ model.providerName }}</span>
-          <DeleteOutlined
-            v-if="!BUILTIN_PROVIDER_IDS.includes(model.providerId ?? '')"
-            class="model-delete"
-            @click.stop="handleDeleteCustom(model.providerId ?? '')"
-          />
-        </div>
-        <div class="model-item add-item" @click="handleAddCustom">
-          <PlusOutlined />
-          <span class="model-name">新增自定义供应商</span>
-        </div>
-        <div class="model-line"></div>
-        <!-- 模型偏好入口 -->
-        <div
-          :class="['model-item', { active: activeTab === 'preference' }]"
-          @click="handleShowPreference"
-        >
-          <span class="model-icon"><SlidersOutlined /></span>
-          <span class="model-name">模型偏好</span>
-        </div>
-      </div>
-      <!-- 右侧设置内容 -->
-      <div class="model-settings">
-        <!-- 厂商配置视图 -->
-        <template v-if="activeTab === 'provider'">
-          <!-- 模型信息 -->
-          <div class="model-info">
-            <span class="model-info-icon">{{ currentEditView.icon }}</span>
-            <div class="model-info-content">
-              <div class="model-info-name">
-                {{ currentEditView.providerName }}
-              </div>
-              <div class="model-info-hint">{{ currentEditView.hint }}</div>
-            </div>
-            <a-tag v-if="isNewProvider" color="orange">未保存</a-tag>
-          </div>
-
-          <!-- 厂商配置表单 -->
-          <SettingForm
-            ref="settingFormRef"
-            v-model:form="formDraft!"
-            @save="handleSave"
-            @cancel="handleCancel"
-          />
-        </template>
-
-        <!-- 模型偏好视图（当前使用的模型 + 润色提示词，独立保存） -->
-        <PreferenceForm
-          v-else
-          v-model:selected-provider-id="selectedProviderId"
-          v-model:polish-prompt="polishPromptDraft"
-          :providers="savedProviders"
-          @save="handleSavePreference"
+  <div v-if="!loading" class="ai-settings-container">
+    <!-- 左侧厂商列表 -->
+    <div class="model-list">
+      <div
+        v-for="model in editingListView"
+        :key="model.providerId"
+        :class="[
+          'model-item',
+          {
+            active:
+              activeTab === 'provider' && currentEditId === model.providerId,
+          },
+        ]"
+        @click="handleSelect(model.providerId ?? '')"
+      >
+        <span class="model-icon">{{ model.icon }}</span>
+        <span class="model-name">{{ model.providerName }}</span>
+        <DeleteOutlined
+          v-if="!BUILTIN_PROVIDER_IDS.includes(model.providerId ?? '')"
+          class="model-delete"
+          @click.stop="handleDeleteCustom(model.providerId ?? '')"
         />
       </div>
+      <div class="model-item add-item" @click="handleAddCustom">
+        <PlusOutlined />
+        <span class="model-name">新增自定义供应商</span>
+      </div>
+      <div class="model-line"></div>
+      <!-- 模型偏好入口 -->
+      <div
+        :class="['model-item', { active: activeTab === 'preference' }]"
+        @click="handleShowPreference"
+      >
+        <span class="model-icon"><SlidersOutlined /></span>
+        <span class="model-name">模型偏好</span>
+      </div>
     </div>
-  </a-card>
+    <!-- 右侧设置内容 -->
+    <div class="model-settings">
+      <!-- 厂商配置视图 -->
+      <template v-if="activeTab === 'provider'">
+        <!-- 模型信息 -->
+        <div class="model-info">
+          <span class="model-info-icon">{{ currentEditView.icon }}</span>
+          <div class="model-info-content">
+            <div class="model-info-name">
+              {{ currentEditView.providerName }}
+            </div>
+            <div class="model-info-hint">{{ currentEditView.hint }}</div>
+          </div>
+          <a-tag v-if="isNewProvider" color="orange">未保存</a-tag>
+        </div>
+
+        <!-- 厂商配置表单 -->
+        <SettingForm
+          ref="settingFormRef"
+          v-model:form="formDraft!"
+          @save="handleSave"
+          @cancel="handleCancel"
+        />
+      </template>
+
+      <!-- 模型偏好视图（当前使用的模型 + 润色提示词，独立保存） -->
+      <PreferenceForm
+        v-else
+        v-model:selected-provider-id="selectedProviderId"
+        v-model:polish-prompt="polishPromptDraft"
+        :providers="savedProviders"
+        @save="handleSavePreference"
+      />
+    </div>
+  </div>
 </template>
 
 <style scoped lang="scss">

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, inject, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import {
@@ -153,7 +153,7 @@ const handleFix = (idx: number, issue: GrammarIssue) => {
     <template v-else-if="hasChecked">
       <!-- 无问题 -->
       <div v-if="issues.length === 0" class="empty-state">
-        <CheckCircleFilled style="font-size: 3rem; color: #52c41a" />
+        <CheckCircleFilled style="font-size: 30px; color: #52c41a" />
         <p>未发现语法问题，简历文本很规范</p>
       </div>
 
@@ -235,7 +235,7 @@ const handleFix = (idx: number, issue: GrammarIssue) => {
   gap: 1rem;
 
   .stats {
-    font-size: 1.3rem;
+    font-size: var(--text-sm);
     color: #8c8c8c;
 
     .num {
@@ -264,7 +264,7 @@ const handleFix = (idx: number, issue: GrammarIssue) => {
   gap: 1rem;
 
   p {
-    font-size: 1.4rem;
+    font-size: var(--text-sm);
     color: #8c8c8c;
     margin: 0;
   }
@@ -288,7 +288,7 @@ const handleFix = (idx: number, issue: GrammarIssue) => {
     margin-bottom: 0.8rem;
 
     .section-name {
-      font-size: 1.3rem;
+      font-size: var(--text-sm);
       font-weight: 600;
       @include themify(
         (
@@ -302,7 +302,7 @@ const handleFix = (idx: number, issue: GrammarIssue) => {
       align-items: center;
       gap: 0.3rem;
       padding: 0.2rem 0.6rem;
-      font-size: 1.2rem;
+      font-size: var(--text-xs);
       border-radius: 0.4rem;
     }
   }
@@ -316,7 +316,7 @@ const handleFix = (idx: number, issue: GrammarIssue) => {
     .diff-row {
       display: flex;
       gap: 0.6rem;
-      font-size: 1.3rem;
+      font-size: var(--text-sm);
       line-height: 1.6;
 
       .diff-label {
@@ -357,7 +357,7 @@ const handleFix = (idx: number, issue: GrammarIssue) => {
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    font-size: 1.2rem;
+    font-size: var(--text-xs);
     color: #595959;
     padding-top: 0.6rem;
     border-top: 1px dashed rgba(0, 0, 0, 0.1);

@@ -1,0 +1,269 @@
+// =====================================================================
+// utilities.scss
+// 通用工具类 · 页面级容器 / 标题 / 区块 / 动画
+// 所有 /app 子路由页面统一引用这些类，保证视觉一致性
+// =====================================================================
+
+// ============ 页面级容器 ============
+// 用于 /app 子路由页：setting / my-resume / template / ai-interview
+.page {
+  padding: var(--space-8) var(--space-10);
+  min-height: 100%;
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+
+  @media (max-width: 768px) {
+    padding: var(--space-5);
+  }
+}
+
+// ============ 页面头部 ============
+// 通用 PageHeader：标题 + 副标题 + 右侧操作区
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+
+  .page-title {
+    font-family: var(--font-display);
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-text);
+  }
+
+  .page-subtitle {
+    margin-top: var(--space-1);
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-normal);
+  }
+
+  .page-actions {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+
+    .page-actions {
+      width: 100%;
+    }
+  }
+}
+
+// ============ 区块容器 ============
+// 用于 ai-interview / setting 等分组页面
+.section-block {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+
+  .block-title {
+    // 中文界面：去掉 uppercase + 宽字距装饰，靠字号字重区分层级
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
+    color: var(--color-text);
+    margin-bottom: var(--space-4);
+  }
+
+  .block-desc {
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-4);
+    line-height: var(--leading-normal);
+  }
+}
+
+// ============ 卡片基础 ============
+// 通用卡片样式（my-resume / template 等可扩展）
+.base-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition:
+    border-color var(--duration-base) var(--ease-out),
+    background var(--duration-base) var(--ease-out);
+
+  &:hover {
+    border-color: var(--color-primary-border);
+  }
+}
+
+// ============ 通用按钮（非 AntD）============
+// 原生 button 用，配合 SiteHeader 等自定义组件
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-5);
+  height: 36px;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition:
+    background var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out);
+
+  &:hover {
+    background: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+  }
+
+  &:active {
+    background: var(--color-primary-pressed);
+    border-color: var(--color-primary-pressed);
+  }
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-5);
+  height: 36px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition:
+    background var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out);
+
+  &:hover {
+    background: var(--color-surface-hover);
+    border-color: var(--color-border-strong);
+  }
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+  height: 36px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition:
+    background var(--duration-base) var(--ease-out),
+    color var(--duration-base) var(--ease-out);
+
+  &:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+  }
+}
+
+// ============ 图标按钮（方形/圆形）============
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    background var(--duration-base) var(--ease-out),
+    color var(--duration-base) var(--ease-out);
+
+  // 统一内部图标渲染尺寸：不同图标库 svg 宽度基准不一（1em / 1.2em），
+  // em 换算基准不同会导致同一排按钮图标大小不齐，这里锁死为 20px
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+  }
+
+  &.is-danger:hover {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+  }
+}
+
+// ============ 通用入场动画 ============
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// 工具类
+.animate-fade-up {
+  animation: fade-up var(--duration-slow) var(--ease-out) both;
+}
+
+.animate-fade-in {
+  animation: fade-in var(--duration-slow) var(--ease-out) both;
+}
+
+// ============ 文本工具 ============
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

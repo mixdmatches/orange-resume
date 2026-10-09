@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { h } from 'vue'
 import { useRouter } from 'vue-router'
-import { message, Modal } from 'ant-design-vue'
+import { message } from 'ant-design-vue'
 import { SettingOutlined, FileTextOutlined } from '@ant-design/icons-vue'
 import ResumeSelectCard from './components/ResumeSelectCard.vue'
 import ResumePreviewCard from './components/ResumePreviewCard.vue'
-import InterviewHistoryList from './components/InterviewHistoryList.vue'
-import InterviewDetailDrawer from './components/InterviewDetailDrawer.vue'
 import { getAllResumesIDB } from '@/service/resumeIDB'
 import { useInterviewStore } from '@/stores/interview'
 import {
@@ -16,17 +14,7 @@ import {
   QUESTION_COUNT_MAX,
   QUESTION_COUNT_MIN,
 } from '@/stores/interview'
-import type {
-  InterviewCategory,
-  InterviewDifficulty,
-  InterviewDetail,
-  InterviewSession,
-} from '@/types/interview'
-import {
-  deleteInterviewApi,
-  getInterviewDetailApi,
-  listInterviewsApi,
-} from '@/api/interview'
+import type { InterviewCategory, InterviewDifficulty } from '@/types/interview'
 import type { Resume } from '@/types/resume'
 
 const router = useRouter()
@@ -72,95 +60,6 @@ const selectedResume = computed(
   () => resumes.value.find(item => item.id === selectedResumeId.value) ?? null,
 )
 
-// ========= 历史面试列表 =========
-
-/** 历史面试列表 */
-const historyList = ref<InterviewSession[]>([])
-/** 历史列表加载中 */
-const historyLoading = ref(false)
-/** 详情抽屉是否打开 */
-const detailVisible = ref(false)
-/** 详情抽屉的面试详情数据 */
-const detailData = ref<InterviewDetail | null>(null)
-/** 详情抽屉加载中 */
-const detailLoading = ref(false)
-/** 分页信息 */
-const pagination = reactive({
-  currentPage: 1,
-  pageSize: 5,
-  total: 0,
-})
-
-/**
- * 加载历史面试列表
- */
-const loadHistory = async () => {
-  historyLoading.value = true
-  try {
-    const res = await listInterviewsApi({
-      page: pagination.currentPage,
-      pageSize: pagination.pageSize,
-    })
-    pagination.total = res.total
-    historyList.value = res.list
-  } catch {
-    message.error('加载历史面试失败')
-  } finally {
-    historyLoading.value = false
-  }
-}
-
-const handleCurrentChange = (current: number) => {
-  pagination.currentPage = current
-  loadHistory()
-}
-
-const handlePageSizeChange = (_current: number, size: number) => {
-  pagination.currentPage = 1
-  pagination.pageSize = size
-  loadHistory()
-}
-
-/**
- * 打开面试详情抽屉
- * @param id 面试会话 ID
- */
-const handleOpenDetail = async (id: string) => {
-  detailVisible.value = true
-  detailData.value = null
-  detailLoading.value = true
-  try {
-    detailData.value = await getInterviewDetailApi(id)
-  } catch {
-    message.error('加载面试详情失败')
-  } finally {
-    detailLoading.value = false
-  }
-}
-
-/**
- * 删除面试会话（二次确认）
- * @param session 面试会话对象
- */
-const handleDeleteInterview = (session: InterviewSession) => {
-  Modal.confirm({
-    title: '删除该面试记录？',
-    content: `将删除「${session.title}」，此操作不可恢复。`,
-    okText: '删除',
-    okType: 'danger',
-    cancelText: '取消',
-    onOk: async () => {
-      try {
-        await deleteInterviewApi(session.id)
-        message.success('已删除')
-        await loadHistory()
-      } catch {
-        message.error('删除失败')
-      }
-    },
-  })
-}
-
 // ========= 简历加载 =========
 
 const loadResumes = async () => {
@@ -181,7 +80,7 @@ const handleManageResume = () => {
 }
 
 const handleOpenSetting = () => {
-  router.push('/setting')
+  router.push('/profile')
 }
 
 const handleOpenPreview = () => {
@@ -215,43 +114,42 @@ const handleEnterRoom = () => {
 
 onMounted(() => {
   loadResumes()
-  loadHistory()
 })
 </script>
 
 <template>
-  <div class="ai-interview-page">
-    <div class="page-header">
+  <div class="page page-ai-interview">
+    <header class="page-header">
       <div>
-        <h2>AI 模拟面试</h2>
-        <p>
-          基于简历内容智能生成面试题与参考回答，支持自定义提问、快速复制与实践演练。
+        <h1 class="page-title">AI 模拟面试</h1>
+        <p class="page-subtitle">
+          基于简历内容智能生成面试题与参考回答，支持自定义提问、快速复制与实践演练
         </p>
       </div>
-      <a-space>
-        <a-button
-          type="default"
-          :icon="h(FileTextOutlined)"
-          @click="handleManageResume"
-          >我的简历</a-button
-        >
+      <div class="page-actions">
+        <a-button :icon="h(FileTextOutlined)" @click="handleManageResume">
+          我的简历
+        </a-button>
         <a-button
           type="primary"
           :icon="h(SettingOutlined)"
           @click="handleOpenSetting"
-          >AI 设置</a-button
         >
-      </a-space>
-    </div>
+          AI 设置
+        </a-button>
+      </div>
+    </header>
 
-    <div class="selection-panel">
+    <!-- ============ 选择简历区块 ============ -->
+    <section class="section-block">
+      <h2 class="block-title">选择简历</h2>
       <resume-select-card
         v-model:model-value="selectedResumeId"
         :resumes="resumes"
         @manage="handleManageResume"
         @preview="handleOpenPreview"
       />
-    </div>
+    </section>
 
     <a-modal
       v-model:open="resumePreviewVisible"
@@ -263,16 +161,15 @@ onMounted(() => {
       <resume-preview-card :resume="selectedResume" />
     </a-modal>
 
-    <a-card class="interview-config-card">
-      <div class="config-header">
-        <h3>面试配置</h3>
-        <p>
-          选择目标岗位或粘贴岗位 JD（均为选填），AI
-          将结合简历内容让面试更贴近真实求职场景。
-        </p>
-      </div>
+    <!-- ============ 面试配置区块 ============ -->
+    <section class="section-block">
+      <h2 class="block-title">面试配置</h2>
+      <p class="block-desc">
+        选择目标岗位或粘贴岗位 JD（均为选填），AI
+        将结合简历内容让面试更贴近真实求职场景。
+      </p>
 
-      <div class="config-form">
+      <div class="config-grid">
         <div class="form-item">
           <label class="form-label">面试难度</label>
           <div class="difficulty-row">
@@ -294,12 +191,10 @@ onMounted(() => {
               :max="QUESTION_COUNT_MAX"
               :step="1"
             />
-            <span class="form-hint"
-              >共 {{ QUESTION_COUNT_MIN }}-{{
-                QUESTION_COUNT_MAX
-              }}
-              题，实际数量可能因答题情况略有浮动</span
-            >
+            <span class="form-hint">
+              共 {{ QUESTION_COUNT_MIN }}-{{ QUESTION_COUNT_MAX }}
+              题，实际数量可能因答题情况略有浮动
+            </span>
           </div>
         </div>
 
@@ -328,7 +223,7 @@ onMounted(() => {
           />
         </div>
 
-        <div class="form-item">
+        <div class="form-item form-item-full">
           <label class="form-label">岗位 JD</label>
           <a-textarea
             v-model:value="jd"
@@ -353,183 +248,93 @@ onMounted(() => {
           >请先在上方选择一份简历</span
         >
       </div>
-    </a-card>
-
-    <!-- 历史面试列表 -->
-    <interview-history-list
-      :list="historyList"
-      :loading="historyLoading"
-      :total="pagination.total"
-      :current-page="pagination.currentPage"
-      :page-size="pagination.pageSize"
-      @open-detail="handleOpenDetail"
-      @page-size="handlePageSizeChange"
-      @current-page="handleCurrentChange"
-      @delete="handleDeleteInterview"
-      @refresh="loadHistory"
-    />
-
-    <!-- 面试详情抽屉 -->
-    <interview-detail-drawer
-      v-model:open="detailVisible"
-      :detail="detailData"
-      :loading="detailLoading"
-    />
+    </section>
   </div>
 </template>
 
 <style scoped lang="scss">
-.ai-interview-page {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding: 1rem;
+.page-ai-interview {
+  // 继承 .page 基础 padding
+
+  :deep(.section-block) {
+    // 让 a-card 等子组件继承圆角
+    .ant-card {
+      border-radius: var(--radius-md);
+    }
+  }
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.2rem 1.4rem;
-  border-radius: 1rem;
-  background: #fff;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
-  @include themify(
-    (
-      background: (
-        light: #fff,
-        dark: #111827,
-      ),
-      box-shadow: (
-        light: 0 12px 30px rgba(15, 23, 42, 0.04),
-        dark: 0 12px 30px rgba(0, 0, 0, 0.3),
-      ),
-    )
-  );
-}
-
-.page-header h2 {
-  margin: 0;
-  font-size: 1.9rem;
-}
-
-.page-header p {
-  margin: 0.45rem 0 0;
-  color: rgba(0, 0, 0, 0.65);
-  max-width: 620px;
-  @include themify(
-    (
-      color: (
-        light: rgba(0, 0, 0, 0.65),
-        dark: rgba(255, 255, 255, 0.65),
-      ),
-    )
-  );
-}
-
-.selection-panel {
+/* ============ 配置网格 ============ */
+.config-grid {
   display: grid;
-  gap: 1rem;
-  align-items: start;
-}
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-5);
+  margin-top: var(--space-4);
 
-.interview-config-card {
-  border-radius: 1rem;
-  @include themify(
-    (
-      background: (
-        light: #fff,
-        dark: #111827,
-      ),
-      border-color: (
-        light: #f0f0f0,
-        dark: rgba(255, 255, 255, 0.12),
-      ),
-    )
-  );
-}
-
-.config-header h3 {
-  margin: 0;
-  font-size: 1.6rem;
-}
-
-.config-header p {
-  margin: 0.5rem 0 0;
-  color: rgba(0, 0, 0, 0.65);
-  @include themify(
-    (
-      color: (
-        light: rgba(0, 0, 0, 0.65),
-        dark: rgba(255, 255, 255, 0.65),
-      ),
-    )
-  );
-}
-
-.config-form {
-  display: grid;
-  gap: 1.2rem;
-  margin-top: 1.4rem;
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .form-item {
-  display: grid;
-  gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  &.form-item-full {
+    grid-column: 1 / -1;
+  }
 }
 
 .form-label {
-  font-weight: 600;
-}
-
-.question-count-row,
-.difficulty-row {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-}
-
-.question-count-row .ant-input-number {
-  width: 120px;
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  color: var(--color-text);
 }
 
 .form-hint {
-  font-size: 0.85rem;
-  color: rgba(0, 0, 0, 0.45);
-  @include themify(
-    (
-      color: (
-        light: rgba(0, 0, 0, 0.45),
-        dark: rgba(255, 255, 255, 0.45),
-      ),
-    )
-  );
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-1);
+}
+
+.difficulty-row,
+.question-count-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+
+  .form-hint {
+    margin-top: 0;
+  }
+}
+
+.question-count-row {
+  :deep(.ant-input-number) {
+    width: 120px;
+  }
 }
 
 .config-footer {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-top: 1.6rem;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
 }
 
 .footer-hint {
-  color: rgba(0, 0, 0, 0.45);
-  @include themify(
-    (
-      color: (
-        light: rgba(0, 0, 0, 0.45),
-        dark: rgba(255, 255, 255, 0.45),
-      ),
-    )
-  );
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
 }
 
-@media screen and (max-width: 900px) {
-  .page-header,
-  .selection-panel {
+@media (max-width: 768px) {
+  .page-header {
     flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
   }
 }
 </style>

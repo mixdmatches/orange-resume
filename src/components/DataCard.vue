@@ -292,7 +292,7 @@ const handleHideImg = () => {
     &-title {
       display: flex;
       align-items: center;
-      font-size: 1.6rem;
+      font-size: var(--text-sm);
       font-weight: 600;
     }
 
@@ -304,7 +304,7 @@ const handleHideImg = () => {
 
     .info-action {
       color: $primary-color;
-      font-size: 1.3rem;
+      font-size: var(--text-xs);
     }
   }
 
@@ -314,7 +314,7 @@ const handleHideImg = () => {
     height: 30px;
     line-height: 30px;
     text-align: center;
-    font-size: 1.6rem;
+    font-size: var(--text-xs);
     color: $primary-color;
     border-radius: 50%;
     cursor: move;
@@ -382,7 +382,7 @@ const handleHideImg = () => {
 
       .img-placeholder {
         color: #999;
-        font-size: 0.95rem;
+        font-size: var(--text-xs);
         text-align: center;
         padding: 0.5rem;
       }
