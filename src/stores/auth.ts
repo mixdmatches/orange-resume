@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { getProfileApi, loginApi, logoutApi, registerApi } from '@/api/auth'
+import {
+  deleteAccountApi,
+  getProfileApi,
+  loginApi,
+  logoutApi,
+  registerApi,
+} from '@/api/auth'
 import type { LoginParams, RegisterParams, UserInfo } from '@/types/user'
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from '@/utils/request'
 import { storage } from '@/utils/storage'
@@ -16,7 +22,9 @@ export const useAuthStore = defineStore(
      * 避免与 storage 中的 token 产生双份数据。令牌对的持久化由 storage 负责
      * （accessToken 与 refreshToken 均在 storage 中，refreshToken 无需进入 store）。
      */
-    const token = ref<string | null>(storage.get<string>(ACCESS_TOKEN_KEY) || null)
+    const token = ref<string | null>(
+      storage.get<string>(ACCESS_TOKEN_KEY) || null,
+    )
 
     /** 当前登录用户信息（未登录时为 null） */
     const userInfo = ref<UserInfo | null>(null)
@@ -68,15 +76,19 @@ export const useAuthStore = defineStore(
       } catch (err) {
         console.warn('[auth] 后端登出接口异常，仍继续清理本地状态:', err)
       }
-      token.value = null
-      userInfo.value = null
       storage.remove(ACCESS_TOKEN_KEY)
       storage.remove(REFRESH_TOKEN_KEY)
-      try {
-        await clearQueue()
-      } catch (err) {
-        console.warn('[auth] 清空同步队列失败:', err)
-      }
+      await clearAuth()
+    }
+
+    /**
+     * 注销账号
+     */
+    async function deleteAccount() {
+      await deleteAccountApi()
+      storage.remove(ACCESS_TOKEN_KEY)
+      storage.remove(REFRESH_TOKEN_KEY)
+      await clearAuth()
     }
 
     /**
@@ -102,6 +114,7 @@ export const useAuthStore = defineStore(
       fetchProfile,
       logout,
       clearAuth,
+      deleteAccount,
     }
   },
   {

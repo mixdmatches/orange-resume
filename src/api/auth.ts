@@ -45,16 +45,21 @@ export function loginApi(params: LoginParams): Promise<LoginResult> {
  * 清除本地双令牌（后端若为无状态 JWT，无需调用接口）
  */
 export function logoutApi(): Promise<void> {
-  storage.remove(ACCESS_TOKEN_KEY)
-  storage.remove(REFRESH_TOKEN_KEY)
   return post('/auth/logout')
+}
+
+/**
+ * 注销账号
+ */
+export function deleteAccountApi() {
+  return post<Promise<void>>('/user/delete')
 }
 
 /**
  * 获取当前登录用户信息
  * 需要携带 accessToken，由请求拦截器自动注入
  */
-export function getProfileApi(): Promise<UserInfo> {
+export function getProfileApi() {
   return get<UserInfo>('/auth/profile')
 }
 

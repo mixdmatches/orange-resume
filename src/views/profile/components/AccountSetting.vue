@@ -20,15 +20,17 @@ const handleLogout = async () => {
 
 /**
  * 注销账号
- * TODO: 后期实现注销流程——后端删除账号 + 清除云端简历/面试数据 + 清空本地 IndexedDB
- * 当前仅做 UI 占位提示
  */
 const handleDeleteAccount = () => {
   Modal.warning({
-    title: '注销账号功能开发中',
-    content:
-      '注销后云端简历、面试记录等数据将被永久清除且不可恢复，该功能即将上线。',
-    okText: '我知道了',
+    title: '注销账号后不可恢复',
+    content: '注销后云端简历、面试记录等数据将被永久清除且不可恢复',
+    okText: '注销账号',
+    cancelText: '取消',
+    onOk: async () => {
+      await authStore.deleteAccount()
+      router.push('/login')
+    },
   })
 }
 
