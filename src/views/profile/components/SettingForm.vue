@@ -231,30 +231,14 @@ const apiLink = computed(() => {
     align-items: center;
     font-size: 14px;
     font-weight: 500;
-    color: #333;
-    @include themify(
-      (
-        color: (
-          light: #333,
-          dark: #f8faff,
-        ),
-      )
-    );
+    color: var(--color-text);
 
     /* label 右侧跳转链接（如 "获取 API Key"） */
     .setting-link {
       margin-left: 20px;
       font-size: 13px;
       font-weight: normal;
-      color: #1890ff;
-      @include themify(
-        (
-          color: (
-            light: #1890ff,
-            dark: #60a5fa,
-          ),
-        )
-      );
+      color: var(--color-primary);
     }
   }
 

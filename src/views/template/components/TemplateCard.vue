@@ -32,15 +32,9 @@ const emit = defineEmits<{
       </div>
 
       <div class="tpl-actions">
-        <a-button size="small" @click="emit('preview', props.template.id)">
-          预览
-        </a-button>
-        <a-button
-          size="small"
-          type="primary"
-          @click="emit('use', props.template.id)"
-        >
-          使用此模板
+        <a-button @click="emit('preview', props.template.id)"> 预览 </a-button>
+        <a-button type="primary" @click="emit('use', props.template.id)">
+          使用
         </a-button>
       </div>
     </div>
@@ -114,8 +108,8 @@ const emit = defineEmits<{
   color: var(--color-text-secondary);
   line-height: var(--leading-normal);
   // 用 min-height 锁定描述区高度，1 行和 2 行时卡片等高
-  // text-lg(20px) × leading-normal(1.5) × 2行 = 60px
-  min-height: calc(var(--text-lg) * var(--leading-normal) * 2);
+  // text-xs(14px) × leading-normal(1.5) × 2行 = 60px
+  min-height: calc(var(--text-xs) * var(--leading-normal) * 2);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -130,5 +124,8 @@ const emit = defineEmits<{
   gap: var(--space-2);
   // margin-top:auto 贴底，无论描述 1 行还是 2 行按钮位置一致
   margin-top: auto;
+  :deep(.ant-btn) {
+    flex: 1;
+  }
 }
 </style>

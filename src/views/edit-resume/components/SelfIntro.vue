@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, inject, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { CopyOutlined, ReloadOutlined } from '@ant-design/icons-vue'
@@ -200,14 +200,9 @@ const handleCopy = async () => {
   flex-direction: column;
   gap: 0.8rem;
   padding: 1rem;
-  border: 1px solid;
+  border: 1px solid var(--color-border);
   border-radius: 0.6rem;
-  @include themify(
-    (
-      background-color: $bg-color,
-      border-color: $border-color-mode,
-    )
-  );
+  background: var(--color-surface);
 
   .form-item {
     display: flex;
@@ -219,11 +214,7 @@ const handleCopy = async () => {
       width: 3rem;
       font-size: var(--text-sm);
       font-weight: 500;
-      @include themify(
-        (
-          color: $text-color,
-        )
-      );
+      color: var(--color-text);
     }
   }
 }
@@ -260,15 +251,10 @@ const handleCopy = async () => {
     padding: 1rem 1.2rem;
     font-size: var(--text-sm);
     line-height: 1.9;
-    border: 1px solid;
+    border: 1px solid var(--color-border);
     border-radius: 0.6rem;
-    @include themify(
-      (
-        background-color: $bg-color,
-        border-color: $border-color-mode,
-        color: $text-color,
-      )
-    );
+    background: var(--color-surface);
+    color: var(--color-text);
 
     :deep(p) {
       margin: 0 0 0.8rem 0;
@@ -276,7 +262,7 @@ const handleCopy = async () => {
 
     :deep(strong) {
       font-weight: 600;
-      color: #1677ff;
+      color: var(--color-primary);
     }
 
     :deep(ul),

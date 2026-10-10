@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, inject, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import {
@@ -290,11 +290,7 @@ const handleFix = (idx: number, issue: GrammarIssue) => {
     .section-name {
       font-size: var(--text-sm);
       font-weight: 600;
-      @include themify(
-        (
-          color: $text-color,
-        )
-      );
+      color: var(--color-text);
     }
 
     .severity-tag {

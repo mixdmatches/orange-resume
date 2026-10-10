@@ -246,18 +246,8 @@ const formatTime = (t?: string) => {
 <style scoped lang="scss">
 .history-card {
   border-radius: 1rem;
-  @include themify(
-    (
-      background: (
-        light: #fff,
-        dark: #111827,
-      ),
-      border-color: (
-        light: #f0f0f0,
-        dark: rgba(255, 255, 255, 0.12),
-      ),
-    )
-  );
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
 }
 
 .empty-state {
@@ -272,14 +262,7 @@ const formatTime = (t?: string) => {
   padding-right: 0.6rem !important;
 
   &:hover {
-    @include themify(
-      (
-        background: (
-          light: #f5f5f5,
-          dark: rgba(255, 255, 255, 0.06),
-        ),
-      )
-    );
+    background: var(--color-surface-hover);
   }
 }
 
@@ -289,27 +272,11 @@ const formatTime = (t?: string) => {
 
 .meta-text {
   font-size: 0.85rem;
-  color: rgba(0, 0, 0, 0.45);
-  @include themify(
-    (
-      color: (
-        light: rgba(0, 0, 0, 0.45),
-        dark: rgba(255, 255, 255, 0.45),
-      ),
-    )
-  );
+  color: var(--color-text-secondary);
 }
 
 .score-text {
   font-weight: 600;
-  color: #fa8c16;
-  @include themify(
-    (
-      color: (
-        light: #fa8c16,
-        dark: #fa8c16,
-      ),
-    )
-  );
+  color: var(--color-warning);
 }
 </style>

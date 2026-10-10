@@ -23,7 +23,7 @@ const goToGithub = () => {
   align-items: flex-start;
   justify-content: space-between;
   width: 100%;
-  height: $site-header-height;
+  height: 60px;
   padding: 0 1rem;
   .title {
     flex: 1;

@@ -579,31 +579,13 @@ onBeforeRouteLeave(to => {
   padding: 0 10px;
   border-radius: 8px;
   overflow: hidden;
-  @include themify(
-    (
-      background: (
-        light: #fff,
-        dark: #111827,
-      ),
-      border-color: (
-        light: #e8e8e8,
-        dark: rgba(255, 255, 255, 0.12),
-      ),
-    )
-  );
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
 
   .model-line {
     height: 1px;
-    background: #e8e8e8;
+    background: var(--color-border);
     margin: 12px 0;
-    @include themify(
-      (
-        background: (
-          light: #e8e8e8,
-          dark: rgba(255, 255, 255, 0.12),
-        ),
-      )
-    );
   }
 
   .model-item {
@@ -617,27 +599,11 @@ onBeforeRouteLeave(to => {
     transition: all 0.2s ease;
 
     &:hover {
-      background: #f5f5f5;
-      @include themify(
-        (
-          background: (
-            light: #f5f5f5,
-            dark: rgba(255, 255, 255, 0.08),
-          ),
-        )
-      );
+      background: var(--color-surface-hover);
     }
 
     &.active {
-      background: #e6f7ff;
-      @include themify(
-        (
-          background: (
-            light: #e6f7ff,
-            dark: rgba(59, 130, 246, 0.18),
-          ),
-        )
-      );
+      background: var(--color-primary-bg);
     }
 
     .model-icon {
@@ -647,15 +613,7 @@ onBeforeRouteLeave(to => {
     .model-name {
       flex: 1;
       font-size: 14px;
-      color: #333;
-      @include themify(
-        (
-          color: (
-            light: #333,
-            dark: #f8faff,
-          ),
-        )
-      );
+      color: var(--color-text);
     }
 
     .model-delete {
@@ -673,15 +631,7 @@ onBeforeRouteLeave(to => {
     }
 
     &.add-item {
-      color: #1890ff;
-      @include themify(
-        (
-          color: (
-            light: #1890ff,
-            dark: #60a5fa,
-          ),
-        )
-      );
+      color: var(--color-primary);
     }
   }
 }
@@ -695,21 +645,10 @@ onBeforeRouteLeave(to => {
   align-items: center;
   gap: 12px;
   padding: 16px;
-  background: #fafafa;
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   margin-bottom: 24px;
-  @include themify(
-    (
-      background: (
-        light: #fafafa,
-        dark: #111827,
-      ),
-      border-color: (
-        light: #f0f0f0,
-        dark: rgba(255, 255, 255, 0.12),
-      ),
-    )
-  );
 
   .model-info-icon {
     font-size: 32px;
@@ -721,29 +660,13 @@ onBeforeRouteLeave(to => {
     .model-info-name {
       font-size: 16px;
       font-weight: 600;
-      color: #333;
+      color: var(--color-text);
       margin-bottom: 4px;
-      @include themify(
-        (
-          color: (
-            light: #333,
-            dark: #f8faff,
-          ),
-        )
-      );
     }
 
     .model-info-hint {
       font-size: 13px;
-      color: rgba(0, 0, 0, 0.5);
-      @include themify(
-        (
-          color: (
-            light: rgba(0, 0, 0, 0.5),
-            dark: rgba(255, 255, 255, 0.65),
-          ),
-        )
-      );
+      color: var(--color-text-secondary);
     }
   }
 }

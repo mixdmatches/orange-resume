@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { inject, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import {
@@ -284,11 +284,7 @@ const handleAnalyze = async () => {
   .area-title {
     font-size: var(--text-sm);
     font-weight: 600;
-    @include themify(
-      (
-        color: $text-color,
-      )
-    );
+    color: var(--color-text);
   }
 
   .jd-textarea {
@@ -316,14 +312,9 @@ const handleAnalyze = async () => {
   align-items: center;
   gap: 1.6rem;
   padding: 1.4rem;
-  border: 1px solid;
+  border: 1px solid var(--color-border);
   border-radius: 0.8rem;
-  @include themify(
-    (
-      background-color: $bg-color,
-      border-color: $border-color-mode,
-    )
-  );
+  background: var(--color-surface);
 
   .score-ring {
     flex-shrink: 0;
@@ -370,24 +361,15 @@ const handleAnalyze = async () => {
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
-  @include themify(
-    (
-      color: $text-color,
-    )
-  );
+  color: var(--color-text);
 }
 
 /* 技能对比卡 */
 .skills-card {
   padding: 1.4rem;
-  border: 1px solid;
+  border: 1px solid var(--color-border);
   border-radius: 0.8rem;
-  @include themify(
-    (
-      background-color: $bg-color,
-      border-color: $border-color-mode,
-    )
-  );
+  background: var(--color-surface);
 
   .skills-grid {
     display: grid;
@@ -403,11 +385,7 @@ const handleAnalyze = async () => {
       font-size: var(--text-sm);
       font-weight: 500;
       margin-bottom: 0.6rem;
-      @include themify(
-        (
-          color: $text-color,
-        )
-      );
+      color: var(--color-text);
     }
 
     .tag-list {
@@ -432,14 +410,9 @@ const handleAnalyze = async () => {
 
 .points-card {
   padding: 1.4rem;
-  border: 1px solid;
+  border: 1px solid var(--color-border);
   border-radius: 0.8rem;
-  @include themify(
-    (
-      background-color: $bg-color,
-      border-color: $border-color-mode,
-    )
-  );
+  background: var(--color-surface);
 
   .point-list {
     display: flex;
@@ -464,11 +437,7 @@ const handleAnalyze = async () => {
     .point-text {
       font-size: var(--text-sm);
       line-height: 1.6;
-      @include themify(
-        (
-          color: $text-color,
-        )
-      );
+      color: var(--color-text);
     }
   }
 
@@ -481,14 +450,9 @@ const handleAnalyze = async () => {
 /* 改进建议 */
 .suggestions-card {
   padding: 1.4rem;
-  border: 1px solid;
+  border: 1px solid var(--color-border);
   border-radius: 0.8rem;
-  @include themify(
-    (
-      background-color: $bg-color,
-      border-color: $border-color-mode,
-    )
-  );
+  background: var(--color-surface);
 
   .suggestion-list {
     margin: 0;

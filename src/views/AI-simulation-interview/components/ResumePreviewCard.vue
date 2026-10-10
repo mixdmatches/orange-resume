@@ -38,22 +38,11 @@ defineProps({
 
 <style scoped lang="scss">
 .resume-preview-card {
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 1rem;
   min-width: 360px;
   min-height: 320px;
-  @include themify(
-    (
-      background: (
-        light: #fff,
-        dark: #111827,
-      ),
-      border-color: (
-        light: #f0f0f0,
-        dark: rgba(255, 255, 255, 0.12),
-      ),
-    )
-  );
+  border: 1px solid var(--color-border);
 }
 
 .preview-header {
@@ -71,15 +60,7 @@ defineProps({
 
 .preview-header p {
   margin: 0.6rem 0 0;
-  color: rgba(0, 0, 0, 0.65);
-  @include themify(
-    (
-      color: (
-        light: rgba(0, 0, 0, 0.65),
-        dark: rgba(255, 255, 255, 0.65),
-      ),
-    )
-  );
+  color: var(--color-text-secondary);
 }
 
 .preview-content {

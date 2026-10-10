@@ -373,19 +373,8 @@ const defaultOpenKeys = (detail: InterviewDetail) =>
 .score-card {
   padding: 1rem 1.2rem;
   border-radius: 0.8rem;
-  border: 1px solid;
-  @include themify(
-    (
-      background: (
-        light: #f7f8fa,
-        dark: rgba(255, 255, 255, 0.06),
-      ),
-      border-color: (
-        light: #e8e8e8,
-        dark: rgba(255, 255, 255, 0.12),
-      ),
-    )
-  );
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-muted);
 }
 
 .score-overall {
@@ -424,15 +413,7 @@ const defaultOpenKeys = (detail: InterviewDetail) =>
 .dim-comment {
   font-size: 0.85rem;
   margin-top: 0.2rem;
-  color: rgba(0, 0, 0, 0.65);
-  @include themify(
-    (
-      color: (
-        light: rgba(0, 0, 0, 0.65),
-        dark: rgba(255, 255, 255, 0.65),
-      ),
-    )
-  );
+  color: var(--color-text-secondary);
 }
 
 .score-block {
@@ -473,15 +454,7 @@ const defaultOpenKeys = (detail: InterviewDetail) =>
 .verdict {
   margin-top: 1rem;
   padding-top: 0.8rem;
-  border-top: 1px solid;
-  @include themify(
-    (
-      border-color: (
-        light: #e8e8e8,
-        dark: rgba(255, 255, 255, 0.12),
-      ),
-    )
-  );
+  border-top: 1px solid var(--color-border);
 }
 
 .verdict .block-title {
@@ -497,19 +470,8 @@ const defaultOpenKeys = (detail: InterviewDetail) =>
 .summary-section {
   padding: 1rem 1.2rem;
   border-radius: 0.8rem;
-  border: 1px solid;
-  @include themify(
-    (
-      background: (
-        light: #f7f8fa,
-        dark: rgba(255, 255, 255, 0.06),
-      ),
-      border-color: (
-        light: #e8e8e8,
-        dark: rgba(255, 255, 255, 0.12),
-      ),
-    )
-  );
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-muted);
 }
 
 .markdown-body {
@@ -546,15 +508,7 @@ const defaultOpenKeys = (detail: InterviewDetail) =>
   font-weight: 600;
   font-size: 0.85rem;
   margin-bottom: 0.3rem;
-  color: rgba(0, 0, 0, 0.45);
-  @include themify(
-    (
-      color: (
-        light: rgba(0, 0, 0, 0.45),
-        dark: rgba(255, 255, 255, 0.45),
-      ),
-    )
-  );
+  color: var(--color-text-secondary);
 }
 
 .section-body {

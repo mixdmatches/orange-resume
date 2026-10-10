@@ -7,38 +7,5 @@ $danger-color: #ff4d4f;
 $site-header-height: 60px;
 $border-color: #f0f0f0;
 
-$bg-color: (
-  light: #fff,
-  dark: #000,
-);
-
-$layout-bg-color: (
-  light: #f5f5f5,
-  dark: #141414,
-);
-
-$text-color: (
-  light: #2c3e50,
-  dark: #f8faff,
-);
-
-$border-color-mode: (
-  light: #e4e7ed,
-  dark: #505153,
-);
-
-// 主题化样式
-// $key: 样式名
-// $valueMap: 样式值map
-@mixin themify($properties) {
-  // 主题列表
-  $themes: light, dark;
-
-  @each $theme in $themes {
-    [data-theme='#{$theme}'] & {
-      @each $property, $valueMap in $properties {
-        #{$property}: map.get($valueMap, $theme);
-      }
-    }
-  }
-}
+// TODO: 所有组件已迁移到 CSS 变量（var(--color-xxx)），themify mixin 保留暂不删除
+// 后续清理完所有调用后再移除

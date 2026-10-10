@@ -190,17 +190,13 @@ watch(
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
-  @include themify(
-    (
-      background-color: $layout-bg-color,
-      border-color: $border-color-mode,
-    )
-  );
+  background: var(--color-bg-muted);
+  border-color: var(--color-border);
 
   /* 聚焦时容器整体高亮：主题色边框 + 柔和光环 */
   &:focus-within {
-    border-color: $primary-color;
-    box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.12);
+    border-color: var(--color-primary);
+    box-shadow: var(--focus-ring);
   }
 }
 
@@ -219,21 +215,10 @@ watch(
   line-height: 1.6;
   overflow-y: auto;
   word-break: break-word;
-  @include themify(
-    (
-      color: $text-color,
-    )
-  );
+  color: var(--color-text);
 
   &::placeholder {
-    @include themify(
-      (
-        color: (
-          light: #b0b3b8,
-          dark: rgba(255, 255, 255, 0.32),
-        ),
-      )
-    );
+    color: var(--color-text-tertiary);
   }
 
   &:disabled {
@@ -268,20 +253,13 @@ watch(
 .char-count {
   font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
-  @include themify(
-    (
-      color: (
-        light: #999,
-        dark: rgba(255, 255, 255, 0.45),
-      ),
-    )
-  );
+  color: var(--color-text-tertiary);
 }
 
 /* 圆形发送按钮 */
 .send-btn {
-  width: 3.2rem;
-  height: 3.2rem;
+  width: 2rem;
+  height: 2rem;
   border: none;
   border-radius: 50%;
   display: flex;
@@ -292,26 +270,16 @@ watch(
   transition:
     background-color 0.2s ease,
     transform 0.1s ease;
-  @include themify(
-    (
-      background-color: (
-        light: #dcdfe4,
-        dark: #3a3a3c,
-      ),
-      color: (
-        light: #b0b3b8,
-        dark: rgba(255, 255, 255, 0.35),
-      ),
-    )
-  );
+  background: var(--color-border-strong);
+  color: var(--color-text-tertiary);
 
   /* 有内容时激活为主题色 */
   &.is-active {
-    background: $primary-color;
+    background: var(--color-primary);
     color: #fff;
 
     &:hover {
-      background: #4096ff;
+      background: var(--color-primary-hover);
     }
 
     &:active {
@@ -324,18 +292,8 @@ watch(
   }
 
   &.is-stop {
-    @include themify(
-      (
-        background-color: (
-          light: #1f2329,
-          dark: #f0f0f0,
-        ),
-        color: (
-          light: #fff,
-          dark: #1f2329,
-        ),
-      )
-    );
+    background: var(--color-text);
+    color: var(--color-surface);
 
     &:hover {
       opacity: 0.85;
@@ -352,13 +310,6 @@ watch(
   margin-top: 0.6rem;
   text-align: center;
   font-size: var(--text-xs);
-  @include themify(
-    (
-      color: (
-        light: #b0b3b8,
-        dark: rgba(255, 255, 255, 0.32),
-      ),
-    )
-  );
+  color: var(--color-text-tertiary);
 }
 </style>

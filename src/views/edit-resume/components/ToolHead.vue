@@ -264,11 +264,9 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
 
       <span class="divider-v"></span>
 
-      <a-tooltip title="切换主题">
-        <button class="icon-btn">
-          <theme-icon></theme-icon>
-        </button>
-      </a-tooltip>
+      <button class="icon-btn">
+        <theme-icon></theme-icon>
+      </button>
     </div>
   </div>
 

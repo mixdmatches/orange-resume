@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, inject, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { motion } from 'motion-v'
@@ -494,15 +494,10 @@ const handleStartAiScore = async () => {
 .overview-card,
 .sections-card,
 .issues-card {
-  border: 1px solid;
+  border: 1px solid var(--color-border);
   border-radius: 0.8rem;
   padding: 1.4rem;
-  @include themify(
-    (
-      background-color: $bg-color,
-      border-color: $border-color-mode,
-    )
-  );
+  background: var(--color-surface);
 }
 
 .card-title {
@@ -512,11 +507,7 @@ const handleStartAiScore = async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  @include themify(
-    (
-      color: $text-color,
-    )
-  );
+  color: var(--color-text);
 
   .perfect-tip {
     font-size: var(--text-xs);
@@ -536,11 +527,7 @@ const handleStartAiScore = async () => {
   .overview-title {
     font-size: var(--text-base);
     font-weight: 600;
-    @include themify(
-      (
-        color: $text-color,
-      )
-    );
+    color: var(--color-text);
   }
 
   .grade-badge {
@@ -586,11 +573,7 @@ const handleStartAiScore = async () => {
       font-size: var(--text-base);
       font-weight: 500;
       margin: 0 0 0.5rem 0;
-      @include themify(
-        (
-          color: $text-color,
-        )
-      );
+      color: var(--color-text);
     }
 
     .issue-summary {
@@ -623,11 +606,7 @@ const handleStartAiScore = async () => {
 
     .section-name {
       font-size: var(--text-sm);
-      @include themify(
-        (
-          color: $text-color,
-        )
-      );
+      color: var(--color-text);
     }
 
     .section-count {
@@ -708,15 +687,10 @@ const handleStartAiScore = async () => {
 .ai-total-card,
 .dimensions-card,
 .highlights-card {
-  border: 1px solid;
+  border: 1px solid var(--color-border);
   border-radius: 0.8rem;
   padding: 1.4rem;
-  @include themify(
-    (
-      background-color: $bg-color,
-      border-color: $border-color-mode,
-    )
-  );
+  background: var(--color-surface);
 }
 
 .card-title {
@@ -725,11 +699,7 @@ const handleStartAiScore = async () => {
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
-  @include themify(
-    (
-      color: $text-color,
-    )
-  );
+  color: var(--color-text);
 }
 
 .ai-total-card {
@@ -742,11 +712,7 @@ const handleStartAiScore = async () => {
     .total-title {
       font-size: var(--text-base);
       font-weight: 600;
-      @include themify(
-        (
-          color: $text-color,
-        )
-      );
+      color: var(--color-text);
     }
 
     .grade-badge {
@@ -775,7 +741,7 @@ const handleStartAiScore = async () => {
       .score-num {
         font-size: var(--text-2xl);
         font-weight: 700;
-        color: $primary-color;
+        color: var(--color-primary);
       }
 
       .score-unit {
@@ -810,11 +776,7 @@ const handleStartAiScore = async () => {
 
       .dim-name {
         font-size: var(--text-sm);
-        @include themify(
-          (
-            color: $text-color,
-          )
-        );
+        color: var(--color-text);
       }
 
       .dim-score {

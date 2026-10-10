@@ -16,7 +16,7 @@ import {
   CloseOutlined,
   MinusOutlined,
   StopOutlined,
-  EditOutlined
+  EditOutlined,
 } from '@ant-design/icons-vue'
 import ChatInput from '@/components/ChatInput.vue'
 import MarkdownIt from 'markdown-it'
@@ -626,14 +626,9 @@ const refreshSessionList = async () => {
   flex-direction: column;
   z-index: 100;
   user-select: none;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
-  border: 1px solid transparent;
-  @include themify(
-    (
-      background-color: $bg-color,
-      border-color: $border-color-mode,
-    )
-  );
+  box-shadow: 0 12px 40px var(--shadow-xs);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
 
   &.minimized {
     height: auto;
@@ -647,8 +642,8 @@ const refreshSessionList = async () => {
   justify-content: space-between;
   height: 52px;
   padding: 0 0.8rem 0 1.2rem;
-  background: $primary-color;
-  color: #fff;
+  background: var(--color-surface);
+  color: var(--color-text);
   cursor: move;
 
   .panel-title {
@@ -665,7 +660,7 @@ const refreshSessionList = async () => {
   }
 
   .header-action {
-    color: #fff;
+    color: var(--color-text);
     &:hover {
       background: rgba(255, 255, 255, 0.2);
     }
@@ -679,20 +674,16 @@ const refreshSessionList = async () => {
   gap: 2px;
   min-width: 100px;
   max-width: 120px;
-  border-radius: 054rem;
+  border-radius: 0.54rem;
   padding: 0.4rem;
   border-radius: 0.5rem;
-  @include themify(
-    (
-      background-color: $bg-color,
-    )
-  );
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
+  background-color: var(--color-surface);
+  box-shadow: 0 12px 40px var(--shadow-xs);
 
   .session-empty {
     padding: 0.8rem;
     text-align: center;
-    color: #999;
+    color: var(--color-text);
   }
 
   .session-item {
@@ -720,18 +711,14 @@ const refreshSessionList = async () => {
       font-size: var(--text-xs);
       white-space: nowrap;
       text-overflow: ellipsis;
-      @include themify(
-        (
-          color: $text-color,
-        )
-      );
+      color: var(--color-text);
     }
 
     .session-delete-btn {
       flex-shrink: 0;
       opacity: 0;
       transition: opacity 0.15s;
-      color: #999;
+      color: var(--color-text);
 
       &:hover {
         color: #ff4d4f;
@@ -774,23 +761,19 @@ const refreshSessionList = async () => {
 
   .welcome-icon {
     font-size: var(--text-4xl);
-    color: $primary-color;
+    color: var(--color-primary);
   }
 
   .welcome-title {
     font-size: var(--text-base);
     font-weight: 600;
     margin: 0;
-    @include themify(
-      (
-        color: $text-color,
-      )
-    );
+    color: var(--color-text);
   }
 
   .welcome-desc {
     font-size: var(--text-sm);
-    color: #8c8c8c;
+    color: var(--color-text-secondary);
     margin: 0;
     line-height: 1.6;
     max-width: 280px;
@@ -819,18 +802,14 @@ const refreshSessionList = async () => {
   }
 
   &.user .bubble {
-    background: $primary-color;
-    color: #fff;
+    background: var(--color-primary);
+    color: var(--color-text);
     border-bottom-right-radius: 0.2rem;
   }
 
   &.assistant .bubble {
-    @include themify(
-      (
-        background-color: $layout-bg-color,
-        color: $text-color,
-      )
-    );
+    background: var(--color-bg-muted);
+    color: var(--color-text);
     border-bottom-left-radius: 0.2rem;
   }
 
@@ -858,14 +837,7 @@ const refreshSessionList = async () => {
     gap: 0.3rem;
     margin-top: 0.4rem;
     font-size: var(--text-xs);
-    @include themify(
-      (
-        color: (
-          light: rgba(0, 0, 0, 0.45),
-          dark: rgba(255, 255, 255, 0.45),
-        ),
-      )
-    );
+    color: var(--color-text);
   }
 }
 
@@ -900,7 +872,7 @@ const refreshSessionList = async () => {
   :deep(blockquote) {
     margin: 0.4rem 0;
     padding: 0.4rem 0.8rem;
-    border-left: 3px solid $primary-color;
+    border-left: 3px solid var(--color-primary);
     background: rgba(22, 119, 255, 0.08);
     border-radius: 0 0.4rem 0.4rem 0;
   }
@@ -931,17 +903,13 @@ const refreshSessionList = async () => {
 
   .tool-name {
     font-weight: 600;
-    @include themify(
-      (
-        color: $text-color,
-      )
-    );
+    color: var(--color-text);
   }
 
   .tool-status-text {
     margin-left: auto;
     font-size: var(--text-xs);
-    color: #8c8c8c;
+    color: var(--color-text-secondary);
   }
 
   &.done {

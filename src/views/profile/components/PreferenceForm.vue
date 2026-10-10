@@ -81,16 +81,8 @@ function resetPrompt() {
     align-items: center;
     font-size: 14px;
     font-weight: 500;
-    color: #333;
+    color: var(--color-text);
     margin-bottom: 8px;
-    @include themify(
-      (
-        color: (
-          light: #333,
-          dark: #f8faff,
-        ),
-      )
-    );
   }
 }
 

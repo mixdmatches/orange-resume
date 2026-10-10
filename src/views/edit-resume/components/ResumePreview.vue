@@ -141,11 +141,7 @@ const currentTemplate = computed(() => {
   /* 纸面宽于可视区时横向滚动查看，纸面宽度恒定不变形 */
   overflow: auto;
   min-width: 0;
-  @include themify(
-    (
-      color: $text-color,
-    )
-  );
+  color: var(--color-text);
 }
 
 .preview-wrapper {
