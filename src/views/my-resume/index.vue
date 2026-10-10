@@ -425,6 +425,7 @@ const formatTime = (t?: number) => {
 
         <div class="card-body">
           <h3 class="card-title">{{ item.title }}</h3>
+          <p class="card-meta">创建于 {{ formatTime(item.createdAt) }}</p>
           <p class="card-meta">更新于 {{ formatTime(item.updatedAt || 0) }}</p>
         </div>
 
