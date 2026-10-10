@@ -1,1 +1,0 @@
-import{a6 as i,a8 as n,a7 as o,aX as t}from"./index-BBxnaDFf.js";function r(e){return n("/user/ai-config",e)}function s(){return i("/user/ai-config")}function p(e){return o(`/user/ai-config/${e}`)}function u(){return i("/user/ai-config/sel-model-and-prompt")}function d(e){return t("/user/ai-config/sel-model-and-prompt",e)}export{s as a,r as b,p as d,u as g,d as s};
