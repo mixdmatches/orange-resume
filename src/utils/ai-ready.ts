@@ -23,7 +23,9 @@ export async function ensureAiProviderReady(): Promise<boolean> {
 
   // 1. 必须已选择服务商（未选择时后端返回空字符串）
   if (!preference.selectedProviderId) {
-    message.warning('请先前往「设置 → AI 服务商」选择并保存要使用的 AI 服务商')
+    message.warning(
+      '请先前往「个人中心 -> AI配置商 -> 模型偏好选择模型」选择并保存要使用的 AI 服务商',
+    )
     return false
   }
 
