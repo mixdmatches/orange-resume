@@ -37,12 +37,31 @@ const registerState = reactive({
   confirmPassword: '',
 })
 const registerRules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    {
+      min: 3,
+      max: 20,
+      message: '用户名3-20位',
+      trigger: 'blur',
+    },
+    {
+      // 注意：pattern 必须传 RegExp 对象，async-validator 会静默忽略字符串形式的 pattern
+      pattern: /^[A-Za-z0-9_]+$/,
+      message: '用户名只能包含字母、数字、下划线',
+      trigger: 'blur',
+    },
+  ],
   email: [
     {
       required: true,
-      type: 'email',
-      message: '邮箱格式不正确',
+      message: '请输入 QQ 邮箱',
+      trigger: 'blur',
+    },
+    {
+      // 仅允许 QQ 邮箱：数字账号或英文别名均可（如 12345@qq.com、alias@qq.com）
+      pattern: /^[A-Za-z0-9._%+-]+@qq\.com$/,
+      message: '仅支持 QQ 邮箱（格式：xxx@qq.com）',
       trigger: 'blur',
     },
   ],
@@ -300,7 +319,7 @@ onMounted(() => {
                 <a-input
                   v-model:value="registerState.email"
                   size="large"
-                  placeholder="邮箱"
+                  placeholder="QQ 邮箱"
                   allow-clear
                 >
                   <template #prefix><MailOutlined /></template>
