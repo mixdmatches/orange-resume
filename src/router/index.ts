@@ -67,7 +67,7 @@ export const ai_tools_routes: RouteRecordRaw[] = [
     path: '/ai-tools/analyze',
     name: 'ai-analyze',
     meta: {
-      title: 'AI 简历分析',
+      title: 'ATS 简历诊断',
       icon: () => h(FundOutlined),
       group: 'ai-tools',
     },
@@ -111,12 +111,6 @@ export const header_nav_items: HeaderNavItem[] = [
   },
   {
     type: 'item',
-    label: '证件照制作',
-    icon: () => h(HeatMapOutlined),
-    path: '/id-card',
-  },
-  {
-    type: 'item',
     label: '个人中心',
     icon: () => h(UserOutlined),
     path: '/profile',
@@ -136,12 +130,6 @@ export const header_routes: RouteRecordRaw[] = [
     name: 'template',
     meta: { title: '模板中心', icon: () => h(ShopOutlined) },
     component: () => import('@/views/template/index.vue'),
-  },
-  {
-    path: '/id-card',
-    name: 'id-card',
-    meta: { title: '证件照制作', icon: () => h(HeatMapOutlined) },
-    component: () => import('@/views/id-card/index.vue'),
   },
   {
     path: '/profile',

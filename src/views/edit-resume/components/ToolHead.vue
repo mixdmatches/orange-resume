@@ -8,6 +8,7 @@ import {
   RedoOutlined,
   BarChartOutlined,
   RobotOutlined,
+  CameraOutlined,
 } from '@ant-design/icons-vue'
 import { exportResumeToBrowserPrint } from '@/utils/print'
 import ThemeIcon from '@/components/ThemeIcon.vue'
@@ -16,6 +17,7 @@ import AiAssistant from './AiAssistant.vue'
 import GrammarCheck from './GrammarCheck.vue'
 import SelfIntro from './SelfIntro.vue'
 import JobMatch from './JobMatch.vue'
+import IdCardMaker from './IdCardMaker.vue'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import { computed, inject, ref } from 'vue'
@@ -37,6 +39,14 @@ const emit = defineEmits<{
   (e: 'undo'): void
   (e: 'redo'): void
 }>()
+
+/** 证件照制作弹窗开关 */
+const idCardOpen = ref(false)
+
+/** 打开证件照制作弹窗 */
+const handleOpenIdCard = () => {
+  idCardOpen.value = true
+}
 
 const resume: Resume = inject('resume') as Resume
 
@@ -208,6 +218,11 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
           <BarChartOutlined />
         </button>
       </a-tooltip>
+      <a-tooltip title="证件照制作">
+        <button class="icon-btn" @click="handleOpenIdCard">
+          <CameraOutlined />
+        </button>
+      </a-tooltip>
 
       <span class="divider-v"></span>
 
@@ -328,6 +343,9 @@ const handleAiDrawerAfterOpenChange = (open: boolean) => {
 
   <!-- 智能助手可拖拽对话框 -->
   <AiAssistant v-model:open="aiAssistantOpen" :resume-text="resumeText" />
+
+  <!-- 证件照制作弹窗 -->
+  <IdCardMaker v-model:open="idCardOpen" />
 </template>
 
 <style scoped lang="scss">
