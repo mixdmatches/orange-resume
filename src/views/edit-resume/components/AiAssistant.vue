@@ -3,6 +3,7 @@ import LineMdChatRoundDots from '~icons/line-md/chat-round-dots'
 import LineMdPlusCircle from '~icons/line-md/plus-circle'
 import {
   computed,
+  inject,
   nextTick,
   onMounted,
   onUnmounted,
@@ -30,6 +31,9 @@ import { agentChatStreamApi } from '@/api/agent'
 import type { ChatMessage, ToolCallInfo } from '@/types/ai'
 import type { AiSession } from '@/types/ai-sesstion'
 import { ensureAiProviderReady } from '@/utils/ai-ready'
+import type { Resume } from '@/types/resume'
+
+const resume: Resume = inject('resume') as Resume
 
 /** 控制对话框显示/隐藏 */
 const props = defineProps<{ open: boolean; resumeText?: string }>()
@@ -267,7 +271,10 @@ const handleDeleteSession = async (id: string) => {
  */
 const ensureSession = async (): Promise<string> => {
   if (sessionId.value) return sessionId.value
-  const session = await createAiSessionApi({ type: 'chat' })
+  const session = await createAiSessionApi({
+    resumeId: resume.id,
+    type: 'chat',
+  })
   sessionId.value = session.id
   return session.id
 }
@@ -409,8 +416,9 @@ const sessionList = ref<AiSession[]>([])
  * 刷新会话列表
  */
 const refreshSessionList = async () => {
-  const res = await listChatSesstionsApi()
+  const res = await listChatSesstionsApi(resume.id)
   sessionList.value = res || []
+  messages.value = []
 }
 </script>
 

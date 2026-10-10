@@ -33,8 +33,8 @@ export function listAiSessionsApi(params: SessionListParams) {
  * 对话会话列表(不分页)
  * @returns 对话会话列表
  */
-export function listChatSesstionsApi() {
-  return get<AiSession[]>('/ai-sessions/chat')
+export function listChatSesstionsApi(resumeId: string) {
+  return get<AiSession[]>(`/ai-sessions/chat/${resumeId}`)
 }
 
 /**

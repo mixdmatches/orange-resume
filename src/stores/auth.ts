@@ -11,6 +11,7 @@ import type { LoginParams, RegisterParams, UserInfo } from '@/types/user'
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from '@/utils/request'
 import { storage } from '@/utils/storage'
 import { clearQueue } from '@/service/syncQueue'
+import { clearAllResumesIDB } from '@/service/resumeIDB'
 
 export const useAuthStore = defineStore(
   'auth',
@@ -67,8 +68,8 @@ export const useAuthStore = defineStore(
     /**
      * 退出登录
      * 1. 调用后端登出接口（即使失败也继续清理本地状态）
-     * 2. 清除本地双令牌（storage）与响应式状态（token ref + userInfo）
-     * 3. 清空离线同步队列，防止残留数据污染新账户
+     * 2. 清除本地双令牌（storage）
+     * 3. 响应式状态、离线队列、本地简历缓存统一由 clearAuth 清理
      */
     async function logout() {
       try {
@@ -82,7 +83,7 @@ export const useAuthStore = defineStore(
     }
 
     /**
-     * 注销账号
+     * 注销账号：删除云端账号数据，本地清理逻辑与退出登录一致（clearAuth）
      */
     async function deleteAccount() {
       await deleteAccountApi()
@@ -92,9 +93,7 @@ export const useAuthStore = defineStore(
     }
 
     /**
-     * 清空鉴权状态（响应式 token ref + userInfo + 同步队列）
-     * 用于 401 刷新失败后登录页同步清理：request.ts 已清 storage 中的双令牌，
-     * 此方法负责同步清空 store 内的响应式状态与离线队列，确保 isLoggedIn 变为 false。
+     * 清空本地鉴权与用户数据（换号前必须执行，防止数据串号）
      */
     async function clearAuth() {
       token.value = null
@@ -103,6 +102,11 @@ export const useAuthStore = defineStore(
         await clearQueue()
       } catch (err) {
         console.warn('[auth] 清空同步队列失败:', err)
+      }
+      try {
+        await clearAllResumesIDB()
+      } catch (err) {
+        console.warn('[auth] 清空本地简历缓存失败:', err)
       }
     }
 

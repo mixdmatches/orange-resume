@@ -1,17 +1,5 @@
 /**
  * 简历数据调度层（Repository 模式）
- * 组件层只与本模块交互，由本模块决定走 IndexedDB 还是后端
- *
- * Local-First 策略：
- *   - 读：先 IDB（毫秒级）→ 没有再走云端 → 拉到后回填 IDB
- *   - 写：先写 IDB（本地立即可见）→ 入同步队列 → 异步上云
- *   - 删：先删 IDB → 入队列 → 异步删云端
- *   - 离线：写操作全部进队列，监听 online 事件回放
- *
- * 多端冲突策略：用 updatedAt 时间戳比对，云端更新则覆盖本地
- *
- * 说明：错误提示由 request.ts 的响应拦截器统一弹出，本层只负责
- *       控制流（成功/失败重试/出队等），不再重复 message.error。
  */
 import type { Resume } from '@/types/resume'
 import {
@@ -153,85 +141,95 @@ const ensureNetworkListener = () => {
 }
 
 /**
+ * 从云端对账同步简历到本地（拉新增 + 更新已有 + 删本地多余）
+ * @param local 本地当前简历列表（用于增量比对与防竞态）
+ */
+const syncFromCloud = async (local: Resume[]): Promise<void> => {
+  try {
+    // 读取同步队列，避免重复拉取删除中的简历，也避免误删创建中的简历
+    const pendingOps = await getPendingOps()
+    const pendingDeleteIds = new Set(
+      pendingOps.filter(op => op.type === 'delete').map(op => op.resumeId),
+    )
+    const pendingCreateIds = new Set(
+      pendingOps.filter(op => op.type === 'create').map(op => op.resumeId),
+    )
+
+    const remote = await getResumeListApi()
+    const remoteIds = new Set(remote.list.map(r => r.id))
+
+    for (const summary of remote.list) {
+      // 防竞态：跳过有 pending delete 的简历，避免删除中的简历被复活
+      if (pendingDeleteIds.has(summary.id)) {
+        console.log(`[listResumes] 跳过 ${summary.id}：本地有待执行的删除操作`)
+        continue
+      }
+      const existed = local.find(r => r.id === summary.id)
+      if (!existed) {
+        // 本地没有 → 拉详情后存本地
+        try {
+          const detail = await getResumeByIdApi(summary.id)
+          await addResumeIDB(detail)
+        } catch (e) {
+          console.warn('拉取简历详情失败', e)
+        }
+      } else if (
+        summary.updatedAt &&
+        (!existed.updatedAt || summary.updatedAt > existed.updatedAt)
+      ) {
+        // 云端更新时间更新 → 拉详情覆盖本地
+        try {
+          const detail = await getResumeByIdApi(summary.id)
+          await updateResumeIDB(summary.id, detail)
+        } catch (e) {
+          console.warn('更新简历详情失败', e)
+        }
+      }
+    }
+
+    // 对账：删除本地有但云端已不存在的简历（排除正在创建中的）
+    // 场景：用户在另一台设备删除了某份简历，本机需要同步删除
+    for (const localResume of local) {
+      if (
+        !remoteIds.has(localResume.id) &&
+        !pendingCreateIds.has(localResume.id)
+      ) {
+        console.log(`[listResumes] 对账删除 ${localResume.id}：云端已不存在`)
+        await deleteResumeIDB(localResume.id)
+      }
+    }
+  } catch (e) {
+    // 离线或未登录，静默失败
+    console.warn('同步云端列表失败', e)
+  }
+}
+
+/**
  * 获取简历列表
- * 优先本地（列表页秒开），后台静默拉云端补全
- * @returns 本地已有的简历列表（按更新时间倒序）
+ * - 本地有数据：立即返回（列表页秒开），后台静默拉云端补全
+ * - 本地为空（首次登录/换号后缓存已清）：等待云端拉取完成再返回，
+ *   否则后台同步完成后无人触发刷新，页面会一直显示空列表
+ * @returns 简历列表（按更新时间倒序）
  */
 export async function listResumes(): Promise<Resume[]> {
   ensureNetworkListener()
-  // 1. 先读本地，立即返回
+  // 1. 先读本地
   const local = await getAllResumesIDB()
+  const sortByUpdated = (a: Resume, b: Resume) =>
+    (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt)
 
-  // 2. 静默同步：后台拉云端补全（不阻塞列表渲染）
   if (navigator.onLine) {
-    void (async () => {
-      try {
-        // 读取同步队列，避免重复拉取删除中的简历，也避免误删创建中的简历
-        const pendingOps = await getPendingOps()
-        const pendingDeleteIds = new Set(
-          pendingOps.filter(op => op.type === 'delete').map(op => op.resumeId),
-        )
-        const pendingCreateIds = new Set(
-          pendingOps.filter(op => op.type === 'create').map(op => op.resumeId),
-        )
-
-        const remote = await getResumeListApi()
-        const remoteIds = new Set(remote.list.map(r => r.id))
-
-        for (const summary of remote.list) {
-          // 防竞态：跳过有 pending delete 的简历，避免删除中的简历被复活
-          if (pendingDeleteIds.has(summary.id)) {
-            console.log(
-              `[listResumes] 跳过 ${summary.id}：本地有待执行的删除操作`,
-            )
-            continue
-          }
-          const existed = local.find(r => r.id === summary.id)
-          if (!existed) {
-            // 本地没有 → 拉详情后存本地
-            try {
-              const detail = await getResumeByIdApi(summary.id)
-              await addResumeIDB(detail)
-            } catch (e) {
-              console.warn('拉取简历详情失败', e)
-            }
-          } else if (
-            summary.updatedAt &&
-            (!existed.updatedAt || summary.updatedAt > existed.updatedAt)
-          ) {
-            // 云端更新时间更新 → 拉详情覆盖本地
-            try {
-              const detail = await getResumeByIdApi(summary.id)
-              await updateResumeIDB(summary.id, detail)
-            } catch (e) {
-              console.warn('更新简历详情失败', e)
-            }
-          }
-        }
-
-        // 对账：删除本地有但云端已不存在的简历（排除正在创建中的）
-        // 场景：用户在另一台设备删除了某份简历，本机需要同步删除
-        for (const localResume of local) {
-          if (
-            !remoteIds.has(localResume.id) &&
-            !pendingCreateIds.has(localResume.id)
-          ) {
-            console.log(
-              `[listResumes] 对账删除 ${localResume.id}：云端已不存在`,
-            )
-            await deleteResumeIDB(localResume.id)
-          }
-        }
-      } catch (e) {
-        // 离线或未登录，静默失败
-        console.warn('同步云端列表失败', e)
-      }
-    })()
+    // 2a. 本地为空：同步等待云端拉取，拉完回读 IDB
+    if (local.length === 0) {
+      await syncFromCloud(local)
+      const synced = await getAllResumesIDB()
+      return synced.sort(sortByUpdated)
+    }
+    // 2b. 本地有数据：静默同步，不阻塞列表渲染
+    void syncFromCloud(local)
   }
 
-  return local.sort(
-    (a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt),
-  )
+  return local.sort(sortByUpdated)
 }
 
 /**

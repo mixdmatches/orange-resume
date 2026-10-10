@@ -46,6 +46,7 @@ export interface AiSession {
 
 /** 创建会话 DTO */
 export class CreateSessionDto {
+  resumeId!: string
   /** 会话类型：暂时只开放对话类型（面试会话由后续面试流程接口创建） */
   type!: 'chat'
   /** 会话标题（可选，不传默认"新对话"，首条用户消息发出后自动截取覆盖） */

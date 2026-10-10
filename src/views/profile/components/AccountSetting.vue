@@ -98,7 +98,7 @@ const handleBindEmail = () => {
       <div class="settings-text">
         <span class="settings-title danger">退出登录</span>
         <span class="settings-desc"
-          >清除本地登录状态，简历数据仍保留在此设备</span
+          >退出后清除本机简历缓存，简历数据已保存在云端</span
         >
       </div>
       <a-button danger @click="handleLogout">

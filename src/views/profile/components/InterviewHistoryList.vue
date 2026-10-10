@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { DeleteOutlined, EyeOutlined } from '@ant-design/icons-vue'
 import type { InterviewDetail, InterviewSession } from '@/types/interview'
+import InterviewDetailDrawer from './InterviewDetailDrawer.vue'
 import {
   listInterviewsApi,
   deleteInterviewApi,
@@ -235,7 +236,6 @@ const formatTime = (t?: string) => {
       @show-size-change="handlePageSizeChange"
     />
   </a-card>
-  <!-- 面试详情抽屉 -->
   <interview-detail-drawer
     v-model:open="detailVisible"
     :detail="detailData"
