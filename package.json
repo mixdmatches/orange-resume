@@ -14,6 +14,7 @@
   "dependencies": {
     "@ant-design/icons-vue": "^7.0.1",
     "@faker-js/faker": "^10.1.0",
+    "@imgly/background-removal": "^1.4.5",
     "aieditor": "^1.4.2",
     "ant-design-vue": "~4.2.6",
     "axios": "^1.19.0",
@@ -24,11 +25,13 @@
     "lodash-es": "^4.17.21",
     "markdown-it": "^14.1.1",
     "motion-v": "^2.2.1",
+    "onnxruntime-web": "1.21.0-dev.20250206-d981b153d3",
     "openai": "^6.39.1",
     "pdfjs-dist": "^6.0.227",
     "pinia-plugin-persistedstate": "^4.5.0",
     "sortablejs": "^1.15.7",
     "vue": "^3.5.18",
+    "vue-cropper": "^1.1.4",
     "vue-router": "^4.5.1"
   },
   "devDependencies": {

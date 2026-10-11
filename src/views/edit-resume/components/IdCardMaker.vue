@@ -1,42 +1,52 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
+import { VueCropper } from 'vue-cropper'
+import 'vue-cropper/dist/index.css'
 import {
   UploadOutlined,
   SwapOutlined,
   UndoOutlined,
-  DownloadOutlined,
-  CheckOutlined,
-  CloseOutlined,
   InfoCircleOutlined,
 } from '@ant-design/icons-vue'
 import { motion } from 'motion-v'
+import { removeBackground, preload } from '@imgly/background-removal'
+
+/** 抠图公共配置：资源走 npmmirror 镜像，规避官方 CDN 国内被墙 */
+const IMG_CONFIG = {
+  // 模型与分片资源从 npmmirror 文件镜像加载（与主包 1.4.5 配套）
+  publicPath:
+    'https://registry.npmmirror.com/@imgly/background-removal-data/1.4.5/files/dist/',
+  // 1.4.5 仅支持 small/medium，medium 是质量与体积的平衡点（约 40MB）
+  model: 'medium' as const,
+}
 
 const props = defineProps<{
   /** 控制弹窗显示 */
   open: boolean
 }>()
 
+/** 模型是否已完成预热 */
+let preloaded = false
+
+/** 弹窗首次打开时预热模型资源（失败静默，生成时库会自动重拉） */
+watch(
+  () => props.open,
+  open => {
+    if (!open || preloaded) return
+    preload(IMG_CONFIG)
+      .then(() => {
+        preloaded = true
+      })
+      .catch(() => {})
+  },
+  { immediate: true },
+)
+
 const emit = defineEmits<{
   /** 请求关闭弹窗 */
   (e: 'update:open', val: boolean): void
-  /** 确认使用，将结果回传给父组件 */
-  (e: 'confirm', data: IdCardResult): void
 }>()
-
-/** 证件照规格预设 */
-export interface IdCardPreset {
-  /** 唯一标识 */
-  id: string
-  /** 显示名称 */
-  label: string
-  /** 宽度（像素）*/
-  width: number
-  /** 高度（像素）*/
-  height: number
-  /** 实际物理尺寸描述 */
-  desc: string
-}
 
 /** 底色预设 */
 export interface BgColor {
@@ -46,66 +56,22 @@ export interface BgColor {
   value: string
 }
 
-/** 确认后的证件照结果 */
-export interface IdCardResult {
-  /** 处理后的图片 Base64 */
-  dataUrl: string
-  /** 宽度 px */
-  width: number
-  /** 高度 px */
-  height: number
-  /** 使用的底色 */
-  bgColor: string
-}
-
-/** 常用证件照规格 */
-const presets: IdCardPreset[] = [
-  { id: '1inch', label: '一寸', width: 295, height: 413, desc: '25×35mm' },
-  { id: '2inch', label: '二寸', width: 413, height: 579, desc: '35×49mm' },
-  {
-    id: 'small1inch',
-    label: '小一寸',
-    width: 260,
-    height: 378,
-    desc: '22×32mm',
-  },
-  {
-    id: 'small2inch',
-    label: '小二寸',
-    width: 413,
-    height: 531,
-    desc: '35×45mm',
-  },
-  {
-    id: 'full2inch',
-    label: '大二寸',
-    width: 413,
-    height: 626,
-    desc: '35×53mm',
-  },
-]
+/** 固定证件照规格：一寸（25×35mm） */
+const PRESET = { label: '一寸', width: 295, height: 413, desc: '25×35mm' }
 
 /** 常用底色 */
 const bgColors: BgColor[] = [
   { id: 'white', label: '白色', value: '#ffffff' },
   { id: 'blue', label: '蓝色', value: '#438edb' },
   { id: 'red', label: '红色', value: '#d50000' },
+  { id: 'original', label: '原图', value: '' },
 ]
-
-/** 当前选中的规格 ID */
-const activePresetId = ref('1inch')
 
 /** 当前选中的底色 ID */
 const activeBgId = ref('blue')
 
-/** 上传后的图片对象 */
-const uploadedImage = ref<HTMLImageElement | null>(null)
-
-/** 原始图片源 */
+/** 原始图片源（传入 VueCropper） */
 const imageSrc = ref('')
-
-/** 裁剪框数据（相对坐标 0~1） */
-const cropBox = ref({ x: 0.25, y: 0.15, w: 0.5, h: 0.75 })
 
 /** 文件输入引用 */
 const fileInputRef = ref<HTMLInputElement | null>(null)
@@ -113,32 +79,34 @@ const fileInputRef = ref<HTMLInputElement | null>(null)
 /** 拖拽是否悬停 */
 const isDragging = ref(false)
 
-/** 当前选中的规格对象 */
-const activePreset = computed(
-  () => presets.find(p => p.id === activePresetId.value) ?? presets[0],
-)
+/** VueCropper 组件引用 */
+const cropperRef = ref<InstanceType<typeof VueCropper> | null>(null)
 
 /** 当前选中的底色对象 */
 const activeBg = computed(
   () => bgColors.find(b => b.id === activeBgId.value) ?? bgColors[0],
 )
 
-/** 图片宽高比（基于选中规格） */
-const targetRatio = computed(
-  () => activePreset.value.width / activePreset.value.height,
-)
-
 /** 是否已上传图片 */
-const hasImage = computed(() => !!uploadedImage.value)
+const hasImage = computed(() => !!imageSrc.value)
+
+/** 预览视图状态：edit 编辑 / generating 生成中 / done 完成 */
+const view = ref<'edit' | 'generating' | 'done'>('edit')
+
+/** 生成完成的证件照 DataURL */
+const previewUrl = ref('')
+
+/** 初始截图框宽度（px） */
+const INIT_CROP_WIDTH = 160
+
+/** 初始截图框高度（px，按一寸比例 295:413 换算） */
+const INIT_CROP_HEIGHT = Math.round(
+  (INIT_CROP_WIDTH * PRESET.height) / PRESET.width,
+)
 
 /** 弹窗关闭 */
 const handleClose = () => {
   emit('update:open', false)
-}
-
-/** 重置裁剪区域 */
-const resetCropBox = () => {
-  cropBox.value = { x: 0.25, y: 0.15, w: 0.5, h: 0.75 }
 }
 
 /** 触发文件选择 */
@@ -170,8 +138,8 @@ const handleDrop = (e: DragEvent) => {
   if (file) loadImageFile(file)
 }
 
-/** 加载图片文件 */
-const loadImageFile = (file: File) => {
+/** 加载图片文件（交给 VueCropper 渲染） */
+const loadImageFile = async (file: File) => {
   if (!file.type.startsWith('image/')) {
     message.error('请选择图片文件')
     return
@@ -180,89 +148,200 @@ const loadImageFile = (file: File) => {
   reader.onload = ev => {
     const img = new Image()
     img.onload = () => {
-      uploadedImage.value = img
       imageSrc.value = ev.target?.result as string
-      resetCropBox()
     }
     img.src = ev.target?.result as string
   }
   reader.readAsDataURL(file)
 }
 
-/** 切换底色（换背景色） */
-const changeBgColor = (bgId: string) => {
-  activeBgId.value = bgId
+/** VueCropper 图片加载失败回调 */
+const handleImgLoadError = () => {
+  imageSrc.value = ''
+  message.error('图片加载失败，请更换图片')
 }
 
-/** 生成裁剪后的证件照 DataURL */
-const generateIdCard = (): string => {
-  if (!uploadedImage.value) return ''
-  const img = uploadedImage.value
-  const preset = activePreset.value
-  const bg = activeBg.value
+/** 重置截图框到初始位置 */
+const handleResetCrop = () => {
+  cropperRef.value?.refresh()
+}
 
+/** 将图片缩到长边 maxSide 内降低推理内存占用，失败时返回原图 */
+const shrinkImage = (blob: Blob, maxSide = 1080): Promise<Blob> =>
+  createImageBitmap(blob)
+    .then(bitmap => {
+      const longSide = Math.max(bitmap.width, bitmap.height)
+      if (longSide <= maxSide) {
+        bitmap.close()
+        return blob
+      }
+      const scale = maxSide / longSide
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.round(bitmap.width * scale)
+      canvas.height = Math.round(bitmap.height * scale)
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        bitmap.close()
+        return blob
+      }
+      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+      bitmap.close()
+      return new Promise<Blob>(resolve =>
+        canvas.toBlob(b => resolve(b ?? blob), 'image/png'),
+      )
+    })
+    .catch(() => blob)
+
+/** 裁剪与抠图缓存：结果页换底色时 cropper 已卸载，直接复用此处数据 */
+const pipelineCache = ref<{
+  /** 裁剪指纹：裁剪框/图片位姿/输出体积任一变化都会使其失效 */
+  fingerprint: string
+  /** 裁剪结果 Blob */
+  cropBlob: Blob
+  /** AI 抠出的透明人像（原图模式下为 null） */
+  cutout: Blob | null
+} | null>(null)
+
+/** 从 cropper 异步取裁剪 Blob（组件已卸载时返回 null） */
+const getCropBlob = (cropper: any): Promise<Blob | null> =>
+  new Promise(resolve => {
+    try {
+      cropper.getCropBlob((blob: Blob) => resolve(blob ?? null))
+    } catch {
+      resolve(null)
+    }
+  })
+
+/** 计算裁剪指纹：图片缩放/位移/裁剪框变化都会反映到指纹 */
+const fingerprintOf = (cropper: any, blob: Blob) =>
+  [
+    cropper.scale,
+    cropper.x,
+    cropper.y,
+    cropper.cropW,
+    cropper.cropH,
+    cropper.cropOffsertX,
+    cropper.cropOffsertY,
+    blob.size,
+  ].join('|')
+
+/** 将人像 Blob 合成到规格尺寸画布（非原图模式先填底色） */
+const composeIdCard = async (portraitBlob: Blob): Promise<string> => {
   const canvas = document.createElement('canvas')
-  canvas.width = preset.width
-  canvas.height = preset.height
+  canvas.width = PRESET.width
+  canvas.height = PRESET.height
   const ctx = canvas.getContext('2d')
   if (!ctx) return ''
-
-  // 底色填充
-  ctx.fillStyle = bg.value
-  ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-  // 按裁剪区域从原图截取并缩放到目标尺寸
-  const sx = cropBox.value.x * img.naturalWidth
-  const sy = cropBox.value.y * img.naturalHeight
-  const sw = cropBox.value.w * img.naturalWidth
-  const sh = cropBox.value.h * img.naturalHeight
-
-  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)
-
+  const isOriginal = activeBgId.value === 'original'
+  const portrait = await createImageBitmap(portraitBlob)
+  if (!isOriginal) {
+    ctx.fillStyle = activeBg.value.value
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+  }
+  ctx.drawImage(portrait, 0, 0, canvas.width, canvas.height)
+  portrait.close()
   return canvas.toDataURL('image/png')
 }
 
-/** 下载证件照 */
-const handleDownload = () => {
+/** AI 抠图：先缩图降低内存，输出透明背景 PNG */
+const aiCutout = async (cropBlob: Blob): Promise<Blob> => {
+  const heapNow = () =>
+    (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory
+      ?.usedJSHeapSize ?? 0
+  const heap0 = heapNow()
+  const t0 = performance.now()
+  const shrunk = await shrinkImage(cropBlob)
+  const tShrink = Math.round(performance.now() - t0)
+  const blob = await removeBackground(shrunk, {
+    ...IMG_CONFIG,
+    output: { format: 'image/png' },
+  })
+  const tTotal = Math.round(performance.now() - t0)
+  console.table([
+    { 指标: '原图体积', 值: `${(cropBlob.size / 1024).toFixed(0)} KB` },
+    { 指标: '送入模型体积', 值: `${(shrunk.size / 1024).toFixed(0)} KB` },
+    { 指标: '缩图耗时', 值: `${tShrink} ms` },
+    { 指标: '端到端耗时', 值: `${tTotal} ms` },
+    {
+      指标: '堆增长(参考)',
+      值: `${((heapNow() - heap0) / 1048576).toFixed(1)} MB`,
+    },
+  ])
+  return blob
+}
+
+/** 编辑态生成：从 cropper 取裁剪，指纹未变则复用缓存免二次推理 */
+const generateFromCropper = async (): Promise<string> => {
+  const cropper = cropperRef.value
+  if (!cropper) return ''
+  const cropBlob = await getCropBlob(cropper)
+  if (!cropBlob) return ''
+  const isOriginal = activeBgId.value === 'original'
+  const fp = fingerprintOf(cropper, cropBlob)
+  let cutoutBlob =
+    pipelineCache.value?.fingerprint === fp ? pipelineCache.value.cutout : null
+  if (!isOriginal && !cutoutBlob) cutoutBlob = await aiCutout(cropBlob)
+  pipelineCache.value = { fingerprint: fp, cropBlob, cutout: cutoutBlob }
+  return composeIdCard(isOriginal ? cropBlob : (cutoutBlob as Blob))
+}
+
+/** 结果页换底色：不依赖 cropper，直接复用缓存重绘 */
+const regenerateWithBg = async (): Promise<string> => {
+  const entry = pipelineCache.value
+  if (!entry) return ''
+  const isOriginal = activeBgId.value === 'original'
+  let cutoutBlob = entry.cutout
+  if (!isOriginal && !cutoutBlob) {
+    cutoutBlob = await aiCutout(entry.cropBlob)
+    pipelineCache.value = { ...entry, cutout: cutoutBlob }
+  }
+  return composeIdCard(isOriginal ? entry.cropBlob : cutoutBlob)
+}
+
+/** 生成并进入结果视图（cropper 入口失败回编辑页，缓存入口失败留在结果页） */
+const runGenerate = async (mode: 'cropper' | 'cache') => {
+  view.value = 'generating'
+  const dataUrl =
+    mode === 'cropper' ? await generateFromCropper() : await regenerateWithBg()
+  if (!dataUrl) {
+    message.error('生成失败，请重试')
+    view.value = mode === 'cache' ? 'done' : 'edit'
+    return
+  }
+  previewUrl.value = dataUrl
+  view.value = 'done'
+}
+
+/** 点击预览 */
+const handlePreviewImg = async () => {
   if (!hasImage.value) {
     message.warning('请先上传照片')
     return
   }
-  const dataUrl = generateIdCard()
-  if (!dataUrl) {
-    message.error('生成失败，请重试')
-    return
-  }
-  const preset = activePreset.value
+  await runGenerate('cropper')
+}
+
+/** 结果页切换底色：复用缓存秒级重绘，或首次切到颜色时补一次推理 */
+const handleResultBgChange = (bgId: string) => {
+  if (bgId === activeBgId.value) return
+  activeBgId.value = bgId
+  runGenerate('cache')
+}
+
+/** 返回编辑视图 */
+const handleBackEdit = () => {
+  view.value = 'edit'
+}
+
+/** 下载生成的证件照 */
+const handleDownload = () => {
+  if (!previewUrl.value) return
   const a = document.createElement('a')
-  a.href = dataUrl
-  a.download = `${preset.label}_证件照.png`
+  a.href = previewUrl.value
+  a.download = `${PRESET.label}_证件照.png`
   a.click()
   message.success('下载成功')
 }
-
-/** 确认使用 */
-const handleConfirm = () => {
-  if (!hasImage.value) {
-    message.warning('请先上传照片')
-    return
-  }
-  const dataUrl = generateIdCard()
-  emit('confirm', {
-    dataUrl,
-    width: activePreset.value.width,
-    height: activePreset.value.height,
-    bgColor: activeBg.value.value,
-  })
-  emit('update:open', false)
-}
-
-/** 图片加载后重置裁剪框（按规格比例） */
-watch(activePreset, () => {
-  if (uploadedImage.value) {
-    resetCropBox()
-  }
-})
 </script>
 
 <template>
@@ -302,38 +381,42 @@ watch(activePreset, () => {
           />
         </div>
 
-        <!-- 已上传时的裁剪预览 -->
+        <!-- 已上传时的裁剪预览（VueCropper 接管交互） -->
         <motion.div
-          v-else
+          v-else-if="view === 'edit'"
           class="crop-stage"
           :initial="{ opacity: 0 }"
           :animate="{ opacity: 1 }"
           :transition="{ duration: 0.25 }"
         >
-          <div class="crop-canvas" :style="{ backgroundColor: activeBg.value }">
-            <!-- 原图（作为裁剪源） -->
-            <img :src="imageSrc" class="crop-source" alt="原始照片" />
-            <!-- 裁剪框 overlay：显示目标证件照比例的参考框 -->
-            <div
-              class="crop-guide"
-              :style="{
-                aspectRatio: `${activePreset.width} / ${activePreset.height}`,
-              }"
-            >
-              <!-- 九宫格辅助线 -->
-              <div class="grid-lines">
-                <span class="line-h line-h-1"></span>
-                <span class="line-h line-h-2"></span>
-                <span class="line-v line-v-1"></span>
-                <span class="line-v line-v-2"></span>
-              </div>
-            </div>
+          <div class="cropper-wrap">
+            <VueCropper
+              ref="cropperRef"
+              :img="imageSrc"
+              :output-size="1"
+              output-type="png"
+              :info="false"
+              :can-scale="true"
+              :auto-crop="true"
+              :auto-crop-width="INIT_CROP_WIDTH"
+              :auto-crop-height="INIT_CROP_HEIGHT"
+              :fixed="true"
+              :fixed-number="[PRESET.width, PRESET.height]"
+              :full="true"
+              :high="true"
+              :can-move="true"
+              :can-move-box="true"
+              :center-box="true"
+              :max-img-size="4000"
+              mode="contain"
+              @img-load-error="handleImgLoadError"
+            />
           </div>
 
           <div class="crop-footer">
             <span class="crop-size">
-              {{ activePreset.width }}×{{ activePreset.height }} px ·
-              {{ activePreset.desc }}
+              {{ PRESET.width }}×{{ PRESET.height }} px ·
+              {{ PRESET.desc }}
             </span>
             <div class="crop-actions">
               <a-tooltip title="重新选择">
@@ -341,8 +424,8 @@ watch(activePreset, () => {
                   <SwapOutlined />
                 </button>
               </a-tooltip>
-              <a-tooltip title="重置裁剪">
-                <button class="mini-btn" @click="resetCropBox">
+              <a-tooltip title="重置裁剪框">
+                <button class="mini-btn" @click="handleResetCrop">
                   <UndoOutlined />
                 </button>
               </a-tooltip>
@@ -356,73 +439,55 @@ watch(activePreset, () => {
             </div>
           </div>
         </motion.div>
-      </div>
 
-      <!-- ============ 右侧：控制面板 ============ -->
-      <div class="control-panel">
-        <!-- 规格选择 -->
-        <div class="control-group">
-          <div class="group-title">选择规格</div>
-          <div class="preset-list">
-            <button
-              v-for="p in presets"
-              :key="p.id"
-              class="preset-btn"
-              :class="{ active: activePresetId === p.id }"
-              @click="activePresetId = p.id"
-            >
-              <span class="preset-label">{{ p.label }}</span>
-              <span class="preset-desc">{{ p.desc }}</span>
-            </button>
+        <!-- 生成中：loading -->
+        <div v-else-if="view === 'generating'" class="progress-stage">
+          <a-spin size="large" />
+          <div class="stage-text">
+            正在生成证件照，首次使用需下载模型资源，请耐心等待
           </div>
         </div>
 
-        <!-- 底色选择 -->
-        <div class="control-group">
-          <div class="group-title">底色</div>
-          <div class="bg-list">
+        <!-- 生成完成：结果预览、切底色与导出 -->
+        <div v-else class="result-stage">
+          <img :src="previewUrl" class="result-img" alt="证件照预览" />
+          <div class="result-bg-row">
             <button
               v-for="bg in bgColors"
               :key="bg.id"
-              class="bg-btn"
-              :class="{ active: activeBgId === bg.id }"
-              @click="changeBgColor(bg.id)"
-            >
-              <span class="bg-swatch" :style="{ backgroundColor: bg.value }">
-                <CheckOutlined v-if="activeBgId === bg.id" />
-              </span>
-              <span class="bg-label">{{ bg.label }}</span>
-            </button>
+              class="result-bg-dot"
+              :class="{ active: activeBgId === bg.id, 'no-color': !bg.value }"
+              :style="bg.value ? { backgroundColor: bg.value } : undefined"
+              :title="bg.label"
+              @click="handleResultBgChange(bg.id)"
+            />
+          </div>
+          <div class="result-actions">
+            <a-button @click="handleBackEdit">返回编辑</a-button>
+            <a-button type="primary" @click="handleDownload">下载照片</a-button>
           </div>
         </div>
+      </div>
 
+      <!-- ============ 右侧：控制面板（仅编辑态） ============ -->
+      <div v-if="view === 'edit'" class="control-panel">
         <!-- 提示 -->
         <div class="tip-box">
           <InfoCircleOutlined class="tip-icon" />
           <span class="tip-text">
-            建议使用正面免冠照片，人像居中，面部占比约 2/3
+            拖动/滚轮缩放调整照片，拖动裁剪框选取区域；点击预览后自动抠出人像，可再换底色或下载
           </span>
         </div>
 
         <!-- 操作按钮 -->
         <div class="action-row">
           <a-button
-            class="action-btn action-download"
-            :disabled="!hasImage"
-            @click="handleDownload"
-          >
-            <DownloadOutlined />
-            下载
-          </a-button>
-          <a-button
             type="primary"
             class="action-btn action-confirm"
             :disabled="!hasImage"
-            @click="handleConfirm"
+            @click="handlePreviewImg"
+            >预览效果</a-button
           >
-            <CheckOutlined />
-            使用此照片
-          </a-button>
         </div>
       </div>
     </div>
@@ -507,78 +572,15 @@ watch(activePreset, () => {
   min-height: 400px;
 }
 
-.crop-canvas {
+/* VueCropper 容器（组件根节点默认铺满父容器） */
+.cropper-wrap {
   flex: 1;
-  position: relative;
+  min-height: 400px;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 360px;
 
-  .crop-source {
-    position: absolute;
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    z-index: 0;
-    opacity: 0.45;
-    filter: saturate(0.6);
-  }
-
-  .crop-guide {
-    position: relative;
-    width: 70%;
-    height: auto;
-    max-width: 280px;
-    z-index: 1;
-    border: 1.5px solid var(--color-primary);
-    border-radius: var(--radius-md);
-    box-shadow:
-      0 0 0 9999px rgba(0, 0, 0, 0.35),
-      0 4px 20px rgba(0, 0, 0, 0.15);
-  }
-
-  /* 九宫格辅助线 */
-  .grid-lines {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-
-    .line-h,
-    .line-v {
-      position: absolute;
-      background: rgba(255, 255, 255, 0.5);
-    }
-
-    .line-h {
-      left: 0;
-      right: 0;
-      height: 1px;
-    }
-
-    .line-h-1 {
-      top: 33.33%;
-    }
-
-    .line-h-2 {
-      top: 66.66%;
-    }
-
-    .line-v {
-      top: 0;
-      bottom: 0;
-      width: 1px;
-    }
-
-    .line-v-1 {
-      left: 33.33%;
-    }
-
-    .line-v-2 {
-      left: 66.66%;
-    }
+  :deep(.vue-cropper) {
+    background: var(--color-bg-muted);
   }
 }
 
@@ -620,6 +622,69 @@ watch(activePreset, () => {
   }
 }
 
+/* 生成中进度舞台 */
+.progress-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  min-height: 400px;
+
+  .stage-text {
+    font-size: var(--text-xs);
+    color: var(--color-text-tertiary);
+  }
+}
+
+/* 生成结果舞台 */
+.result-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  min-height: 400px;
+
+  .result-img {
+    width: 236px;
+    height: 330px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    background: #fff;
+  }
+
+  .result-bg-row {
+    display: flex;
+    gap: var(--space-3);
+  }
+
+  .result-bg-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-full);
+    border: 2px solid var(--color-border);
+    cursor: pointer;
+    transition: border-color var(--duration-fast) var(--ease-out);
+
+    &.active {
+      border-color: var(--color-primary);
+    }
+
+    &.no-color {
+      background: repeating-conic-gradient(#e8e8e8 0% 25%, #fff 0% 50%) 0 0 /
+        8px 8px;
+    }
+  }
+
+  .result-actions {
+    display: flex;
+    gap: var(--space-3);
+  }
+}
+
 /* ============ 右侧控制面板 ============ */
 .control-panel {
   width: 240px;
@@ -631,111 +696,6 @@ watch(activePreset, () => {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
-}
-
-.control-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.group-title {
-  font-size: var(--text-xs);
-  font-weight: var(--font-medium);
-  color: var(--color-text-secondary);
-  letter-spacing: var(--tracking-wide);
-}
-
-/* 规格选择 */
-.preset-list {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-2);
-}
-
-.preset-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: var(--space-3) var(--space-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
-  cursor: pointer;
-  transition:
-    border-color var(--duration-fast) var(--ease-out),
-    background-color var(--duration-fast) var(--ease-out);
-
-  &:hover {
-    border-color: var(--color-primary-border);
-  }
-
-  &.active {
-    border-color: var(--color-primary);
-    background: var(--color-primary-bg);
-  }
-
-  .preset-label {
-    font-size: var(--text-sm);
-    font-weight: var(--font-medium);
-    color: var(--color-text);
-  }
-
-  .preset-desc {
-    font-size: 12px;
-    color: var(--color-text-tertiary);
-  }
-}
-
-/* 底色选择 */
-.bg-list {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.bg-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: var(--space-2);
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  background: transparent;
-  cursor: pointer;
-  transition:
-    border-color var(--duration-fast) var(--ease-out),
-    background-color var(--duration-fast) var(--ease-out);
-
-  &:hover {
-    background: var(--color-bg-muted);
-  }
-
-  &.active {
-    border-color: var(--color-primary);
-  }
-
-  .bg-swatch {
-    position: relative;
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-full);
-    border: 2px solid var(--color-border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: border-color var(--duration-fast) var(--ease-out);
-  }
-
-  &.active .bg-swatch {
-    border-color: var(--color-primary);
-  }
-
-  .bg-label {
-    font-size: var(--text-xs);
-    color: var(--color-text-secondary);
-  }
 }
 
 /* 提示框 */
