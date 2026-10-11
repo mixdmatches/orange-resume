@@ -30,5 +30,11 @@ export async function pdfToText(file: File) {
     fullText += content.items.map((item: any) => item.str).join(' ') + '\n'
   }
 
-  return fullText.trim()
+  const text = fullText.trim()
+  if (!text) {
+    throw new Error(
+      '该 PDF 没有可提取的文字（可能是扫描件或图片转的 PDF），请换用文字版 PDF',
+    )
+  }
+  return text
 }
