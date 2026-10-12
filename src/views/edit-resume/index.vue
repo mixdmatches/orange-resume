@@ -156,8 +156,6 @@ const canRedo = resumeHistory.canRedo
 
 provide('resume', resume)
 
-const resumeMode = ref('edit')
-
 const splitterContainer = ref<HTMLElement | null>(null)
 const MAX_LEFT_WIDTH = 47
 const leftWidth = ref(MAX_LEFT_WIDTH)
@@ -233,7 +231,6 @@ const syncText = computed(() => {
 <template>
   <div class="edit-container">
     <tool-head
-      v-model:resume-mode="resumeMode"
       :can-undo="canUndo"
       :can-redo="canRedo"
       :last-save-time="lastSaveTime"
