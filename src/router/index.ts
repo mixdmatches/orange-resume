@@ -47,7 +47,7 @@ export const ai_tools_routes: RouteRecordRaw[] = [
     path: '/ai-tools/polish',
     name: 'ai-polish',
     meta: {
-      title: 'AI 润色简历',
+      title: 'AI 生成简历',
       icon: () => h(EditOutlined),
       group: 'ai-tools',
     },

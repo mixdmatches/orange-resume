@@ -1,12 +1,12 @@
 <script setup lang="ts">
-// AI 润色简历 · 占位页面
+
 </script>
 
 <template>
   <div class="page page-ai-tools">
     <div class="placeholder">
       <div class="placeholder-icon">✨</div>
-      <h2 class="placeholder-title">AI 润色简历</h2>
+      <h2 class="placeholder-title">AI 生成简历</h2>
       <p class="placeholder-desc">智能优化表述、丰富措辞，让简历更专业更有亮点</p>
       <a-tag color="orange">功能开发中</a-tag>
     </div>
