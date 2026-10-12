@@ -21,6 +21,7 @@ import { message } from 'ant-design-vue'
 import { importPDF } from '@/utils/importPDF'
 import { generateUUID } from '@/utils/uuid'
 import TemplateThumb from '@/components/TemplateThumb.vue'
+import storage from '@/utils/storage'
 
 const router = useRouter()
 
@@ -89,6 +90,8 @@ const handleOneDeleteOk = async () => {
   try {
     await deleteResume(activeResumeId.value)
     await getAllResume()
+    // 清除本地编辑操作历史栈
+    storage.remove(`resume-history:${activeResumeId.value}`)
     message.success('删除成功')
   } catch (error) {
     message.error(error instanceof Error ? error.message : '删除失败')
@@ -182,6 +185,9 @@ const handleBatchDeleteOk = async () => {
   try {
     await deleteBatchResume(idsToDelete)
     await getAllResume()
+    for (const id of idsToDelete) {
+      storage.remove(`resume-history:${id}`)
+    }
     message.success(`批量删除成功，共删除 ${deleteCount} 份简历`)
     selectedIds.value = []
     selectMode.value = false
