@@ -202,6 +202,9 @@ const handleBatchDeleteOk = async () => {
 // ========== 导入配置相关状态 ==========
 const openConfigModal = ref(false)
 const importLoading = ref(false)
+const importProgressText = ref('')
+const pdfAbortController = ref<AbortController | null>(null)
+const importSnapshot = ref<Resume | null>(null)
 
 /**
  * 导入JSON配置
@@ -244,7 +247,14 @@ const handleImportJSON = async () => {
 }
 
 /**
- * 导入PDF配置
+ * 停止当前 PDF 流式解析
+ */
+const handleStopImportPDF = () => {
+  pdfAbortController.value?.abort()
+}
+
+/**
+ * 导入PDF配置（SSE 流式 AI 解析，渐进显示识别进度）
  */
 const handleImportPDF = async () => {
   const input = document.createElement('input')
@@ -257,17 +267,42 @@ const handleImportPDF = async () => {
     const file = (e.target as HTMLInputElement)?.files?.[0]
     if (!file) return
     importLoading.value = true
+    importProgressText.value = '正在提取 PDF 文字...'
+    const controller = new AbortController()
+    pdfAbortController.value = controller
     try {
-      const resume = await importPDF(file)
-      message.success('PDF 解析成功，正在处理...')
-      console.log('PDF 解析文本内容：', resume)
+      const resume = await importPDF(file, {
+        signal: controller.signal,
+        onProgress: progress => {
+          if (progress.stage === 'extract') {
+            importProgressText.value = '正在提取 PDF 文字...'
+          } else {
+            importProgressText.value = progress.degraded
+              ? 'AI 解析中（结果较大，等待完整生成）...'
+              : `AI 解析中 · 已识别 ${progress.parsedFields} 个字段`
+          }
+          if (progress.snapshot) {
+            importSnapshot.value = progress.snapshot
+          }
+        },
+      })
+      resume.title = 'Ai解析简历导入'
       await createResume(resume)
       await getAllResume()
       message.success('PDF 导入成功')
     } catch (error) {
       console.error('PDF 导入失败', error)
-      message.error(error instanceof Error ? error.message : 'PDF 导入失败')
+      const errMsg = error instanceof Error ? error.message : 'PDF 导入失败'
+      // 用户主动停止不算失败，用 warning 提示
+      if (errMsg === '已停止解析') {
+        message.warning('已停止解析')
+      } else {
+        message.error(errMsg)
+      }
     } finally {
+      pdfAbortController.value = null
+      importSnapshot.value = null
+      importProgressText.value = ''
       input.removeEventListener('change', handleChange)
       document.body.removeChild(input)
       importLoading.value = false
@@ -323,33 +358,62 @@ const formatTime = (t?: number) => {
       :closable="false"
       @cancel="() => (openConfigModal = false)"
     >
-      <a-spin :spinning="importLoading">
-        <div class="import-options">
-          <a-card hoverable class="import-card" @click="handleImportJSON">
-            <template #cover>
-              <div class="import-icon json-icon">
-                <plus-outlined />
-              </div>
-            </template>
-            <a-card-meta
-              title="JSON 导入"
-              description="从本地 JSON 文件导入简历配置"
-            />
-          </a-card>
+      <!-- 空闲态：选择导入方式 -->
+      <div v-if="!importLoading" class="import-options">
+        <a-card hoverable class="import-card" @click="handleImportJSON">
+          <template #cover>
+            <div class="import-icon json-icon">
+              <plus-outlined />
+            </div>
+          </template>
+          <a-card-meta
+            title="JSON 导入"
+            description="从本地 JSON 文件导入简历配置"
+          />
+        </a-card>
 
-          <a-card hoverable class="import-card" @click="handleImportPDF">
-            <template #cover>
-              <div class="import-icon pdf-icon">
-                <vertical-align-top-outlined />
-              </div>
-            </template>
-            <a-card-meta
-              title="PDF 导入(AI解析)"
-              description="从本地 PDF 文件中提取简历内容，AI解析后导入"
-            />
-          </a-card>
+        <a-card hoverable class="import-card" @click="handleImportPDF">
+          <template #cover>
+            <div class="import-icon pdf-icon">
+              <vertical-align-top-outlined />
+            </div>
+          </template>
+          <a-card-meta
+            title="PDF 导入(AI解析)"
+            description="从本地 PDF 文件中提取简历内容，AI解析后导入"
+          />
+        </a-card>
+      </div>
+
+      <!-- 解析态：白纸实时生长预览，AI 内容随流逐块填充 -->
+      <div v-else class="import-live">
+        <div v-if="importSnapshot" class="live-paper">
+          <TemplateThumb
+            :template-id="importSnapshot.templateId"
+            :resume="importSnapshot"
+            fit="width"
+          />
         </div>
-      </a-spin>
+        <div v-else class="live-extract">
+          <a-spin size="small" />
+        </div>
+        <div class="live-status">
+          <span
+            v-if="importSnapshot"
+            class="live-dot"
+            aria-hidden="true"
+          ></span>
+          <span class="progress-text">{{ importProgressText }}</span>
+          <a-button
+            v-if="pdfAbortController"
+            size="small"
+            type="link"
+            @click="handleStopImportPDF"
+          >
+            停止解析
+          </a-button>
+        </div>
+      </div>
     </a-modal>
 
     <!-- ============ 页面头部 ============ -->
@@ -650,6 +714,68 @@ const formatTime = (t?: number) => {
 
 .pdf-icon {
   background: linear-gradient(135deg, #f04864 0%, #ff7a45 100%);
+}
+
+/* ============ 流式解析实时预览 ============ */
+.import-live {
+  padding-top: var(--space-3);
+  animation: fade-up var(--duration-base) var(--ease-out);
+}
+
+// A4 白纸舞台：TemplateThumb fit="width" 按容器宽自适应缩放
+.live-paper {
+  width: min(320px, 100%);
+  margin: 0 auto;
+  overflow: hidden;
+  background: #fff;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
+// 提取文字阶段的过渡占位
+.live-extract {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 140px;
+}
+
+.live-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) 0 var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+// 呼吸圆点：表示内容正在实时生成
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  animation: live-pulse 1.2s var(--ease-out) infinite;
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .import-live,
+  .live-dot {
+    animation: none;
+  }
 }
 
 @keyframes fade-up {

@@ -1,12 +1,5 @@
 <script setup lang="ts">
-import {
-  computed,
-  onMounted,
-  onBeforeUnmount,
-  provide,
-  ref,
-  watchEffect,
-} from 'vue'
+import { computed, onMounted, onBeforeUnmount, provide, ref } from 'vue'
 import { templates } from '@/template/index'
 import type { Resume } from '@/types/resume'
 
@@ -33,11 +26,7 @@ const props = withDefaults(
   },
 )
 
-// Vue 的 provide 只在 setup 时执行一次，不响应 props 变化；
-// 放在 watchEffect 里确保 props.resume 引用切换时，子组件 inject 能拿到最新值
-watchEffect(() => {
-  provide('resume', props.resume)
-})
+provide('resume', props.resume)
 
 // 模板原始页高（A4 @96dpi = 1123px）
 const PAGE_HEIGHT = 1123

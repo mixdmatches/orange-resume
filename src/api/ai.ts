@@ -217,6 +217,17 @@ export async function* chatStreamApi(
 }
 
 /**
+ * 流式pdf转stream
+ * @param params
+ */
+export async function* pdfToJsonStreamApi(params: {
+  pdfText: string
+  signal?: AbortSignal
+}): AsyncGenerator<string, void, unknown> {
+  yield* streamSse('/ai/pdf-to-json/stream', params, params.signal)
+}
+
+/**
  * AI 自我介绍流式生成
  * @param params - 简历纯文本与生成选项（场景/时长/语气）
  * @param signal - 可选中止信号（"停止生成"时传入）
