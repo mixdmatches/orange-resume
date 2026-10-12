@@ -44,16 +44,6 @@ export interface NavDropdownChild {
 /** AI 工具子路由（下拉菜单）*/
 export const ai_tools_routes: RouteRecordRaw[] = [
   {
-    path: '/ai-tools/translate',
-    name: 'ai-translate',
-    meta: {
-      title: 'AI 翻译简历',
-      icon: () => h(TranslationOutlined),
-      group: 'ai-tools',
-    },
-    component: () => import('@/views/ai-tools/translate/index.vue'),
-  },
-  {
     path: '/ai-tools/polish',
     name: 'ai-polish',
     meta: {
