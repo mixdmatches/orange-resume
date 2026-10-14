@@ -4,7 +4,6 @@ import { message } from 'ant-design-vue'
 import { CopyOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import MarkdownIt from 'markdown-it'
 import type { Resume } from '@/types/resume'
-import { resumeToText } from '@/utils/resumeToText'
 import { selfIntroStreamApi } from '@/api'
 import { ensureAiProviderReady } from '@/utils/ai-ready'
 import type { SelfIntroOptions } from '@/types/ai'
@@ -48,7 +47,7 @@ const handleGenerate = async () => {
   hasGenerated.value = true
 
   try {
-    const resumeText = resumeToText(resume)
+    const resumeText = JSON.stringify(resume)
     const options: SelfIntroOptions = {
       scene: scene.value,
       duration: duration.value,

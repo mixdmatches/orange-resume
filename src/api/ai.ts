@@ -111,9 +111,6 @@ export async function* fetchSseEvents(
     )
   }
 
-  // SSE 端点的业务异常可能以 HTTP 200 + 裸 JSON 返回（如"请先选择 AI 服务商"），
-  // 此时 content-type 不是 event-stream；按 JSON 错误解析并抛出，
-  // 避免被当作 SSE 帧解析后静默失败（表现为界面无响应）
   const contentType = response.headers.get('content-type') ?? ''
   if (!contentType.includes('text/event-stream')) {
     throw await parseStreamError(
@@ -156,10 +153,6 @@ export async function* fetchSseEvents(
     }
   }
 
-  // 流正常结束但零事件产出：说明响应体不是有效 SSE 帧
-  // （如后端异常被中间件/代理篡改了 content-type，或返回了裸 JSON）
-  // 此时不能静默返回，否则上层 for-await 循环正常结束、loading 被清空，
-  // 表现为气泡框空白且无任何提示
   if (eventCount === 0) {
     throw new Error(
       `${opts?.errorPrefix ?? '流式请求失败'}（响应未包含有效 SSE 事件）`,

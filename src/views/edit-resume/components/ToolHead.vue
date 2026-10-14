@@ -21,7 +21,6 @@ import IdCardMaker from './IdCardMaker.vue'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import { computed, inject, ref } from 'vue'
-import { resumeToText } from '@/utils/resumeToText'
 import type { Resume } from '@/types/resume'
 import templates from '@/template'
 import TemplateThumb from '@/components/TemplateThumb.vue'
@@ -51,7 +50,7 @@ const handleOpenIdCard = () => {
 const resume: Resume = inject('resume') as Resume
 
 /** 当前简历的纯文本形式（传给 AI 助手供 Agent 工具调用） */
-const resumeText = computed(() => resumeToText(resume))
+const resumeText = computed(() => JSON.stringify(resume))
 
 /**
  * 根据云端同步状态返回保存位置前缀：

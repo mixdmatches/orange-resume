@@ -1,13 +1,5 @@
 /**
  * AI 面试模块 API
- *
- * 说明：
- * - 非流式接口使用 request 封装（axios），走统一拦截器（鉴权/错误提示/401 刷新）
- * - 流式答题基于 ai.ts 的通用传输层 fetchSseEvents 复用
- * - 后端统一入口 POST /interviews/:id/stream，按 interview_session.status 自动路由：
- *   pending_questions → 开始面试（空 body 或不传 content）
- *   in_progress + content → 答题评价
- *   in_progress + finishOnly=true → 提前结束
  */
 import { fetchSseEvents } from '@/api/ai'
 import type {

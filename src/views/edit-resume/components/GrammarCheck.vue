@@ -8,7 +8,6 @@ import {
 } from '@ant-design/icons-vue'
 import type { Resume } from '@/types/resume'
 import { grammarCheckApi } from '@/api'
-import { resumeToText } from '@/utils/resumeToText'
 import type { GrammarIssue } from '@/types/ai'
 
 /** 简历数据 */
@@ -45,7 +44,7 @@ const handleCheck = async () => {
 
   try {
     const { issues: resultIssues } = await grammarCheckApi({
-      resumeText: resumeToText(resume),
+      resumeText: JSON.stringify(resume),
     })
     if (resultIssues.length === 0) {
       message.success('未发现语法问题，简历文本很规范')

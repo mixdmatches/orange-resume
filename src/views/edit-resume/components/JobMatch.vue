@@ -10,7 +10,6 @@ import {
 } from '@ant-design/icons-vue'
 import { motion } from 'motion-v'
 import type { Resume } from '@/types/resume'
-import { resumeToText } from '@/utils/resumeToText'
 import { jobMatchApi } from '@/api'
 import type { JobMatchResult } from '@/types/ai'
 
@@ -64,7 +63,7 @@ const handleAnalyze = async () => {
   hasAnalyzed.value = true
 
   try {
-    const resumeText = resumeToText(resume)
+    const resumeText = JSON.stringify(resume)
     result.value = await jobMatchApi({
       resumeText,
       jobDescription: jobDescription.value,

@@ -18,7 +18,6 @@ import {
   BulbFilled,
 } from '@ant-design/icons-vue'
 import type { ResumeScoreResult } from '@/types/ai'
-import { resumeToText } from '@/utils/resumeToText'
 import { scoreResumeApi } from '@/api'
 
 /**
@@ -169,7 +168,7 @@ const handleStartAiScore = async () => {
   aiScoreLoading.value = true
   aiScoreResult.value = null
 
-  const resumeText = resumeToText(resume)
+  const resumeText = JSON.stringify(resume)
   aiScoreResult.value = await scoreResumeApi({ resumeText })
   hasAiScored.value = true
   message.success('评分完成')
