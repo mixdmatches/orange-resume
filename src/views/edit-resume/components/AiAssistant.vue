@@ -13,8 +13,16 @@ const resume: Resume = inject('resume') as Resume
 const props = defineProps<{ open: boolean; resumeText?: string }>()
 const emit = defineEmits<{ (e: 'update:open', value: boolean): void }>()
 
-const { posX, posY, minimized, handleHeaderMouseDown, toggleMinimize } =
-  usePanelDraggable(toRef(props, 'open'))
+const {
+  posX,
+  posY,
+  width,
+  height,
+  minimized,
+  handleHeaderMouseDown,
+  handleResizeMouseDown,
+  toggleMinimize,
+} = usePanelDraggable(toRef(props, 'open'))
 
 /** 消息列表组件实例引用，用于调用子组件暴露的 scrollToBottom */
 const messageListRef = ref<InstanceType<typeof AiMessageList> | null>(null)
@@ -51,7 +59,12 @@ const handleClose = () => emit('update:open', false)
       v-if="props.open"
       class="ai-assistant"
       :class="{ minimized }"
-      :style="{ left: posX + 'px', top: posY + 'px' }"
+      :style="{
+        left: posX + 'px',
+        top: posY + 'px',
+        width: width + 'px',
+        height: minimized ? undefined : height + 'px',
+      }"
     >
       <AiAssistantHeader
         v-model:dropdown-open="dropdownVisible"
@@ -90,6 +103,23 @@ const handleClose = () => emit('update:open', false)
           />
         </div>
       </div>
+
+      <!-- 拉伸把手：最小化态隐藏 -->
+      <div
+        v-show="!minimized"
+        class="resize-handle resize-e"
+        @mousedown="handleResizeMouseDown($event, 'e')"
+      />
+      <div
+        v-show="!minimized"
+        class="resize-handle resize-s"
+        @mousedown="handleResizeMouseDown($event, 's')"
+      />
+      <div
+        v-show="!minimized"
+        class="resize-handle resize-se"
+        @mousedown="handleResizeMouseDown($event, 'se')"
+      />
     </div>
   </transition>
 </template>
@@ -97,9 +127,6 @@ const handleClose = () => emit('update:open', false)
 <style scoped lang="scss">
 .ai-assistant {
   position: fixed;
-  width: 450px;
-  height: 760px;
-  max-height: 80vh;
   border-radius: 0.8rem;
   overflow: hidden;
   display: flex;
@@ -112,7 +139,6 @@ const handleClose = () => emit('update:open', false)
 
   &.minimized {
     height: auto;
-    max-height: none;
   }
 }
 
@@ -127,6 +153,45 @@ const handleClose = () => emit('update:open', false)
 .input-area {
   flex-shrink: 0;
   padding: 0.6rem 0.8rem 0.4rem;
+}
+
+/** 拉伸把手：默认透明，hover 显示淡蓝边线提示 */
+.resize-handle {
+  position: absolute;
+  z-index: 10;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: rgba(22, 119, 255, 0.5);
+  }
+}
+
+/** 右侧纵向把手 */
+.resize-e {
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 100%;
+  cursor: ew-resize;
+}
+
+/** 底部横向把手 */
+.resize-s {
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  cursor: ns-resize;
+}
+
+/** 右下角把手：略大便于抓取 */
+.resize-se {
+  right: 0;
+  bottom: 0;
+  width: 12px;
+  height: 12px;
+  cursor: nwse-resize;
+  z-index: 11;
 }
 
 .fade-scale-enter-active,
