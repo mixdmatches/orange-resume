@@ -13,13 +13,16 @@ export interface ToolCallInfo {
   output?: string
 }
 
-/** AI 对话消息（OpenAI 兼容格式） */
+/** AI 对话消息 */
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant'
   content: string
+  reasoning?: string
   stopped?: boolean
   /** Agent 调用的工具列表（仅 assistant 消息可能有） */
   toolCalls?: ToolCallInfo[]
+  /** 生成失败时的错误详情（仅 failed 状态有值） */
+  errorMessage?: string | null
 }
 
 /** 对话请求参数 */

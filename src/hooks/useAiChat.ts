@@ -158,6 +158,11 @@ export function useAiChat(
             assistantMsg.content += event.content
             scrollToBottom()
           }
+        } else if (event.type === 'reasoning') {
+          if (sessionId.value === sid) {
+            assistantMsg.reasoning += event.content
+            scrollToBottom()
+          }
         } else if (event.type === 'tool_call') {
           const toolCall: ToolCallInfo = {
             name: event.name,
@@ -190,7 +195,8 @@ export function useAiChat(
         return
       }
       if (sessionId.value === sid) {
-        assistantMsg.content = `> ⚠️ ${(error as Error).message || '请求失败，请重试'}`
+        assistantMsg.errorMessage =
+          (error as Error).message || '请求失败，请重试'
       }
     } finally {
       if (sid) {

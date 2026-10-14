@@ -107,6 +107,8 @@ export interface AiSessionMessage {
   extra?: Record<string, unknown> | null
   /** 流式状态：streaming 进行中 / done 完成 / failed 失败 */
   streamStatus?: string | null
+  /** 错误详情 */
+  errorMessage?: string | null
   /** 创建时间 */
   createdAt?: string
 }

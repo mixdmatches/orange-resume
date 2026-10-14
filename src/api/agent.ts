@@ -4,6 +4,7 @@ import { fetchSseEvents } from '@/api/ai'
 export type AgentSseEvent =
   | { type: 'start' }
   | { type: 'content'; content: string }
+  | { type: 'reasoning'; content: string }
   | { type: 'tool_call'; name: string; args: Record<string, unknown> }
   | { type: 'tool_result'; name: string; output: string }
   | {
