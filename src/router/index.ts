@@ -10,27 +10,19 @@ import {
   HeatMapOutlined,
   UserOutlined,
   ToolOutlined,
-  TranslationOutlined,
   EditOutlined,
-  FundOutlined,
 } from '@ant-design/icons-vue'
 import { ACCESS_TOKEN_KEY } from '@/utils/request'
 import { storage } from '@/utils/storage'
 
-/** 导航项类型：普通按钮 or 下拉分组 */
 export type NavItemType = 'item' | 'dropdown'
 
 /** 统一的 header 导航配置（包含普通项和下拉分组）*/
 export interface HeaderNavItem {
-  /** 类型：普通按钮 或 下拉分组 */
   type: NavItemType
-  /** 显示文字 */
   label: string
-  /** 图标渲染函数 */
   icon: () => any
-  /** 按钮类型的路由路径（type='item' 时使用）*/
   path?: string
-  /** 下拉分组的子项（type='dropdown' 时使用）*/
   children?: NavDropdownChild[]
 }
 
@@ -41,7 +33,7 @@ export interface NavDropdownChild {
   icon: () => any
 }
 
-/** AI 工具子路由（下拉菜单）*/
+/** AI 工具子路由 */
 export const ai_tools_routes: RouteRecordRaw[] = [
   {
     path: '/ai-tools/polish',
@@ -54,24 +46,15 @@ export const ai_tools_routes: RouteRecordRaw[] = [
     component: () => import('@/views/ai-tools/polish/index.vue'),
   },
   {
-    path: '/ai-tools/analyze',
-    name: 'ai-analyze',
-    meta: {
-      title: 'ATS 简历诊断',
-      icon: () => h(FundOutlined),
-      group: 'ai-tools',
-    },
-    component: () => import('@/views/ai-tools/analyze/index.vue'),
-  },
-  {
-    path: '/ai-interview',
+    path: '/ai-tools/ai-interview',
     name: 'ai-interview',
     meta: {
       title: 'AI 模拟面试',
       icon: () => h(HeatMapOutlined),
       group: 'ai-tools',
     },
-    component: () => import('@/views/AI-simulation-interview/index.vue'),
+    component: () =>
+      import('@/views/ai-tools/AI-simulation-interview/index.vue'),
   },
 ]
 
@@ -130,13 +113,11 @@ export const header_routes: RouteRecordRaw[] = [
 ]
 
 const routes: RouteRecordRaw[] = [
-  // 营销主页（独立于 layout，不需要鉴权）
   {
     path: '/',
     name: 'landing',
     component: () => import('@/views/landing/index.vue'),
   },
-  // 登录页（独立于 layout，不需要鉴权）
   {
     path: '/login',
     name: 'login',
@@ -161,7 +142,6 @@ const routes: RouteRecordRaw[] = [
     props: true,
   },
   {
-    // 面试间：独立于 header 布局的专注式页面
     path: '/interview-room',
     name: 'interview-room',
     meta: {

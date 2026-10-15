@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { message } from 'ant-design-vue'
+import { computed, ref, watch } from 'vue'
 import {
   FileTextOutlined,
   UploadOutlined,
@@ -9,39 +8,40 @@ import {
   FileMarkdownOutlined,
   FileWordOutlined,
 } from '@ant-design/icons-vue'
+import { message } from 'ant-design-vue'
 import type { Resume } from '@/types/resume'
+import type { UploadChangeParam } from 'ant-design-vue'
+import type { FileType } from 'ant-design-vue/es/upload/interface'
+import { extractFileText } from '@/utils/extractFileText'
+import { resumeToText } from '@/utils/resumeToText'
 
-/**
- * ResumeSelectCard 选择简历卡片
- * 双入口设计：
- *  1. 应用内简历 —— 原有下拉选择流程（功能保留）
- *  2. 外部简历上传 —— pdf/json/txt/word/markdown（UI 先行，功能 TODO）
- */
 const props = defineProps({
   resumes: {
     type: Array as () => Resume[],
     default: () => [],
   },
-  modelValue: {
+  selectedReusmeId: {
+    type: String,
+    default: '',
+  },
+  resumeText: {
     type: String,
     default: '',
   },
 })
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: string): void
+  (e: 'update:selectedReusmeId', value: string): void
+  (e: 'update:resumeText', value: string): void
   (e: 'manage'): void
   (e: 'preview'): void
 }>()
 
-/** 当前激活的入口：inner=应用内简历 / upload=外部简历上传 */
+/** 当前激活的入口 */
 const activeTab = ref<'inner' | 'upload'>('inner')
 
-/** 拖拽悬停状态（用于上传区高亮） */
-const dragOver = ref(false)
-
 const selectedResume = computed(
-  () => props.resumes.find(item => item.id === props.modelValue) ?? null,
+  () => props.resumes.find(item => item.id === props.selectedReusmeId) ?? null,
 )
 
 const options = computed(() =>
@@ -52,37 +52,53 @@ const options = computed(() =>
 )
 
 const currentValue = computed({
-  get: () => props.modelValue,
-  set: (value: string) => emit('update:modelValue', value),
+  get: () => props.selectedReusmeId || undefined,
+  set: (value?: string) => emit('update:selectedReusmeId', value ?? ''),
 })
 
-/**
- * 点击上传区
- * TODO: 后期实现外部简历解析与导入（pdf/json/txt/word/markdown）
- */
-const handleUploadClick = () => {
-  message.info('外部简历上传功能开发中，敬请期待')
+const fileList = ref()
+
+const beforeUpload = () => false
+
+const handleChange = async (info: UploadChangeParam) => {
+  const { file, fileList: fls } = info
+  fileList.value = fls
+
+  if (fls.length === 0) {
+    emit('update:resumeText', '')
+    return
+  }
+
+  const rawFile = (file.originFileObj ?? file) as unknown as FileType
+  if (!(rawFile instanceof Blob)) return
+  try {
+    const text = await extractFileText(rawFile)
+    emit('update:resumeText', text)
+  } catch (err) {
+    message.error((err as Error).message)
+    emit('update:resumeText', '')
+  }
 }
 
-/**
- * 拖拽放下（阻止默认行为，避免浏览器直接打开文件）
- * TODO: 后期在这里接收文件并走解析流程
- */
+watch(
+  () => props.selectedReusmeId,
+  id => {
+    const resume = props.resumes.find(item => item.id === id)
+    emit('update:resumeText', resume ? resumeToText(resume) : '')
+  },
+)
+
+watch(
+  () => activeTab.value,
+  () => {
+    fileList.value = []
+    emit('update:selectedReusmeId', '')
+    emit('update:resumeText', '')
+  },
+)
+
 const handleDrop = (e: DragEvent) => {
-  dragOver.value = false
   e.preventDefault()
-  message.info('外部简历上传功能开发中，敬请期待')
-}
-
-/** 拖拽悬停进入 */
-const handleDragOver = (e: DragEvent) => {
-  e.preventDefault()
-  dragOver.value = true
-}
-
-/** 拖拽离开 */
-const handleDragLeave = () => {
-  dragOver.value = false
 }
 </script>
 
@@ -117,13 +133,14 @@ const handleDragLeave = () => {
       </button>
     </div>
 
-    <!-- ============ 应用内简历（原有功能） ============ -->
+    <!-- ============ 应用内简历 ============ -->
     <template v-if="activeTab === 'inner'">
       <div class="select-row">
         <a-select
           v-model:value="currentValue"
           :options="options"
           placeholder="请选择简历"
+          :allowClear="true"
           style="min-width: 320px; width: 100%"
         />
         <a-space>
@@ -161,24 +178,16 @@ const handleDragLeave = () => {
       </div>
     </template>
 
-    <!-- ============ 外部简历上传（UI 先行，功能 TODO） ============ -->
+    <!-- ============ 外部简历上传 ============ -->
     <template v-else>
-      <!-- TODO: 后期实现外部简历解析导入流程：
-           1. 点击/拖拽接收文件（.pdf .json .txt .docx .md）
-           2. pdf 走 importPDF（已有 utils/importPDF.ts）
-           3. json 走 JSON.parse 校验 Resume 结构
-           4. txt/md/word 提取纯文本后交给 AI 结构化（参考 pdfToJsonApi）
-           5. 解析成功后写入简历库并自动选中 -->
-      <div
-        class="upload-zone"
-        :class="{ 'drag-over': dragOver }"
-        role="button"
-        tabindex="0"
-        @click="handleUploadClick"
-        @keydown.enter="handleUploadClick"
+      <a-upload-dragger
+        v-model:fileList="fileList"
+        name="file"
+        :maxCount="1"
+        :before-upload="beforeUpload"
+        @change="handleChange"
         @drop="handleDrop"
-        @dragover="handleDragOver"
-        @dragleave="handleDragLeave"
+        accept=".docx,.pdf,.json,.txt,.md"
       >
         <div class="upload-icon">
           <InboxOutlined />
@@ -192,8 +201,7 @@ const handleDragLeave = () => {
           <span class="format-tag"><FileWordOutlined /> Word</span>
           <span class="format-tag"><FileMarkdownOutlined /> Markdown</span>
         </div>
-        <a-tag class="dev-tag" color="orange">功能开发中</a-tag>
-      </div>
+      </a-upload-dragger>
     </template>
   </a-card>
 </template>

@@ -23,18 +23,12 @@ const resumes = ref<Resume[]>([])
 const selectedResumeId = ref('')
 const resumePreviewVisible = ref(false)
 
-/** 目标岗位方向（选填，可从常用岗位中选择或自行输入） */
 const jobType = ref('')
-/** 目标岗位 JD 原文（选填，仅前端展示） */
 const jd = ref('')
-/** 面试难度 */
 const difficulty = ref<InterviewDifficulty>('medium')
-/** 面试题目数量（5-20） */
 const questionCount = ref<number>(DEFAULT_QUESTION_COUNT)
-/** 面试题目类型（null=混合出题） */
 const category = ref<InterviewCategory>(DEFAULT_CATEGORY)
 
-/** 题目类型选项（混合出题 / 技术 / 行为 / 项目深挖） */
 const categoryOptions: Array<{ label: string; value: InterviewCategory }> = [
   { label: '混合出题', value: null },
   { label: '技术类', value: 'technical' },
@@ -42,7 +36,6 @@ const categoryOptions: Array<{ label: string; value: InterviewCategory }> = [
   { label: '项目深挖', value: 'project_deep_dive' },
 ]
 
-/** 常用岗位方向预置项，也支持用户自由输入 */
 const jobTypeOptions = [
   '前端开发工程师',
   '后端开发工程师',
@@ -59,17 +52,14 @@ const jobTypeOptions = [
 const selectedResume = computed(
   () => resumes.value.find(item => item.id === selectedResumeId.value) ?? null,
 )
+const resumeText = ref('')
 
 // ========= 简历加载 =========
-
 const loadResumes = async () => {
   try {
     const list = await getAllResumesIDB()
     list.sort((a, b) => b.createdAt - a.createdAt)
     resumes.value = list
-    if (!selectedResumeId.value && list.length) {
-      selectedResumeId.value = list[0].id
-    }
   } catch {
     message.error('读取简历列表失败，请刷新重试')
   }
@@ -84,25 +74,20 @@ const handleOpenSetting = () => {
 }
 
 const handleOpenPreview = () => {
-  if (!selectedResume.value) {
+  if (!selectedResumeId.value) {
     message.warning('请先选择一份简历')
     return
   }
   resumePreviewVisible.value = true
 }
 
-/**
- * 进入面试间
- * 校验已选简历后，将简历 ID 与选填的岗位方向/JD/难度/题量/题型写入面试会话 store，
- * 再跳转到独立的面试间页面。
- */
 const handleEnterRoom = () => {
-  if (!selectedResume.value) {
+  if (!resumeText.value) {
     message.warning('请先选择一份简历')
     return
   }
   interviewStore.startInterview({
-    resumeId: selectedResume.value.id,
+    resumeText: resumeText.value,
     jobType: jobType.value.trim(),
     jd: jd.value.trim(),
     difficulty: difficulty.value,
@@ -144,7 +129,8 @@ onMounted(() => {
     <section class="section-block">
       <h2 class="block-title">选择简历</h2>
       <resume-select-card
-        v-model:model-value="selectedResumeId"
+        v-model:selectedReusmeId="selectedResumeId"
+        v-model:resumeText="resumeText"
         :resumes="resumes"
         @manage="handleManageResume"
         @preview="handleOpenPreview"
@@ -240,12 +226,12 @@ onMounted(() => {
         <a-button
           type="primary"
           size="large"
-          :disabled="!selectedResume"
+          :disabled="!resumeText"
           @click="handleEnterRoom"
           >进入面试间</a-button
         >
-        <span v-if="!selectedResume" class="footer-hint"
-          >请先在上方选择一份简历</span
+        <span v-if="!resumeText" class="footer-hint"
+          >请先在上方选择简历或上传简历文件</span
         >
       </div>
     </section>

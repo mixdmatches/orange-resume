@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, h, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
@@ -17,15 +17,19 @@ import {
 import MarkdownIt from 'markdown-it'
 import ChatInput from '@/components/ChatInput.vue'
 import { useInterviewStore } from '@/stores/interview'
-import { getResumeByIdIDB } from '@/service/resumeIDB'
 import { useInterviewSession } from './composables/useInterviewSession'
-import type { Resume } from '@/types/resume'
 
 const router = useRouter()
 const interviewStore = useInterviewStore()
-const { jobType, jd, difficulty, questionCount, category, interviewId } =
-  storeToRefs(interviewStore)
-const resume = ref<Resume | null>(null)
+const {
+  resumeText,
+  jobType,
+  jd,
+  difficulty,
+  questionCount,
+  category,
+  interviewId,
+} = storeToRefs(interviewStore)
 
 /** 面试会话状态机（聊天流、计时器、AI 交互） */
 const {
@@ -41,7 +45,7 @@ const {
   finish,
   reset,
 } = useInterviewSession({
-  resume,
+  resumeText: resumeText.value,
   jobType,
   jd,
   difficulty,
@@ -54,16 +58,8 @@ const {
 const answerInput = ref('')
 /** 聊天流滚动容器，用于自动滚动到底部 */
 const chatContainerRef = ref<HTMLElement | null>(null)
-
-/** markdown-it 实例：用于渲染面试总结与参考答案 */
 const md = new MarkdownIt({ breaks: true, linkify: true })
-
-/** 是否配置了岗位 JD */
 const hasJd = computed(() => !!jd.value)
-
-/**
- * 渲染 Markdown 文本为 HTML（面试总结卡片、参考答案使用）
- */
 const renderMarkdown = (content: string) => md.render(content)
 
 /**
@@ -72,9 +68,6 @@ const renderMarkdown = (content: string) => md.render(content)
 const scoreColor = (score: number) =>
   score >= 80 ? 'success' : score >= 60 ? 'processing' : 'error'
 
-/**
- * 难度中文标签
- */
 const difficultyLabel = (d: string) =>
   d === 'easy' ? '简单' : d === 'hard' ? '困难' : '中等'
 
@@ -91,16 +84,10 @@ watch(
   },
 )
 
-/**
- * 返回面试配置页
- */
 const handleBack = async () => {
-  router.push('/ai-interview')
+  router.push('/ai-tools/ai-interview')
 }
 
-/**
- * 点击"开始面试"：调用会话启动逻辑并提示失败原因
- */
 const handleStart = async () => {
   try {
     await start()
@@ -109,9 +96,6 @@ const handleStart = async () => {
   }
 }
 
-/**
- * 发送回答：成功后清空输入框，失败时提示原因（输入保留）
- */
 const handleSend = async () => {
   const text = answerInput.value.trim()
   if (!text) return
@@ -123,9 +107,6 @@ const handleSend = async () => {
   }
 }
 
-/**
- * 点击"结束面试"：二次确认后生成总结评价
- */
 const handleFinishClick = () => {
   Modal.confirm({
     title: '确定要提前结束面试吗？',
@@ -142,28 +123,9 @@ const handleFinishClick = () => {
   })
 }
 
-/**
- * 重新面试：回到欢迎页并清空会话数据
- */
 const handleRestart = () => {
   reset()
 }
-
-/** 加载当前面试会话关联的简历，无会话时退回配置页 */
-const loadResume = async () => {
-  if (!interviewStore.resumeId) {
-    message.warning('请先选择简历并发起面试')
-    router.replace('/ai-interview')
-    return
-  }
-  try {
-    resume.value = await getResumeByIdIDB(interviewStore.resumeId)
-  } catch {
-    message.error('读取简历失败，请返回重试')
-  }
-}
-
-onMounted(loadResume)
 </script>
 
 <template>
@@ -211,10 +173,6 @@ onMounted(loadResume)
         </p>
 
         <div class="welcome-info">
-          <div class="info-line">
-            <span class="label">简历</span>
-            <span class="value">{{ resume?.title || '加载中…' }}</span>
-          </div>
           <div class="info-line">
             <span class="label">轮数</span>
             <span class="value">{{ questionCount }} 轮（动态出题）</span>
