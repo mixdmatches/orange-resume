@@ -8,6 +8,7 @@ import {
   SafetyOutlined,
 } from '@ant-design/icons-vue'
 import { getVerifyCodeApi, resetPasswordApi } from '@/api'
+import { useCountdown } from '@/hooks/useCountdown.ts'
 
 const emit = defineEmits<{
   back: []
@@ -15,9 +16,7 @@ const emit = defineEmits<{
 }>()
 
 const loading = ref(false)
-const codeLoading = ref(false)
-const countdown = ref(0)
-let countdownTimer: ReturnType<typeof setInterval> | null = null
+const { countdown, start: startCountdown, stop: stopCountdown } = useCountdown()
 
 const formRef = ref<FormInstance>()
 const state = reactive({
@@ -64,23 +63,12 @@ async function handleSendCode() {
   }
 
   if (countdown.value > 0) return
-
-  codeLoading.value = true
   try {
     await getVerifyCodeApi(state.email)
     await message.success('验证码已发送，请查收邮件')
-    countdown.value = 60
-    countdownTimer = setInterval(() => {
-      countdown.value--
-      if (countdown.value <= 0 && countdownTimer) {
-        clearInterval(countdownTimer)
-        countdownTimer = null
-      }
-    }, 1000)
+    startCountdown()
   } catch {
     // 接口异常由拦截器提示
-  } finally {
-    codeLoading.value = false
   }
 }
 
@@ -112,11 +100,7 @@ function handleBack() {
   state.code = ''
   state.newPassword = ''
   state.confirmPassword = ''
-  if (countdownTimer) {
-    clearInterval(countdownTimer)
-    countdownTimer = null
-  }
-  countdown.value = 0
+  stopCountdown()
   emit('back')
 }
 

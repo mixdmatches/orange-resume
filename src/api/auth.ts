@@ -51,6 +51,14 @@ export function getVerifyCodeApi(email: string) {
 }
 
 /**
+ * 获取注册验证码
+ * @param email
+ */
+export function sendRegisterCodeApi(email: string) {
+  return post<void>('/auth/register-code', { email })
+}
+
+/**
  * 重置密码（忘记密码流程）
  */
 export function resetPasswordApi(data: ResetPasswordDto) {
@@ -94,4 +102,7 @@ export default {
   logoutApi,
   getProfileApi,
   getVerifyCodeApi,
+  sendRegisterCodeApi,
+  resetPasswordApi,
+  changePasswordApi,
 }

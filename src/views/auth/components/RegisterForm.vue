@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { type FormInstance, message } from 'ant-design-vue'
-import { LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons-vue'
+import {
+  LockOutlined,
+  MailOutlined,
+  SafetyOutlined,
+  UserOutlined,
+} from '@ant-design/icons-vue'
+import { sendRegisterCodeApi } from '@/api/auth'
+import { useCountdown } from '@/hooks/useCountdown.ts'
 import { useAuthStore } from '@/stores/auth'
 import { initRepository } from '@/service/resumeRepository'
 import type { RegisterParams } from '@/types/user'
@@ -12,11 +19,13 @@ const emit = defineEmits<{
 
 const authStore = useAuthStore()
 const loading = ref(false)
+const { countdown, start: startCountdown } = useCountdown()
 
 const formRef = ref<FormInstance>()
 const state = reactive({
   username: '',
   email: '',
+  code: '',
   password: '',
   confirmPassword: '',
 })
@@ -39,6 +48,10 @@ const rules = {
       trigger: 'blur',
     },
   ],
+  code: [
+    { required: true, message: '请输入验证码', trigger: 'blur' },
+    { len: 6, message: '验证码为 6 位数字', trigger: 'blur' },
+  ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 6, message: '密码至少 6 位', trigger: 'blur' },
@@ -55,15 +68,39 @@ const rules = {
   ],
 }
 
+async function handleSendCode() {
+  try {
+    await formRef.value?.validateFields('email')
+  } catch {
+    return
+  }
+
+  if (countdown.value > 0) return
+
+  try {
+    await sendRegisterCodeApi(state.email)
+    await message.success('验证码已发送，请查收邮件')
+    startCountdown()
+  } catch {
+    // 接口异常由拦截器提示
+  }
+}
+
 async function handleSubmit() {
   try {
     await formRef.value?.validate()
-    loading.value = true
+  } catch {
+    return
+  }
+
+  loading.value = true
+  try {
     const params: RegisterParams = {
       username: state.username,
       password: state.password,
       confirmPassword: state.confirmPassword,
-      email: state.email || undefined,
+      email: state.email,
+      code: state.code,
     }
     await authStore.register(params)
     await message.success('注册成功')
@@ -99,6 +136,26 @@ defineExpose({ loading })
         allow-clear
       >
         <template #prefix><MailOutlined /></template>
+      </a-input>
+    </a-form-item>
+    <a-form-item name="code">
+      <a-input
+        v-model:value="state.code"
+        size="large"
+        placeholder="6 位验证码"
+        :maxlength="6"
+      >
+        <template #prefix><SafetyOutlined /></template>
+        <template #suffix>
+          <a-button
+            type="link"
+            size="small"
+            :disabled="countdown > 0"
+            @click="handleSendCode"
+          >
+            {{ countdown > 0 ? `${countdown}s` : '获取验证码' }}
+          </a-button>
+        </template>
       </a-input>
     </a-form-item>
     <a-form-item name="password">

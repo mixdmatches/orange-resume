@@ -9,7 +9,8 @@ export interface RegisterParams {
   username: string
   password: string
   confirmPassword: string
-  email?: string
+  email: string
+  code: string
 }
 
 /** 用户信息（对应后端 User 实体） */
