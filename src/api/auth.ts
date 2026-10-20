@@ -1,10 +1,12 @@
 import type {
+  ChangePasswordDto,
   LoginParams,
   LoginResult,
   RegisterParams,
+  ResetPasswordDto,
   UserInfo,
 } from '@/types/user'
-import { get, post, ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from '@/utils/request'
+import { ACCESS_TOKEN_KEY, get, post, REFRESH_TOKEN_KEY } from '@/utils/request'
 import { storage } from '@/utils/storage'
 
 /**
@@ -41,6 +43,29 @@ export function loginApi(params: LoginParams): Promise<LoginResult> {
 }
 
 /**
+ * 获取重置密码验证码
+ * @param email
+ */
+export function getVerifyCodeApi(email: string) {
+  return post<void>('/auth/forget', { email })
+}
+
+/**
+ * 重置密码（忘记密码流程）
+ */
+export function resetPasswordApi(data: ResetPasswordDto) {
+  return post<void>('/auth/reset', data)
+}
+
+/**
+ * 修改密码（已登录状态下）
+ * @param data - 旧密码 + 新密码
+ */
+export function changePasswordApi(data: ChangePasswordDto) {
+  return post<void>('/user/change-password', data)
+}
+
+/**
  * 退出登录
  * 清除本地双令牌（后端若为无状态 JWT，无需调用接口）
  */
@@ -63,4 +88,10 @@ export function getProfileApi() {
   return get<UserInfo>('/auth/profile')
 }
 
-export default { registerApi, loginApi, logoutApi, getProfileApi }
+export default {
+  registerApi,
+  loginApi,
+  logoutApi,
+  getProfileApi,
+  getVerifyCodeApi,
+}

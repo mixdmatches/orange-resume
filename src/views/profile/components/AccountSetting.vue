@@ -1,60 +1,48 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Modal } from 'ant-design-vue'
 import {
-  LogoutOutlined,
   DeleteOutlined,
   KeyOutlined,
-  MailOutlined,
+  LogoutOutlined,
 } from '@ant-design/icons-vue'
 import { useAuthStore } from '@/stores/auth'
+import ChangePasswordModal from './ChangePasswordModal.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
+const changePasswordVisible = ref(false)
 
-/** 退出登录：复用 store 逻辑（清 token + 队列），成功后回登录页 */
-const handleLogout = async () => {
-  await authStore.logout()
-  router.push('/login')
+/** 退出登录：二次确认后清除 token 并跳转登录页 */
+const handleLogout = () => {
+  Modal.confirm({
+    title: '确认退出登录？',
+    content: '退出后需重新登录才能访问简历数据',
+    okText: '退出登录',
+    cancelText: '取消',
+    okType: 'danger',
+    onOk: async () => {
+      await authStore.logout()
+      await router.push('/login')
+    },
+  })
 }
 
 /**
  * 注销账号
  */
 const handleDeleteAccount = () => {
-  Modal.warning({
-    title: '注销账号后不可恢复',
-    content: '注销后云端简历、面试记录等数据将被永久清除且不可恢复',
-    okText: '注销账号',
+  Modal.confirm({
+    title: '确认退出登录？',
+    content: '退出后需重新登录才能访问简历数据',
+    okText: '退出登录',
     cancelText: '取消',
+    okType: 'danger',
     onOk: async () => {
       await authStore.deleteAccount()
-      router.push('/login')
+      await router.push('/login')
     },
-  })
-}
-
-/**
- * 修改密码
- * TODO: 后期实现——弹出修改密码表单，调用后端改密接口（需登录态校验/旧密码验证）
- */
-const handleChangePassword = () => {
-  Modal.warning({
-    title: '修改密码功能开发中',
-    content: '修改密码功能即将上线，届时可通过本页面安全修改登录密码。',
-    okText: '我知道了',
-  })
-}
-
-/**
- * 绑定/换绑邮箱
- * TODO: 后期实现——验证码校验 + 后端绑定接口，绑定后用于找回密码与通知
- */
-const handleBindEmail = () => {
-  Modal.warning({
-    title: '邮箱绑定功能开发中',
-    content: '绑定邮箱功能即将上线，绑定后可用于找回密码与重要通知。',
-    okText: '我知道了',
   })
 }
 </script>
@@ -64,32 +52,12 @@ const handleBindEmail = () => {
     <!-- 修改密码 -->
     <div class="settings-row">
       <div class="settings-text">
-        <span class="settings-title">
-          修改密码
-          <a-tag color="orange">开发中</a-tag>
-        </span>
+        <span class="settings-title">修改密码</span>
         <span class="settings-desc">定期更新密码保护账号安全</span>
       </div>
-      <a-button @click="handleChangePassword">
+      <a-button @click="changePasswordVisible = true">
         <template #icon><key-outlined /></template>
         修改
-      </a-button>
-    </div>
-    <div class="row-divider"></div>
-    <!-- 绑定邮箱 -->
-    <div class="settings-row">
-      <div class="settings-text">
-        <span class="settings-title">
-          绑定邮箱
-          <a-tag color="orange">开发中</a-tag>
-        </span>
-        <span class="settings-desc">
-          {{ authStore.userInfo?.email || '未绑定邮箱' }}
-        </span>
-      </div>
-      <a-button @click="handleBindEmail">
-        <template #icon><mail-outlined /></template>
-        {{ authStore.userInfo?.email ? '换绑' : '绑定' }}
       </a-button>
     </div>
     <div class="row-divider"></div>
@@ -119,6 +87,8 @@ const handleBindEmail = () => {
       </a-button>
     </div>
   </div>
+
+  <ChangePasswordModal v-model:open="changePasswordVisible" />
 </template>
 
 <style scoped lang="scss">

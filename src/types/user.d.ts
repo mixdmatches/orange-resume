@@ -1,6 +1,6 @@
 /** 登录请求参数 */
 export interface LoginParams {
-  username: string
+  usernameOrEmail: string
   password: string
 }
 
@@ -34,4 +34,16 @@ export interface LoginResult {
   refreshToken: string
   /** 当前登录用户信息 */
   userInfo: UserInfo
+}
+
+export interface ResetPasswordDto {
+  email: string
+  code: string
+  newPassword: string
+}
+
+/** 修改密码请求参数（已登录状态下） */
+export interface ChangePasswordDto {
+  oldPassword: string
+  newPassword: string
 }
