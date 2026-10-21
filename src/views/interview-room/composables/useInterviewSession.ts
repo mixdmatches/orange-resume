@@ -4,7 +4,12 @@ import type {
   InterviewDifficulty,
   InterviewSseEvent,
 } from '@/types/interview'
-import { createInterviewApi, interviewStreamApi } from '@/api/interview'
+import {
+  createInterviewApi,
+  interviewAnswerApi,
+  interviewFinishApi,
+  interviewStartApi,
+} from '@/api/interview'
 import { DEFAULT_QUESTION_COUNT } from '@/stores/interview'
 import { ensureAiProviderReady } from '@/utils/ai-ready'
 
@@ -297,7 +302,7 @@ export const useInterviewSession = (options: {
 
       // 2. 统一 SSE 流（空对象 → 后端根据 pending_questions 状态自动路由到"开始面试"路径）
       streamController = new AbortController()
-      const stream = interviewStreamApi(session.id, {}, streamController.signal)
+      const stream = interviewStartApi(session.id, {}, streamController.signal)
       activeRun = consumeStream(stream)
       await activeRun
     } catch (error) {
@@ -328,20 +333,24 @@ export const useInterviewSession = (options: {
     }
 
     if (!(await ensureAiProviderReady())) return
-    if (finishing) return
 
     pushMessage('candidate', text)
     thinking.value = true
 
     try {
       streamController = new AbortController()
-      const stream = interviewStreamApi(
+      const stream = interviewAnswerApi(
         interviewId.value,
         { content: text },
         streamController.signal,
       )
       activeRun = consumeStream(stream)
       await activeRun
+
+      // 答题评价流结束后，如果已经是最后一题（没有下一题），自动结束面试生成总结
+      if (phase.value === 'interviewing' && interviewId.value) {
+        await finish()
+      }
     } finally {
       activeRun = null
       streamController = null
@@ -350,8 +359,10 @@ export const useInterviewSession = (options: {
     }
   }
 
-  const isPhaseFinished = () => phase.value === 'finished'
-
+  /**
+   * 提前结束面试
+   * 立即切换到 finished 状态，后台静默生成总结，不阻塞用户界面
+   */
   const finish = async () => {
     // 防止重入（如总结生成中再次确认结束）
     if (finishing) return
@@ -359,6 +370,9 @@ export const useInterviewSession = (options: {
     if (!interviewId.value) {
       throw new Error('面试会话未初始化')
     }
+
+    // AI 服务就绪预检查：未选择服务商或未配置 Key 时提示并中止
+    if (!(await ensureAiProviderReady())) return
 
     finishing = true
     try {
@@ -371,26 +385,21 @@ export const useInterviewSession = (options: {
         if (phase.value !== 'interviewing' || !interviewId.value) return
       }
 
-      // AI 服务就绪预检查：未选择服务商或未配置 Key 时提示并中止
-      if (!(await ensureAiProviderReady())) return
-
-      thinking.value = true
       stopTimer()
+      // 立即切换到结束状态，让用户无需等待
+      phase.value = 'finished'
 
       streamController = new AbortController()
-      const stream = interviewStreamApi(
+      const stream = interviewFinishApi(
         interviewId.value,
-        { finishOnly: true },
+        {},
         streamController.signal,
       )
       activeRun = consumeStream(stream)
       await activeRun
-      // 流正常结束但未进入 finished（如服务端提前关闭）：恢复计时器让用户可重试
-      if (!isPhaseFinished()) startTimer()
     } catch (error) {
-      // 失败时不改变 phase，让用户可以重试
-      startTimer()
-      throw error
+      // 后台生成总结失败，静默处理，不阻塞用户
+      console.error('生成面试总结失败:', error)
     } finally {
       finishing = false
       activeRun = null

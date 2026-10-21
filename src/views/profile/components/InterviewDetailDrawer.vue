@@ -57,25 +57,26 @@ const difficultyColor = (d: string) =>
   d === 'easy' ? 'success' : d === 'hard' ? 'error' : 'warning'
 
 /**
- * 面试状态中文标签
+ * 面试步骤对应的 tag 颜色
  */
-const statusLabel = (status: string) => {
-  if (status === 'finished') return '已结束'
-  if (status === 'in_progress') return '进行中'
-  if (status === 'stopped') return '已中止'
-  return '待开始'
-}
-
-/**
- * 面试状态对应的 tag 颜色
- */
-const statusColor = (status: string) => {
-  if (status === 'finished') return 'success'
-  if (status === 'in_progress') return 'processing'
-  if (status === 'stopped') return 'warning'
+const stepColor = (step: string) => {
+  if (step === 'finished') return 'success'
+  if (step === 'asking_question') return 'processing'
+  if (step === 'waiting_answer') return 'processing'
+  if (step === 'stopped') return 'warning'
   return 'default'
 }
 
+/**
+ * 面试步骤中文标签
+ */
+const stepLabel = (step: string) => {
+  if (step === 'finished') return '已结束'
+  if (step === 'asking_question') return '提问中'
+  if (step === 'waiting_answer') return '等待回答'
+  if (step === 'stopped') return '已中止'
+  return '待开始'
+}
 /**
  * 格式化耗时（秒 → mm:ss 或 X分Y秒）
  */
@@ -126,8 +127,8 @@ const defaultOpenKeys = (detail: InterviewDetail) =>
             </a-tag>
           </a-descriptions-item>
           <a-descriptions-item label="状态">
-            <a-tag :color="statusColor(detail.status)">
-              {{ statusLabel(detail.status) }}
+            <a-tag :color="stepColor(detail.currentStep)">
+              {{ stepLabel(detail.currentStep) }}
             </a-tag>
           </a-descriptions-item>
           <a-descriptions-item label="题数">

@@ -5,8 +5,8 @@ import type {
   InterviewListParams,
   InterviewListResult,
   InterviewSession,
-  InterviewStreamDto,
   InterviewSseEvent,
+  InterviewStreamDto,
 } from '@/types/interview'
 import { AI_TIMEOUT, del, get, post } from '@/utils/request'
 
@@ -29,6 +29,66 @@ export async function* interviewStreamApi(
     `/interviews/${interviewId}/stream`,
     data,
     { errorPrefix: '面试请求失败', signal },
+  )) {
+    yield event as InterviewSseEvent
+  }
+}
+
+/**
+ * 开始面试
+ * @param interviewId
+ * @param data
+ * @param signal
+ */
+export async function* interviewStartApi(
+  interviewId: string,
+  data: InterviewStreamDto = {},
+  signal?: AbortSignal,
+): AsyncGenerator<InterviewSseEvent, void, unknown> {
+  for await (const event of fetchSseEvents(
+    `/interviews/${interviewId}/start`,
+    data,
+    { errorPrefix: '面试请求失败', signal },
+  )) {
+    yield event as InterviewSseEvent
+  }
+}
+
+/**
+ * 提交用户回答
+ * @param interviewId
+ * @param data
+ * @param signal
+ */
+export async function* interviewAnswerApi(
+  interviewId: string,
+  data: InterviewStreamDto = {},
+  signal?: AbortSignal,
+): AsyncGenerator<InterviewSseEvent, void, unknown> {
+  for await (const event of fetchSseEvents(
+    `/interviews/${interviewId}/answer`,
+    data,
+    { errorPrefix: '提交用户回答失败', signal },
+  )) {
+    yield event as InterviewSseEvent
+  }
+}
+
+/**
+ * 提前结束面试
+ * @param interviewId
+ * @param data
+ * @param signal
+ */
+export async function* interviewFinishApi(
+  interviewId: string,
+  data: InterviewStreamDto = {},
+  signal?: AbortSignal,
+): AsyncGenerator<InterviewSseEvent, void, unknown> {
+  for await (const event of fetchSseEvents(
+    `/interviews/${interviewId}/finish`,
+    data,
+    { errorPrefix: '提前结束面试失败', signal },
   )) {
     yield event as InterviewSseEvent
   }
@@ -67,4 +127,7 @@ export default {
   listInterviewsApi,
   getInterviewDetailApi,
   deleteInterviewApi,
+  interviewStartApi,
+  interviewAnswerApi,
+  interviewFinishApi,
 }

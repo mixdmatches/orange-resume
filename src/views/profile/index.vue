@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { onMounted, ref, computed, h } from 'vue'
+import { computed, h, onMounted, ref } from 'vue'
 import {
-  MailOutlined,
   ApiOutlined,
   FileTextOutlined,
+  MailOutlined,
   SafetyOutlined,
 } from '@ant-design/icons-vue'
 import { useAuthStore } from '@/stores/auth'
@@ -180,7 +180,7 @@ onMounted(() => {
           <section class="content-card">
             <div class="content-head">
               <h2 class="content-title">账号与安全</h2>
-              <p class="content-desc">管理账号密码、邮箱绑定与登录状态</p>
+              <p class="content-desc">管理账号密码，退出/注销账号</p>
             </div>
             <account-setting />
           </section>

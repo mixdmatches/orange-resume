@@ -54,8 +54,8 @@ export interface InterviewSession {
   modelId?: string | null
   /** ai_session 通用状态 */
   status?: string
-  /** 面试状态机状态 */
-  interviewStatus: InterviewStatus
+  /** 面试当前步骤 */
+  step: InterviewStep
   /** 关联的简历 ID */
   resumeId: string
   /** 目标岗位 */
@@ -105,7 +105,7 @@ export interface InterviewListParams {
 
 export interface InterviewListResult {
   /** 面试会话列表 */
-  list: InterviewSession[]
+  items: InterviewSession[]
   /** 总条数 */
   total: number
   page: number
@@ -119,7 +119,7 @@ export interface InterviewDetail {
   jobTitle: string | null
   difficulty: string
   category: string | null
-  status: InterviewStatus
+  currentStep: InterviewStep
   totalRounds: number
   answeredRounds: number
   totalScore: number | null
@@ -179,3 +179,11 @@ export type InterviewSseEvent =
       interviewSession: Record<string, unknown>
     }
   | { event: 'error'; message: string }
+
+/** 面试步骤标识 */
+export type InterviewStep =
+  | 'created'
+  | 'asking_question'
+  | 'waiting_answer'
+  | 'stopped'
+  | 'finished'

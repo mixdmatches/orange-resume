@@ -3,12 +3,12 @@ import { DeleteOutlined, EyeOutlined } from '@ant-design/icons-vue'
 import type { InterviewDetail, InterviewSession } from '@/types/interview'
 import InterviewDetailDrawer from './InterviewDetailDrawer.vue'
 import {
-  listInterviewsApi,
   deleteInterviewApi,
   getInterviewDetailApi,
+  listInterviewsApi,
 } from '@/api'
 import { message, Modal } from 'ant-design-vue'
-import { ref, reactive, onMounted } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 
 /** 历史面试列表 */
 const historyList = ref<InterviewSession[]>([])
@@ -32,8 +32,8 @@ const loadHistory = async () => {
       page: pagination.currentPage,
       pageSize: pagination.pageSize,
     })
-    pagination.total = res.total
-    historyList.value = res.list
+    pagination.total = res.total ?? 0
+    historyList.value = res.items ?? []
   } catch {
     message.error('加载历史面试失败')
   } finally {
@@ -104,22 +104,24 @@ const handleOpenDetail = async (id: string) => {
 }
 
 /**
- * 面试状态对应的 tag 颜色
+ * 面试步骤对应的 tag 颜色
  */
-const statusColor = (status: string) => {
-  if (status === 'finished') return 'success'
-  if (status === 'in_progress') return 'processing'
-  if (status === 'stopped') return 'warning'
+const stepColor = (step: string) => {
+  if (step === 'finished') return 'success'
+  if (step === 'asking_question') return 'processing'
+  if (step === 'waiting_answer') return 'processing'
+  if (step === 'stopped') return 'warning'
   return 'default'
 }
 
 /**
- * 面试状态中文标签
+ * 面试步骤中文标签
  */
-const statusLabel = (status: string) => {
-  if (status === 'finished') return '已结束'
-  if (status === 'in_progress') return '进行中'
-  if (status === 'stopped') return '已中止'
+const stepLabel = (step: string) => {
+  if (step === 'finished') return '已结束'
+  if (step === 'asking_question') return '提问中'
+  if (step === 'waiting_answer') return '等待回答'
+  if (step === 'stopped') return '已中止'
   return '待开始'
 }
 
@@ -177,8 +179,8 @@ const formatTime = (t?: string) => {
               </template>
               <template #description>
                 <a-space size="small" wrap>
-                  <a-tag :color="statusColor(item.interviewStatus)">
-                    {{ statusLabel(item.interviewStatus) }}
+                  <a-tag :color="stepColor(item.currentStep)">
+                    {{ stepLabel(item.currentStep) }}
                   </a-tag>
                   <a-tag
                     v-if="item.difficulty"

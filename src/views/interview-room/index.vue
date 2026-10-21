@@ -43,7 +43,6 @@ const {
   start,
   submitAnswer,
   finish,
-  reset,
 } = useInterviewSession({
   resumeText: resumeText.value,
   jobType,
@@ -112,19 +111,13 @@ const handleFinishClick = () => {
     title: '确定要提前结束面试吗？',
     content: '结束后 AI 将根据当前对话生成总结评价。',
     okText: '结束面试',
-    cancelText: '继续面试',
-    onOk: async () => {
-      try {
-        await finish()
-      } catch (error) {
+    cancelText: '返回',
+    onOk: () => {
+      finish().catch(error => {
         message.error((error as Error).message || '生成总结失败，请稍后重试')
-      }
+      })
     },
   })
-}
-
-const handleRestart = () => {
-  reset()
 }
 </script>
 
@@ -370,7 +363,6 @@ const handleRestart = () => {
                 >本次面试已结束，用时 {{ elapsedText }}</span
               >
               <a-space>
-                <a-button @click="handleRestart">重新面试</a-button>
                 <a-button type="primary" @click="handleBack"
                   >返回配置页</a-button
                 >
