@@ -65,7 +65,7 @@ async function handleSendCode() {
   if (countdown.value > 0) return
   try {
     await getVerifyCodeApi(state.email)
-    await message.success('验证码已发送，请查收邮件')
+    message.success('验证码已发送，请查收邮件')
     startCountdown()
   } catch {
     // 接口异常由拦截器提示
@@ -86,7 +86,7 @@ async function handleSubmit() {
       code: state.code,
       newPassword: state.newPassword,
     })
-    await message.success('密码重置成功，请使用新密码登录')
+    message.success('密码重置成功，请使用新密码登录')
     emit('success')
   } catch {
     // 接口异常由拦截器提示

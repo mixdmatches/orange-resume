@@ -79,7 +79,7 @@ async function handleSendCode() {
 
   try {
     await sendRegisterCodeApi(state.email)
-    await message.success('验证码已发送，请查收邮件')
+    message.success('验证码已发送，请查收邮件')
     startCountdown()
   } catch {
     // 接口异常由拦截器提示
@@ -103,7 +103,7 @@ async function handleSubmit() {
       code: state.code,
     }
     await authStore.register(params)
-    await message.success('注册成功')
+    message.success('注册成功')
     initRepository()
     emit('success')
   } catch {

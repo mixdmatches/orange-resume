@@ -17,7 +17,7 @@ const activeTab = ref<'login' | 'register'>('login')
 const showForgot = ref(false)
 
 /**
- * 登录/注册成功后的统一跳转
+ * 登录成功后的统一跳转
  * 优先跳转 query.redirect，否则跳首页
  */
 function redirectAfterAuth() {
@@ -157,7 +157,7 @@ onMounted(() => {
               />
             </a-tab-pane>
             <a-tab-pane key="register" tab="注册">
-              <RegisterForm @success="redirectAfterAuth" />
+              <RegisterForm @success="() => (activeTab = 'login')" />
             </a-tab-pane>
           </a-tabs>
         </template>
