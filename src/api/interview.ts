@@ -1,4 +1,4 @@
-import { fetchSseEvents } from '@/api/ai'
+import { fetchSseEvents } from '@/utils/ai-sse-util.ts'
 import type {
   CreateInterviewDto,
   InterviewDetail,

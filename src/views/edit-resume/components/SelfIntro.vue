@@ -4,9 +4,9 @@ import { message } from 'ant-design-vue'
 import { CopyOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import MarkdownIt from 'markdown-it'
 import type { Resume } from '@/types/resume'
-import { selfIntroStreamApi } from '@/api'
 import { ensureAiProviderReady } from '@/utils/ai-ready'
 import type { SelfIntroOptions } from '@/types/ai'
+import { selfIntroApi } from '@/api'
 
 /** 简历数据 */
 const resume = inject<Resume>('resume') as Resume
@@ -53,12 +53,11 @@ const handleGenerate = async () => {
       duration: duration.value,
       tone: tone.value,
     }
-    for await (const delta of selfIntroStreamApi({
+    const res = await selfIntroApi({
       resumeText,
       options,
-    })) {
-      content.value += delta
-    }
+    })
+    content.value = res.content
   } catch (error) {
     message.error((error as Error).message || '生成失败，请重试')
     hasGenerated.value = false

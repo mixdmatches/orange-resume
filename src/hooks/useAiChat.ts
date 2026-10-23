@@ -1,12 +1,12 @@
 import { computed, onUnmounted, reactive, ref, type Ref } from 'vue'
 import MarkdownIt from 'markdown-it'
 import {
+  agentChatStreamApi,
   createAiSessionApi,
   deleteAiSessionApi,
   listChatSesstionsApi,
   listSessionMessagesApi,
-} from '@/api/ai-session'
-import { agentChatStreamApi } from '@/api/agent'
+} from '@/api'
 import { ensureAiProviderReady } from '@/utils/ai-ready'
 import type { ChatMessage, ToolCallInfo } from '@/types/ai'
 import type { AiSession } from '@/types/ai-sesstion'

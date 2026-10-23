@@ -1,6 +1,3 @@
-/**
- * 简历数据调度层（Repository 模式）
- */
 import type { Resume } from '@/types/resume'
 import {
   addResumeIDB,
@@ -16,7 +13,7 @@ import {
   getResumeByIdApi,
   getResumeListApi,
   updateResumeApi,
-} from '@/api/resume'
+} from '@/api'
 import {
   compactOps,
   dequeueSync,

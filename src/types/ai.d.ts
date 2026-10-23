@@ -144,6 +144,7 @@ export interface SelfIntroOptions {
   /** 语气风格 */
   tone: SelfIntroTone
 }
+
 export class SelfIntroDto {
   /** 简历纯文本内容 */
   resumeText!: string

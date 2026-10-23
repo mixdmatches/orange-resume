@@ -1,8 +1,6 @@
-import { streamSse } from '@/api/ai'
 import type {
   AiSession,
   CreateSessionDto,
-  SendMessageDto,
   SessionListParams,
   SessionListResult,
   SessionMessagesParams,
@@ -62,20 +60,10 @@ export function listSessionMessagesApi(
   )
 }
 
-/**
- * AI 会话流式对话（SSE）
- * 逐字返回 AI 回复，适用于实时交互的聊天场景。
- * 简历上下文与历史消息的组装由后端根据会话自动完成，前端只需传本次用户输入。
- *
- * @param sessionId 会话 ID
- * @param data 会话聊天 DTO
- * @param signal 可选中止信号（"停止生成"时传入 AbortController.signal）
- * @yields 文本增量片段
- */
-export async function* chatAiSessionApi(
-  sessionId: string,
-  data: SendMessageDto,
-  signal?: AbortSignal,
-): AsyncGenerator<string, void, unknown> {
-  yield* streamSse(`/ai-sessions/${sessionId}/chat/stream`, data, signal)
+export default {
+  createAiSessionApi,
+  listAiSessionsApi,
+  listChatSesstionsApi,
+  deleteAiSessionApi,
+  listSessionMessagesApi,
 }

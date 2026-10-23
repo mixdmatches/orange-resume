@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { APIManufacturer, AiConfigInput } from '@/types/ai-config'
-import { Modal, message } from 'ant-design-vue'
+import type { AiConfigInput, APIManufacturer } from '@/types/ai-config'
+import { message, Modal } from 'ant-design-vue'
 import {
   DeleteOutlined,
   PlusOutlined,
@@ -9,8 +9,8 @@ import {
 import { computed, onBeforeMount, ref } from 'vue'
 import { onBeforeRouteLeave, useRouter } from 'vue-router'
 import {
-  BUILTIN_PROVIDERS,
   BUILTIN_PROVIDER_IDS,
+  BUILTIN_PROVIDERS,
   DEFAULT_POLISH_PROMPT,
   getProviderUI,
 } from '@/constants/ai'
@@ -22,7 +22,7 @@ import {
   getAiConfigApi,
   getSelModelAndPromptApi,
   setSelModelAndPromptApi,
-} from '@/api/ai-config.ts'
+} from '@/api'
 
 /** 加载中标记：后端数据就绪前不渲染表单区 */
 const loading = ref(true)

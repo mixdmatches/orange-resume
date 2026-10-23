@@ -9,7 +9,7 @@ import {
   interviewAnswerApi,
   interviewFinishApi,
   interviewStartApi,
-} from '@/api/interview'
+} from '@/api'
 import { DEFAULT_QUESTION_COUNT } from '@/stores/interview'
 import { ensureAiProviderReady } from '@/utils/ai-ready'
 

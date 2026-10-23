@@ -1,5 +1,5 @@
 import { message } from 'ant-design-vue'
-import { getAiConfigApi, getSelModelAndPromptApi } from '@/api/ai-config'
+import { getAiConfigApi, getSelModelAndPromptApi } from '@/api'
 
 /**
  * AI 服务就绪预检查

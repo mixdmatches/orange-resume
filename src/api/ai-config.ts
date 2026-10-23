@@ -50,3 +50,11 @@ export function setSelModelAndPromptApi(data: {
 }) {
   return put<void>('/user/ai-config/sel-model-and-prompt', data)
 }
+
+export default {
+  addOrUpdateAiConfigApi,
+  getAiConfigApi,
+  deleteAiConfigApi,
+  getSelModelAndPromptApi,
+  setSelModelAndPromptApi,
+}

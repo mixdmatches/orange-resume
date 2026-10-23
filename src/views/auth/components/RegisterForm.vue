@@ -7,7 +7,7 @@ import {
   SafetyOutlined,
   UserOutlined,
 } from '@ant-design/icons-vue'
-import { sendRegisterCodeApi } from '@/api/auth'
+import { sendRegisterCodeApi } from '@/api'
 import { useCountdown } from '@/hooks/useCountdown.ts'
 import { useAuthStore } from '@/stores/auth'
 import { initRepository } from '@/service/resumeRepository'

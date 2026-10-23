@@ -6,7 +6,7 @@ import {
   loginApi,
   logoutApi,
   registerApi,
-} from '@/api/auth'
+} from '@/api'
 import type { LoginParams, RegisterParams, UserInfo } from '@/types/user'
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from '@/utils/request'
 import { storage } from '@/utils/storage'

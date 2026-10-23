@@ -1,4 +1,4 @@
-import { fetchSseEvents } from '@/api/ai'
+import { fetchSseEvents } from '@/utils/ai-sse-util.ts'
 
 /** Agent SSE 事件类型 */
 export type AgentSseEvent =
@@ -49,3 +49,5 @@ export async function* agentChatStreamApi(
     yield event as AgentSseEvent
   }
 }
+
+export default { agentChatStreamApi }

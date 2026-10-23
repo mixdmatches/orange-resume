@@ -1,5 +1,5 @@
 import { reactive } from 'vue'
-import { pdfToJsonStreamApi } from '@/api/ai'
+import { pdfToJsonStreamApi } from '@/api'
 import { DEFAULT_RESUME } from '@/config/init-resume-data'
 import type { Resume } from '@/types/resume'
 import { generateUUID } from '@/utils/uuid'

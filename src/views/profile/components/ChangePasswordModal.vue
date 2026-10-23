@@ -2,7 +2,7 @@
 import { reactive, ref } from 'vue'
 import { type FormInstance, message } from 'ant-design-vue'
 import { LockOutlined } from '@ant-design/icons-vue'
-import { changePasswordApi } from '@/api/auth'
+import { changePasswordApi } from '@/api'
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
