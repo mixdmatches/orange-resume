@@ -1,167 +1,56 @@
 <script setup lang="ts">
-import { DEFAULT_RESUME } from '@/config/init-resume-data'
-import {
-  createResume,
-  deleteBatchResume,
-  deleteResume,
-  listResumes,
-} from '@/service/resumeRepository'
-import type { Resume } from '@/types/resume'
+import { h, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
   VerticalAlignTopOutlined,
   CheckSquareOutlined,
 } from '@ant-design/icons-vue'
-import dayjs from 'dayjs'
-import { computed, h, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
-import { importPDF } from '@/utils/importPDF'
-import { generateUUID } from '@/utils/uuid'
-import TemplateThumb from '@/components/TemplateThumb.vue'
-import storage from '@/utils/storage'
+import type { Resume } from '@/types/resume'
+import { useResumeList } from './composables/useResumeList'
+import { useBatchSelect } from './composables/useBatchSelect'
+import ResumeCard from './components/ResumeCard.vue'
+import BatchActionBar from './components/BatchActionBar.vue'
+import ImportConfigModal from './components/ImportConfigModal.vue'
 
 const router = useRouter()
 
-const activeResumeId = ref<string>('')
+// ========== 简历列表（加载 / 新建 / 单份删除） ==========
+const {
+  resumes,
+  latestUpdateText,
+  oneDeleteOpen,
+  oneDeleteLoading,
+  getAllResume,
+  handleAddResume,
+  handleDeleteResume,
+  handleOneDeleteOk,
+} = useResumeList()
 
-const resumes = ref<Resume[]>([])
-
-/** 最新更新时间文案 */
-const latestUpdateText = computed(() => {
-  if (!resumes.value.length) return '暂无简历'
-  const latest = resumes.value.reduce((max, cur) => {
-    const t = cur.updatedAt ?? cur.createdAt
-    return t > (max.updatedAt ?? max.createdAt) ? cur : max
-  })
-  return dayjs(latest.updatedAt ?? latest.createdAt).format('YYYY-MM-DD HH:mm')
-})
-
-/**
- * 获取所有简历（走 Repository 调度层，本地优先 + 后台云同步）
- */
-const getAllResume = async () => {
-  const res = await listResumes()
-  // Repository 已按 updatedAt 倒序返回，这里兜底一次
-  res.sort(
-    (a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt),
-  )
-  resumes.value = res
-}
+// ========== 批量管理（多选 / 批量删除） ==========
+const {
+  selectMode,
+  batchDeleteOpen,
+  batchDeleteLoading,
+  selectedIds,
+  allSelected,
+  indeterminate,
+  checkAll,
+  isSelected,
+  toggleSelect,
+  toggleSelectMode,
+  handleBatchDeleteOk,
+} = useBatchSelect({ resumes, refresh: getAllResume })
 
 onMounted(() => {
   getAllResume()
 })
 
-/**
- * 创建简历（Repository 先写本地再入同步队列）
- */
-const handleAddResume = async () => {
-  const id = generateUUID().substring(0, 8)
-  const newResume: Omit<Resume, 'createdAt' | 'updatedAt'> = {
-    ...DEFAULT_RESUME,
-    id,
-    title: `新建简历${id}`,
-  }
-  await createResume(newResume as Resume)
-  await getAllResume()
-}
+// ========== 导入配置弹窗 ==========
+const importModalOpen = ref(false)
 
 const handleEditResume = (id: string) => {
   router.push(`/edit-resume/${id}`)
-}
-
-// ========== 删除单份简历相关状态 ==========
-const oneDeleteOpen = ref(false)
-const oneDeleteLoading = ref(false)
-
-const handleDeleteResume = async (id: string) => {
-  activeResumeId.value = id
-  oneDeleteOpen.value = true
-}
-
-/**
- * 确认删除单份简历
- */
-const handleOneDeleteOk = async () => {
-  oneDeleteLoading.value = true
-  try {
-    await deleteResume(activeResumeId.value)
-    await getAllResume()
-    // 清除本地编辑操作历史栈
-    storage.remove(`resume-history:${activeResumeId.value}`)
-    message.success('删除成功')
-  } catch (error) {
-    message.error(error instanceof Error ? error.message : '删除失败')
-  } finally {
-    oneDeleteLoading.value = false
-    oneDeleteOpen.value = false
-  }
-}
-
-// ========== 批量删除相关状态 ==========
-const selectMode = ref(false)
-const batchDeleteOpen = ref(false)
-const batchDeleteLoading = ref(false)
-const selectedIds = ref<string[]>([])
-
-/**
- * 是否全选（所有简历都被选中）
- */
-const allSelected = computed<boolean>(() => {
-  return (
-    resumes.value.length > 0 &&
-    selectedIds.value.length === resumes.value.length
-  )
-})
-
-/**
- * 是否部分选中（非全选非全不选，复选框 indeterminate 半选状态）
- */
-const indeterminate = computed<boolean>(() => {
-  return (
-    selectedIds.value.length > 0 &&
-    selectedIds.value.length < resumes.value.length
-  )
-})
-
-/**
- * 全选 / 取消全选
- */
-const onCheckAllChange = (e: any) => {
-  selectedIds.value = e.target.checked ? resumes.value.map(item => item.id) : []
-}
-
-/**
- * 判断某份简历是否被选中
- */
-const isSelected = (id: string): boolean => {
-  return selectedIds.value.includes(id)
-}
-
-/**
- * 切换单份简历的选中状态
- */
-const toggleSelect = (id: string): void => {
-  const index = selectedIds.value.indexOf(id)
-  if (index > -1) {
-    selectedIds.value.splice(index, 1)
-  } else {
-    selectedIds.value.push(id)
-  }
-}
-
-/**
- * 切换多选模式
- * 退出多选模式时清空选择
- */
-const toggleSelectMode = (): void => {
-  selectMode.value = !selectMode.value
-  if (!selectMode.value) {
-    selectedIds.value = []
-  }
 }
 
 /**
@@ -173,151 +62,6 @@ const handleCardClick = (item: Resume) => {
   } else {
     handleEditResume(item.id)
   }
-}
-
-/**
- * 确认批量删除
- */
-const handleBatchDeleteOk = async () => {
-  const idsToDelete = [...selectedIds.value]
-  const deleteCount = idsToDelete.length
-  batchDeleteLoading.value = true
-  try {
-    await deleteBatchResume(idsToDelete)
-    await getAllResume()
-    for (const id of idsToDelete) {
-      storage.remove(`resume-history:${id}`)
-    }
-    message.success(`批量删除成功，共删除 ${deleteCount} 份简历`)
-    selectedIds.value = []
-    selectMode.value = false
-  } catch (error) {
-    message.error(error instanceof Error ? error.message : '批量删除失败')
-  } finally {
-    batchDeleteLoading.value = false
-    batchDeleteOpen.value = false
-  }
-}
-
-// ========== 导入配置相关状态 ==========
-const openConfigModal = ref(false)
-const importLoading = ref(false)
-const importProgressText = ref('')
-const pdfAbortController = ref<AbortController | null>(null)
-const importSnapshot = ref<Resume | null>(null)
-
-/**
- * 导入JSON配置
- */
-const handleImportJSON = async () => {
-  const input = document.createElement('input')
-  input.type = 'file'
-  input.accept = '.json'
-  input.style.display = 'none'
-  document.body.appendChild(input)
-
-  const handleChange = async (e: Event) => {
-    const file = (e.target as HTMLInputElement)?.files?.[0]
-    if (!file) return
-    importLoading.value = true
-    try {
-      const text = await file.text()
-      const resume = JSON.parse(text)
-
-      if (!resume.title || !resume.globalConfiguration) {
-        throw new Error('无效的简历配置文件')
-      }
-
-      await createResume(resume)
-      await getAllResume()
-      message.success('导入配置成功')
-    } catch (error) {
-      console.error('导入配置失败', error)
-      message.error(error instanceof Error ? error.message : '导入配置失败')
-    } finally {
-      input.removeEventListener('change', handleChange)
-      document.body.removeChild(input)
-      importLoading.value = false
-      openConfigModal.value = false
-    }
-  }
-
-  input.addEventListener('change', handleChange)
-  input.click()
-}
-
-/**
- * 停止当前 PDF 流式解析
- */
-const handleStopImportPDF = () => {
-  pdfAbortController.value?.abort()
-}
-
-/**
- * 导入PDF配置（SSE 流式 AI 解析，渐进显示识别进度）
- */
-const handleImportPDF = async () => {
-  const input = document.createElement('input')
-  input.type = 'file'
-  input.accept = '.pdf'
-  input.style.display = 'none'
-  document.body.appendChild(input)
-
-  const handleChange = async (e: Event) => {
-    const file = (e.target as HTMLInputElement)?.files?.[0]
-    if (!file) return
-    importLoading.value = true
-    importProgressText.value = '正在提取 PDF 文字...'
-    const controller = new AbortController()
-    pdfAbortController.value = controller
-    try {
-      const resume = await importPDF(file, {
-        signal: controller.signal,
-        onProgress: progress => {
-          if (progress.stage === 'extract') {
-            importProgressText.value = '正在提取 PDF 文字...'
-          } else {
-            importProgressText.value = progress.degraded
-              ? 'AI 解析中（结果较大，等待完整生成）...'
-              : `AI 解析中 · 已识别 ${progress.parsedFields} 个字段`
-          }
-          if (progress.snapshot) {
-            importSnapshot.value = progress.snapshot
-          }
-        },
-      })
-      resume.title = 'Ai解析简历导入'
-      await createResume(resume)
-      await getAllResume()
-      message.success('PDF 导入成功')
-    } catch (error) {
-      console.error('PDF 导入失败', error)
-      const errMsg = error instanceof Error ? error.message : 'PDF 导入失败'
-      // 用户主动停止不算失败，用 warning 提示
-      if (errMsg === '已停止解析') {
-        message.warning('已停止解析')
-      } else {
-        message.error(errMsg)
-      }
-    } finally {
-      pdfAbortController.value = null
-      importSnapshot.value = null
-      importProgressText.value = ''
-      input.removeEventListener('change', handleChange)
-      document.body.removeChild(input)
-      importLoading.value = false
-      openConfigModal.value = false
-    }
-  }
-
-  input.addEventListener('change', handleChange)
-  input.click()
-}
-
-/** 格式化时间 */
-const formatTime = (t?: number) => {
-  if (!t) return '未更新'
-  return dayjs(t).format('YYYY-MM-DD HH:mm')
 }
 </script>
 
@@ -350,71 +94,10 @@ const formatTime = (t?: number) => {
     </a-modal>
 
     <!-- 导入配置弹窗 -->
-    <a-modal
-      v-model:open="openConfigModal"
-      title="选择导入文件类型"
-      centered
-      :footer="null"
-      :closable="false"
-      @cancel="() => (openConfigModal = false)"
-    >
-      <!-- 空闲态：选择导入方式 -->
-      <div v-if="!importLoading" class="import-options">
-        <a-card hoverable class="import-card" @click="handleImportJSON">
-          <template #cover>
-            <div class="import-icon json-icon">
-              <plus-outlined />
-            </div>
-          </template>
-          <a-card-meta
-            title="JSON 导入"
-            description="从本地 JSON 文件导入简历配置"
-          />
-        </a-card>
-
-        <a-card hoverable class="import-card" @click="handleImportPDF">
-          <template #cover>
-            <div class="import-icon pdf-icon">
-              <vertical-align-top-outlined />
-            </div>
-          </template>
-          <a-card-meta
-            title="PDF 导入(AI解析)"
-            description="从本地 PDF 文件中提取简历内容，AI解析后导入"
-          />
-        </a-card>
-      </div>
-
-      <!-- 解析态：白纸实时生长预览，AI 内容随流逐块填充 -->
-      <div v-else class="import-live">
-        <div v-if="importSnapshot" class="live-paper">
-          <TemplateThumb
-            :template-id="importSnapshot.templateId"
-            :resume="importSnapshot"
-            fit="width"
-          />
-        </div>
-        <div v-else class="live-extract">
-          <a-spin size="small" />
-        </div>
-        <div class="live-status">
-          <span
-            v-if="importSnapshot"
-            class="live-dot"
-            aria-hidden="true"
-          ></span>
-          <span class="progress-text">{{ importProgressText }}</span>
-          <a-button
-            v-if="pdfAbortController"
-            size="small"
-            type="link"
-            @click="handleStopImportPDF"
-          >
-            停止解析
-          </a-button>
-        </div>
-      </div>
-    </a-modal>
+    <ImportConfigModal
+      v-model:open="importModalOpen"
+      @imported="getAllResume"
+    />
 
     <!-- ============ 页面头部 ============ -->
     <header class="page-header">
@@ -435,7 +118,7 @@ const formatTime = (t?: number) => {
         <a-button
           :disabled="selectMode"
           :icon="h(VerticalAlignTopOutlined)"
-          @click="() => (openConfigModal = true)"
+          @click="() => (importModalOpen = true)"
           >导入配置</a-button
         >
         <a-button
@@ -450,77 +133,29 @@ const formatTime = (t?: number) => {
     </header>
 
     <!-- ============ 批量操作栏（仅多选模式显示）============ -->
-    <section v-if="selectMode" class="batch-bar">
-      <div class="batch-left">
-        <a-checkbox
-          :checked="allSelected"
-          :indeterminate="indeterminate"
-          @change="onCheckAllChange"
-        >
-          全选
-        </a-checkbox>
-        <span class="selected-count">
-          已选 <a-tag color="blue">{{ selectedIds.length }}</a-tag> / 共
-          {{ resumes.length }} 份
-        </span>
-      </div>
-      <a-button
-        danger
-        :disabled="selectedIds.length === 0"
-        @click="() => (batchDeleteOpen = true)"
-      >
-        <template #icon><DeleteOutlined /></template>
-        删除选中
-      </a-button>
-    </section>
+    <BatchActionBar
+      v-if="selectMode"
+      :all-selected="allSelected"
+      :indeterminate="indeterminate"
+      :selected-count="selectedIds.length"
+      :total-count="resumes.length"
+      @check-all="checkAll"
+      @delete="() => (batchDeleteOpen = true)"
+    />
 
     <!-- ============ 简历卡片网格 ============ -->
     <section v-if="resumes.length > 0" class="resume-grid">
-      <article
+      <ResumeCard
         v-for="(item, i) in resumes"
         :key="item.id"
-        class="resume-card"
-        :class="{ selected: selectMode && isSelected(item.id) }"
+        :resume="item"
+        :select-mode="selectMode"
+        :selected="isSelected(item.id)"
         :style="{ animationDelay: `${i * 50}ms` }"
         @click="handleCardClick(item)"
-      >
-        <!-- 缩略图：实时渲染该简历对应模板（fit="width" 自适应卡片宽度）-->
-        <div class="card-thumb">
-          <TemplateThumb
-            :template-id="item.templateId"
-            :resume="item"
-            fit="width"
-          />
-        </div>
-
-        <div class="card-body">
-          <h3 class="card-title">{{ item.title }}</h3>
-          <p class="card-meta">创建于 {{ formatTime(item.createdAt) }}</p>
-          <p class="card-meta">更新于 {{ formatTime(item.updatedAt || 0) }}</p>
-        </div>
-
-        <div class="card-actions">
-          <button
-            class="card-action-btn"
-            title="编辑"
-            @click.stop="handleEditResume(item.id)"
-          >
-            <edit-outlined />
-          </button>
-          <button
-            class="card-action-btn danger"
-            title="删除"
-            @click.stop="handleDeleteResume(item.id)"
-          >
-            <delete-outlined />
-          </button>
-        </div>
-
-        <!-- 多选模式下的复选框 -->
-        <div v-if="selectMode" class="card-check">
-          <a-checkbox :checked="isSelected(item.id)" />
-        </div>
-      </article>
+        @edit="handleEditResume"
+        @delete="handleDeleteResume"
+      />
     </section>
 
     <a-empty v-else :image-style="{ height: '200px' }" description="暂无简历" />
@@ -528,264 +163,10 @@ const formatTime = (t?: number) => {
 </template>
 
 <style scoped lang="scss">
-/* ============ 批量操作栏 ============ */
-.batch-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-3) var(--space-4);
-  margin-bottom: var(--space-5);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-
-  .batch-left {
-    display: flex;
-    align-items: center;
-    gap: var(--space-4);
-  }
-
-  .selected-count {
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
-
-    :deep(.ant-tag) {
-      margin-inline-end: 4px;
-    }
-  }
-}
-
 /* ============ 简历卡片网格 ============ */
 .resume-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--space-5);
-}
-
-.resume-card {
-  position: relative;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  cursor: pointer;
-  // Grid 子项 min-width:auto 会被内容撑开，设 0 让 grid 控制列宽
-  min-width: 0;
-  // flex column 让卡片内容纵向排列，card-body 可 flex:1 填满
-  display: flex;
-  flex-direction: column;
-  transition:
-    border-color var(--duration-base) var(--ease-out),
-    box-shadow var(--duration-base) var(--ease-out);
-  animation: fade-up var(--duration-slow) var(--ease-out) both;
-
-  &:hover {
-    border-color: var(--color-primary-border);
-    box-shadow: var(--shadow-md);
-
-    .card-actions {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  &.selected {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px var(--color-primary);
-  }
-}
-
-.card-thumb {
-  width: 100%;
-  // 高度自适应：scale 0.3 时 TemplateThumb 完整高度约 337px，不写死避免裁切
-  display: flex;
-  justify-content: center;
-  padding: var(--space-4);
-  background: var(--color-bg-muted);
-  overflow: hidden;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.card-body {
-  padding: var(--space-3) var(--space-4);
-  // flex:1 填满卡片剩余空间，让同行卡片内 body 等高
-  flex: 1;
-  min-width: 0;
-}
-
-.card-title {
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  color: var(--color-text);
-  margin-bottom: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.card-meta {
-  font-size: var(--text-xs);
-  color: var(--color-text-tertiary);
-}
-
-.card-actions {
-  position: absolute;
-  top: var(--space-3);
-  right: var(--space-3);
-  display: flex;
-  gap: var(--space-1);
-  opacity: 0;
-  transform: translateY(-4px);
-  transition:
-    opacity var(--duration-base) var(--ease-out),
-    transform var(--duration-base) var(--ease-out);
-
-  // 多选模式下隐藏操作按钮
-  .resume-card.selected & {
-    display: none;
-  }
-}
-
-.card-action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  font-size: 16px;
-  transition: all var(--duration-base) var(--ease-out);
-
-  &:hover {
-    color: var(--color-text);
-    border-color: var(--color-border-strong);
-  }
-
-  &.danger:hover {
-    color: var(--color-danger);
-    border-color: var(--color-danger);
-    background: var(--color-danger-bg);
-  }
-}
-
-.card-check {
-  position: absolute;
-  top: var(--space-3);
-  right: var(--space-3);
-}
-
-/* ============ 导入弹窗 ============ */
-.import-options {
-  display: flex;
-  gap: var(--space-4);
-  flex-wrap: wrap;
-  justify-content: space-between;
-  padding-top: var(--space-3);
-}
-
-.import-card {
-  width: calc(50% - 8px);
-  cursor: pointer;
-  transition: transform var(--duration-base) var(--ease-out);
-
-  &:hover {
-    transform: translateY(-2px);
-  }
-}
-
-.import-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 120px;
-  font-size: 36px;
-  color: #fff;
-  border-radius: var(--radius-md);
-}
-
-.json-icon {
-  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
-}
-
-.pdf-icon {
-  background: linear-gradient(135deg, #f04864 0%, #ff7a45 100%);
-}
-
-/* ============ 流式解析实时预览 ============ */
-.import-live {
-  padding-top: var(--space-3);
-  animation: fade-up var(--duration-base) var(--ease-out);
-}
-
-// A4 白纸舞台：TemplateThumb fit="width" 按容器宽自适应缩放
-.live-paper {
-  width: min(320px, 100%);
-  margin: 0 auto;
-  overflow: hidden;
-  background: #fff;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-}
-
-// 提取文字阶段的过渡占位
-.live-extract {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 140px;
-}
-
-.live-status {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-3) 0 var(--space-1);
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-}
-
-// 呼吸圆点：表示内容正在实时生成
-.live-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--color-primary);
-  animation: live-pulse 1.2s var(--ease-out) infinite;
-}
-
-@keyframes live-pulse {
-  0%,
-  100% {
-    opacity: 0.35;
-    transform: scale(0.85);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .import-live,
-  .live-dot {
-    animation: none;
-  }
-}
-
-@keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 </style>
