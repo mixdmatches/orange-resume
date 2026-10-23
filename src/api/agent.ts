@@ -1,4 +1,4 @@
-import { fetchSseEvents } from '@/utils/ai-sse-util.ts'
+import { fetchSseEvents, type SseRetryInfo } from '@/utils/ai-sse-util.ts'
 
 /** Agent SSE 事件类型 */
 export type AgentSseEvent =
@@ -30,12 +30,14 @@ export interface AgentChatParams {
  * @param sessionId 会话 ID
  * @param params 对话参数（content + 可选 resumeText）
  * @param signal 可选中止信号
+ * @param onRetry 可选重试回调
  * @yields AgentSseEvent 类型化事件
  */
 export async function* agentChatStreamApi(
   sessionId: string,
   params: AgentChatParams,
   signal?: AbortSignal,
+  onRetry?: (_info: SseRetryInfo) => void,
 ): AsyncGenerator<AgentSseEvent, void, unknown> {
   for await (const event of fetchSseEvents(
     `/agent/${sessionId}/chat/stream`,
@@ -43,6 +45,7 @@ export async function* agentChatStreamApi(
     {
       errorPrefix: 'Agent 对话失败',
       signal,
+      onRetry,
     },
   )) {
     // 后端 SSE 帧结构就是 AgentSseEvent，直接透传

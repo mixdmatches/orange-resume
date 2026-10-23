@@ -3,6 +3,7 @@ import { message } from 'ant-design-vue'
 import { createResume } from '@/service/resumeRepository'
 import type { Resume } from '@/types/resume'
 import { importPDF } from '@/utils/importPDF'
+import type { SseRetryInfo } from '@/utils/ai-sse-util.ts'
 
 /** 文件选中后的处理回调 */
 // eslint-disable-next-line no-unused-vars
@@ -24,6 +25,8 @@ export const useResumeImport = (options: {
   const pdfAbortController = ref<AbortController | null>(null)
   /** PDF 流式解析中的简历快照，驱动白纸实时生长预览 */
   const importSnapshot = ref<Resume | null>(null)
+  /** PDF 导入重试状态 */
+  const importRetryInfo = ref<SseRetryInfo | null>(null)
 
   /**
    * 创建隐藏的文件选择框，选中文件后交给 onFile 处理，
@@ -108,6 +111,10 @@ export const useResumeImport = (options: {
               importSnapshot.value = progress.snapshot
             }
           },
+          onRetry: info => {
+            importRetryInfo.value = info
+            importProgressText.value = `网络波动，正在第 ${info.retryCount} 次重试...`
+          },
         })
         resume.title = 'Ai解析简历导入'
         await createResume(resume)
@@ -125,6 +132,7 @@ export const useResumeImport = (options: {
       } finally {
         pdfAbortController.value = null
         importSnapshot.value = null
+        importRetryInfo.value = null
         importProgressText.value = ''
       }
     })
@@ -135,6 +143,7 @@ export const useResumeImport = (options: {
     importProgressText,
     pdfAbortController,
     importSnapshot,
+    importRetryInfo,
     handleImportJSON,
     handleImportPDF,
     handleStopImportPDF,

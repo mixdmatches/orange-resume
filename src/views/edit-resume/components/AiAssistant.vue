@@ -41,6 +41,7 @@ const {
   sessionList,
   dropdownVisible,
   loading,
+  retryInfo,
   renderMd,
   getToolDisplayName,
   refreshSessionList,
@@ -143,6 +144,14 @@ const handleApplySuggestion = (item: SuggestionItem) => {
           :get-tool-display-name="getToolDisplayName"
           @apply-suggestion="handleApplySuggestion"
         />
+
+        <!-- 网络重试提示 -->
+        <div v-if="retryInfo" class="retry-tip">
+          <span class="retry-icon">🔄</span>
+          <span class="retry-text">
+            网络波动，正在第 {{ retryInfo.retryCount }} 次重试…
+          </span>
+        </div>
 
         <div class="input-area">
           <ChatInput
@@ -247,6 +256,45 @@ const handleApplySuggestion = (item: SuggestionItem) => {
   height: 12px;
   cursor: nwse-resize;
   z-index: 11;
+}
+
+/** 网络重试提示条 */
+.retry-tip {
+  flex-shrink: 0;
+  padding: 0.4rem 0.8rem;
+  background-color: var(--color-warning-bg, #fffbe6);
+  border-top: 1px solid var(--color-warning-border, #ffe58f);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--color-warning-text, #d48806);
+  animation: retry-fade-in 0.2s ease;
+}
+
+.retry-icon {
+  display: inline-block;
+  animation: retry-spin 1s linear infinite;
+}
+
+@keyframes retry-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes retry-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .fade-scale-enter-active,

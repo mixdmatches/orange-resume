@@ -12,6 +12,7 @@ import {
 } from '@/api'
 import { DEFAULT_QUESTION_COUNT } from '@/stores/interview'
 import { ensureAiProviderReady } from '@/utils/ai-ready'
+import type { SseRetryInfo } from '@/utils/ai-sse-util.ts'
 
 export type InterviewPhase = 'idle' | 'interviewing' | 'finished'
 
@@ -74,6 +75,8 @@ export const useInterviewSession = (options: {
   const finalScore = ref<number | null>(null)
   /** 面试已用秒数 */
   const elapsedSeconds = ref(0)
+  /** 当前重试状态（网络波动时展示重试提示） */
+  const retryInfo = ref<SseRetryInfo | null>(null)
 
   let timer: number | null = null
   /** 消息 id 自增器 */
@@ -302,7 +305,15 @@ export const useInterviewSession = (options: {
 
       // 2. 统一 SSE 流（空对象 → 后端根据 pending_questions 状态自动路由到"开始面试"路径）
       streamController = new AbortController()
-      const stream = interviewStartApi(session.id, {}, streamController.signal)
+      const handleRetry = (info: SseRetryInfo) => {
+        retryInfo.value = info
+      }
+      const stream = interviewStartApi(
+        session.id,
+        {},
+        streamController.signal,
+        handleRetry,
+      )
       activeRun = consumeStream(stream)
       await activeRun
     } catch (error) {
@@ -314,6 +325,7 @@ export const useInterviewSession = (options: {
     } finally {
       activeRun = null
       streamController = null
+      retryInfo.value = null
       // "结束面试"中断本流后将接管 thinking（保持 true 直至总结流程结束），此处不能复位
       if (!finishing) thinking.value = false
     }
@@ -339,10 +351,14 @@ export const useInterviewSession = (options: {
 
     try {
       streamController = new AbortController()
+      const handleRetry = (info: SseRetryInfo) => {
+        retryInfo.value = info
+      }
       const stream = interviewAnswerApi(
         interviewId.value,
         { content: text },
         streamController.signal,
+        handleRetry,
       )
       activeRun = consumeStream(stream)
       await activeRun
@@ -354,6 +370,7 @@ export const useInterviewSession = (options: {
     } finally {
       activeRun = null
       streamController = null
+      retryInfo.value = null
       // "结束面试"中断本流后将接管 thinking（保持 true 直至总结流程结束），此处不能复位
       if (!finishing) thinking.value = false
     }
@@ -390,10 +407,14 @@ export const useInterviewSession = (options: {
       phase.value = 'finished'
 
       streamController = new AbortController()
+      const handleRetry = (info: SseRetryInfo) => {
+        retryInfo.value = info
+      }
       const stream = interviewFinishApi(
         interviewId.value,
         {},
         streamController.signal,
+        handleRetry,
       )
       activeRun = consumeStream(stream)
       await activeRun
@@ -404,6 +425,7 @@ export const useInterviewSession = (options: {
       finishing = false
       activeRun = null
       streamController = null
+      retryInfo.value = null
       thinking.value = false
     }
   }
@@ -426,6 +448,7 @@ export const useInterviewSession = (options: {
     phase,
     messages,
     thinking,
+    retryInfo,
     /** 当前题号（兼容 index.vue 原有 askedCount 变量名） */
     askedCount: currentRound,
     totalRounds,

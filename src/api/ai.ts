@@ -8,7 +8,7 @@ import type {
   SelfIntroDto,
 } from '@/types/ai'
 import { AI_TIMEOUT, post } from '@/utils/request'
-import { streamSse } from '@/utils/ai-sse-util.ts'
+import { streamSse, type SseRetryInfo } from '@/utils/ai-sse-util.ts'
 
 const AI_API_CONFIG = {
   timeout: AI_TIMEOUT,
@@ -18,11 +18,14 @@ const AI_API_CONFIG = {
  * 流式pdf转stream
  * @param params
  */
-export async function* pdfToJsonStreamApi(params: {
-  pdfText: string
-  signal?: AbortSignal
-}): AsyncGenerator<string, void, unknown> {
-  yield* streamSse('/ai/pdf-to-json/stream', params, params.signal)
+export async function* pdfToJsonStreamApi(
+  params: {
+    pdfText: string
+    signal?: AbortSignal
+  },
+  onRetry?: (_info: SseRetryInfo) => void,
+): AsyncGenerator<string, void, unknown> {
+  yield* streamSse('/ai/pdf-to-json/stream', params, params.signal, onRetry)
 }
 
 /**

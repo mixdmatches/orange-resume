@@ -11,6 +11,7 @@ import { ensureAiProviderReady } from '@/utils/ai-ready'
 import type { ChatMessage, ToolCallInfo } from '@/types/ai'
 import type { AiSession } from '@/types/ai-sesstion'
 import type { Resume } from '@/types/resume'
+import type { SseRetryInfo } from '@/utils/ai-sse-util.ts'
 
 /** 工具内部名 → 中文展示名映射 */
 const TOOL_NAME_MAP: Record<string, string> = {
@@ -42,6 +43,9 @@ export function useAiChat(
   const sessionList = ref<AiSession[]>([])
 
   const dropdownVisible = ref(false)
+
+  /** 当前重试状态（网络波动时展示重试提示） */
+  const retryInfo = ref<SseRetryInfo | null>(null)
 
   const md = new MarkdownIt({ breaks: true, linkify: true })
 
@@ -146,10 +150,16 @@ export function useAiChat(
       const controller = new AbortController()
       chatControllers.set(sid, controller)
 
+      // 重试回调：更新重试状态供 UI 展示
+      const handleRetry = (info: SseRetryInfo) => {
+        retryInfo.value = info
+      }
+
       for await (const event of agentChatStreamApi(
         sid,
         { content: input, resumeText: resumeText.value },
         controller.signal,
+        handleRetry,
       )) {
         if (!assistantMsg.toolCalls) assistantMsg.toolCalls = []
 
@@ -206,6 +216,8 @@ export function useAiChat(
       streamingSessionIds.value = streamingSessionIds.value.filter(
         v => v !== sid,
       )
+      // 清除重试状态
+      retryInfo.value = null
     }
   }
 
@@ -227,6 +239,7 @@ export function useAiChat(
     dropdownVisible,
     loading,
     hasMessages,
+    retryInfo,
     renderMd,
     getToolDisplayName,
     refreshSessionList,

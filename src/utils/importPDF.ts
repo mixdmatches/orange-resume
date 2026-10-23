@@ -33,6 +33,11 @@ export type ImportPDFProgressHandler = (progress: ImportPDFProgress) => void
 export interface ImportPDFOptions {
   onProgress?: ImportPDFProgressHandler
   signal?: AbortSignal
+  onRetry?: (info: {
+    retryCount: number
+    nextDelayMs: number
+    reason: string
+  }) => void
 }
 
 /** 进度回调节流间隔，避免高频刷新阻塞主线程 */
@@ -177,10 +182,13 @@ export async function importPDF(
   let lastEmitAt = 0
 
   try {
-    for await (const chunk of pdfToJsonStreamApi({
-      pdfText,
-      signal: controller.signal,
-    })) {
+    for await (const chunk of pdfToJsonStreamApi(
+      {
+        pdfText,
+        signal: controller.signal,
+      },
+      opts?.onRetry,
+    )) {
       buffer += chunk
       // 节流：100ms 内最多解析并上报一次
       const now = Date.now()

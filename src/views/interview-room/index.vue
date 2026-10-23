@@ -36,6 +36,7 @@ const {
   phase,
   messages,
   thinking,
+  retryInfo,
   askedCount,
   totalRounds,
   finalScore,
@@ -53,9 +54,7 @@ const {
   interviewId,
 })
 
-/** 候选人正在输入的回答 */
 const answerInput = ref('')
-/** 聊天流滚动容器，用于自动滚动到底部 */
 const chatContainerRef = ref<HTMLElement | null>(null)
 const md = new MarkdownIt({ breaks: true, linkify: true })
 const hasJd = computed(() => !!jd.value)
@@ -339,6 +338,14 @@ const handleFinishClick = () => {
             </div>
           </template>
         </div>
+      </div>
+
+      <!-- 网络重试提示 -->
+      <div v-if="retryInfo" class="retry-tip-bar">
+        <span class="retry-icon">🔄</span>
+        <span class="retry-text">
+          网络波动，正在第 {{ retryInfo.retryCount }} 次重试…
+        </span>
       </div>
 
       <div class="input-bar">
@@ -859,6 +866,46 @@ const handleFinishClick = () => {
 .input-inner {
   max-width: 820px;
   margin: 0 auto;
+}
+
+/** 网络重试提示条 */
+.retry-tip-bar {
+  flex: none;
+  padding: var(--space-2) var(--space-6);
+  background: var(--color-warning-bg, #fffbe6);
+  border-top: 1px solid var(--color-warning-border, #ffe58f);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-warning-text, #d48806);
+  animation: retry-fade-in 0.2s ease;
+}
+
+.retry-icon {
+  display: inline-block;
+  animation: retry-spin 1s linear infinite;
+}
+
+@keyframes retry-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes retry-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .finished-bar {

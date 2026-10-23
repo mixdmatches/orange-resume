@@ -35,7 +35,8 @@ export function resumeToText(resume: Resume): string {
         .join(' | '),
     )
     .filter(Boolean)
-  if (internLines.length) sections.push(`【实习经历】\n${internLines.join('\n')}`)
+  if (internLines.length)
+    sections.push(`【实习经历】\n${internLines.join('\n')}`)
 
   const projLines = resume.projects
     .filter(p => p.visible)
@@ -47,7 +48,8 @@ export function resumeToText(resume: Resume): string {
     .filter(Boolean)
   if (projLines.length) sections.push(`【项目经历】\n${projLines.join('\n')}`)
 
-  if (resume.skills?.trim()) sections.push(`【专业技能】\n${resume.skills.trim()}`)
+  if (resume.skills?.trim())
+    sections.push(`【专业技能】\n${resume.skills.trim()}`)
 
   const customLines: string[] = []
   for (const [moduleName, items] of Object.entries(resume.customData ?? {})) {
@@ -59,7 +61,8 @@ export function resumeToText(resume: Resume): string {
       if (line) customLines.push(`${moduleName}：${line}`)
     }
   }
-  if (customLines.length) sections.push(`【其他经历】\n${customLines.join('\n')}`)
+  if (customLines.length)
+    sections.push(`【其他经历】\n${customLines.join('\n')}`)
 
   return sections.join('\n\n')
 }

@@ -1,4 +1,4 @@
-import { fetchSseEvents } from '@/utils/ai-sse-util.ts'
+import { fetchSseEvents, type SseRetryInfo } from '@/utils/ai-sse-util.ts'
 import type {
   CreateInterviewDto,
   InterviewDetail,
@@ -24,11 +24,12 @@ export async function* interviewStreamApi(
   interviewId: string,
   data: InterviewStreamDto = {},
   signal?: AbortSignal,
+  onRetry?: (_info: SseRetryInfo) => void,
 ): AsyncGenerator<InterviewSseEvent, void, unknown> {
   for await (const event of fetchSseEvents(
     `/interviews/${interviewId}/stream`,
     data,
-    { errorPrefix: '面试请求失败', signal },
+    { errorPrefix: '面试请求失败', signal, onRetry },
   )) {
     yield event as InterviewSseEvent
   }
@@ -39,16 +40,18 @@ export async function* interviewStreamApi(
  * @param interviewId
  * @param data
  * @param signal
+ * @param onRetry
  */
 export async function* interviewStartApi(
   interviewId: string,
   data: InterviewStreamDto = {},
   signal?: AbortSignal,
+  onRetry?: (_info: SseRetryInfo) => void,
 ): AsyncGenerator<InterviewSseEvent, void, unknown> {
   for await (const event of fetchSseEvents(
     `/interviews/${interviewId}/start`,
     data,
-    { errorPrefix: '面试请求失败', signal },
+    { errorPrefix: '面试请求失败', signal, onRetry },
   )) {
     yield event as InterviewSseEvent
   }
@@ -59,16 +62,18 @@ export async function* interviewStartApi(
  * @param interviewId
  * @param data
  * @param signal
+ * @param onRetry
  */
 export async function* interviewAnswerApi(
   interviewId: string,
   data: InterviewStreamDto = {},
   signal?: AbortSignal,
+  onRetry?: (_info: SseRetryInfo) => void,
 ): AsyncGenerator<InterviewSseEvent, void, unknown> {
   for await (const event of fetchSseEvents(
     `/interviews/${interviewId}/answer`,
     data,
-    { errorPrefix: '提交用户回答失败', signal },
+    { errorPrefix: '提交用户回答失败', signal, onRetry },
   )) {
     yield event as InterviewSseEvent
   }
@@ -79,16 +84,18 @@ export async function* interviewAnswerApi(
  * @param interviewId
  * @param data
  * @param signal
+ * @param onRetry
  */
 export async function* interviewFinishApi(
   interviewId: string,
   data: InterviewStreamDto = {},
   signal?: AbortSignal,
+  onRetry?: (_info: SseRetryInfo) => void,
 ): AsyncGenerator<InterviewSseEvent, void, unknown> {
   for await (const event of fetchSseEvents(
     `/interviews/${interviewId}/finish`,
     data,
-    { errorPrefix: '提前结束面试失败', signal },
+    { errorPrefix: '提前结束面试失败', signal, onRetry },
   )) {
     yield event as InterviewSseEvent
   }
