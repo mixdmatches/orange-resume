@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { inject, ref, toRef } from 'vue'
+import { message } from 'ant-design-vue'
 import ChatInput from '@/components/ChatInput.vue'
 import { usePanelDraggable } from '@/hooks/usePanelDraggable'
 import { useAiChat } from '@/hooks/useAiChat'
 import type { Resume } from '@/types/resume'
+import type { SuggestionItem } from '@/types/ai'
 import AiAssistantHeader from './ai-assistant/AiAssistantHeader.vue'
 import AiMessageList from './ai-assistant/AiMessageList.vue'
 
@@ -51,6 +53,58 @@ const {
 
 /** 关闭面板 */
 const handleClose = () => emit('update:open', false)
+
+/**
+ * 应用单条 AI 建议到简历
+ * 根据 module + field 定位，用 rewritten 替换 original
+ */
+const handleApplySuggestion = (item: SuggestionItem) => {
+  const { module, original, rewritten } = item
+
+  /** 在对象中递归查找并替换第一条匹配的字符串 */
+  const traverseAndReplace = (obj: unknown): boolean => {
+    if (obj === null || typeof obj !== 'object') return false
+
+    for (const key of Object.keys(obj)) {
+      const val = (obj as Record<string, unknown>)[key]
+
+      if (typeof val === 'string') {
+        // original 为空表示新增，暂不处理（需要知道具体插入位置）
+        if (!original) continue
+        if (val.includes(original)) {
+          ;(obj as Record<string, unknown>)[key] = val.replace(
+            original,
+            rewritten,
+          )
+          return true
+        }
+      } else if (Array.isArray(val)) {
+        for (const el of val) {
+          if (traverseAndReplace(el)) return true
+        }
+      } else if (typeof val === 'object' && val !== null) {
+        if (traverseAndReplace(val)) return true
+      }
+    }
+    return false
+  }
+
+  // 优先在对应模块内查找
+  const targetModule = (resume as Record<string, unknown>)[module]
+  if (targetModule !== undefined) {
+    if (traverseAndReplace(targetModule)) {
+      message.success('已应用到简历')
+      return
+    }
+  }
+
+  // 回退：全简历查找
+  if (traverseAndReplace(resume)) {
+    message.success('已应用到简历')
+  } else {
+    message.warning('未能在简历中找到对应文本，可能已被修改')
+  }
+}
 </script>
 
 <template>
@@ -87,6 +141,7 @@ const handleClose = () => emit('update:open', false)
           :loading="loading"
           :render-md="renderMd"
           :get-tool-display-name="getToolDisplayName"
+          @apply-suggestion="handleApplySuggestion"
         />
 
         <div class="input-area">

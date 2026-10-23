@@ -6,14 +6,20 @@ import {
   RightOutlined,
   WarningOutlined,
 } from '@ant-design/icons-vue'
-import type { ChatMessage } from '@/types/ai'
+import type { ChatMessage, SuggestionItem } from '@/types/ai'
 import ToolCallCard from './ToolCallCard.vue'
+import SuggestionCard from './SuggestionCard.vue'
+import { parseMessageSegments } from '@/utils/parseSuggestion'
 
 const props = defineProps<{
   messages: ChatMessage[]
   loading: boolean
   renderMd: (text: string) => string
   getToolDisplayName: (name: string) => string
+}>()
+
+const emit = defineEmits<{
+  (e: 'applySuggestion', item: SuggestionItem): void
 }>()
 
 /** 滚动容器 DOM 引用 */
@@ -47,6 +53,9 @@ const toggleReasoning = (idx: number) => {
 
 /** 暴露给父组件调用，用于主动触发滚动 */
 defineExpose({ scrollToBottom })
+
+/** 将消息内容解析为片段（Markdown + Suggestion 卡片） */
+const getMessageSegments = (content: string) => parseMessageSegments(content)
 </script>
 
 <template>
@@ -125,8 +134,23 @@ defineExpose({ scrollToBottom })
               <span class="dot"></span>
             </div>
 
-            <!-- 正文 -->
-            <div v-if="msg.content" v-html="renderMd(msg.content)"></div>
+            <!-- 正文：分段渲染 Markdown + Suggestion 卡片 -->
+            <template v-if="msg.content">
+              <template
+                v-for="(segment, sIdx) in getMessageSegments(msg.content)"
+                :key="sIdx"
+              >
+                <div
+                  v-if="segment.type === 'markdown'"
+                  v-html="renderMd(segment.content)"
+                ></div>
+                <SuggestionCard
+                  v-else-if="segment.type === 'suggestion'"
+                  :item="segment.item"
+                  @apply="emit('applySuggestion', $event)"
+                />
+              </template>
+            </template>
 
             <!-- 生成失败提示 -->
             <div

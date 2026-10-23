@@ -152,3 +152,19 @@ export class SelfIntroDto {
   /** 生成选项 */
   options!: SelfIntroOptions
 }
+
+/** 单条修改建议 */
+export interface SuggestionItem {
+  /** 简历模块标识，如 basic、education、work、project、skill */
+  module: string
+  /** 模块内的字段名，如 description、highlights、position 等 */
+  field: string
+  original: string
+  rewritten: string
+  reason: string
+}
+
+/** 解析后的消息内容片段：普通 Markdown 或建议卡片 */
+export type MessageSegment =
+  | { type: 'markdown'; content: string }
+  | { type: 'suggestion'; item: SuggestionItem }
