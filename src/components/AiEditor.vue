@@ -10,7 +10,7 @@ const divRef = ref<Element>()
 
 let aiEditor: AiEditor | null = null
 
-onMounted(() => {
+async function initAiEditor() {
   aiEditor = new AiEditor({
     element: divRef.value as Element,
     toolbarKeys: [
@@ -50,12 +50,27 @@ onMounted(() => {
     onChange: aiEditor => {
       model.value = aiEditor.getHtml()
     },
+
+    // 选中文字时的气泡菜单配置
+    textSelectionBubbleMenu: {
+      enable: true,
+      items: [
+        'bold',
+        'italic',
+        'underline',
+        'strike',
+        'highlight',
+        'font-color',
+      ],
+    },
   })
+}
+
+onMounted(() => {
+  initAiEditor()
 })
 
 onUnmounted(() => {
-  // 销毁编辑器并置空引用：库内部会级联清理 ProseMirror 视图、
-  // 插件级 window 监听、tippy 弹层与事件总线，置空防止悬垂引用
   if (aiEditor) {
     aiEditor.destroy()
     aiEditor = null

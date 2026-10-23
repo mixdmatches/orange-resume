@@ -3,10 +3,8 @@ import { del, get, post, put } from '@/utils/request'
 
 /**
  * 保存厂商AI配置
- * 内置厂商（deepseek/doubao/openai 等）必传固定 providerId，后端按 id upsert；
- * 自定义厂商创建时不传 providerId，由后端生成
- * @param data 单个AI配置（自定义厂商创建时不含 providerId）
- * @returns 后端返回的 providerId（新建自定义厂商为生成的新 id）
+ * @param data 单个AI配置
+ * @returns 后端返回的 providerId
  */
 export function addOrUpdateAiConfigApi(data: AiConfigInput) {
   return post<string>('/user/ai-config', data)
@@ -14,10 +12,18 @@ export function addOrUpdateAiConfigApi(data: AiConfigInput) {
 
 /**
  * 获取所有厂商AI配置
- * 返回的 apiKeyCipher 为掩码（如 'sk-d****xG2k'），明文永不回传
  */
 export function getAiConfigApi() {
   return get<AiConfigResult[]>('/user/ai-config')
+}
+
+/**
+ * 获取当前选中的厂商AI配置
+ */
+export function getCurrentAiConfig() {
+  return get<{ baseUrl: string; modelId: string; apiKey: string }>(
+    '/user/current-ai-config',
+  )
 }
 
 /**
@@ -57,4 +63,5 @@ export default {
   deleteAiConfigApi,
   getSelModelAndPromptApi,
   setSelModelAndPromptApi,
+  getCurrentAiConfig,
 }
