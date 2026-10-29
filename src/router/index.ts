@@ -6,11 +6,10 @@ import {
 import { h } from 'vue'
 import {
   FileTextOutlined,
-  ShopOutlined,
   HeatMapOutlined,
-  UserOutlined,
+  ShopOutlined,
   ToolOutlined,
-  EditOutlined,
+  UserOutlined,
 } from '@ant-design/icons-vue'
 import { ACCESS_TOKEN_KEY } from '@/utils/request'
 import { storage } from '@/utils/storage'
@@ -35,16 +34,6 @@ export interface NavDropdownChild {
 
 /** AI 工具子路由 */
 export const ai_tools_routes: RouteRecordRaw[] = [
-  {
-    path: '/ai-tools/polish',
-    name: 'ai-polish',
-    meta: {
-      title: 'AI 生成简历',
-      icon: () => h(EditOutlined),
-      group: 'ai-tools',
-    },
-    component: () => import('@/views/ai-tools/polish/index.vue'),
-  },
   {
     path: '/ai-tools/ai-interview',
     name: 'ai-interview',

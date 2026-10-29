@@ -2,11 +2,14 @@
 import type { AiConfigInput, APIManufacturer } from '@/types/ai-config'
 import { message, Modal } from 'ant-design-vue'
 import {
+  ApiOutlined,
   DeleteOutlined,
+  EyeInvisibleOutlined,
+  EyeOutlined,
   PlusOutlined,
   SlidersOutlined,
 } from '@ant-design/icons-vue'
-import { computed, onBeforeMount, ref } from 'vue'
+import { computed, h, onBeforeMount, ref } from 'vue'
 import { onBeforeRouteLeave, useRouter } from 'vue-router'
 import {
   BUILTIN_PROVIDER_IDS,
@@ -22,6 +25,7 @@ import {
   getAiConfigApi,
   getSelModelAndPromptApi,
   setSelModelAndPromptApi,
+  testConnectionApi,
 } from '@/api'
 
 /** 加载中标记：后端数据就绪前不渲染表单区 */
@@ -55,8 +59,6 @@ onBeforeMount(async () => {
  */
 async function refreshSavedStates() {
   const aiConfigs = await getAiConfigApi()
-
-  // 后端返回的 apiKeyCipher 为掩码（明文永不回传），归一化为 apiKeyEnc 仅用于表单回显
   const normalized = aiConfigs.map(item => ({
     providerId: item.providerId,
     providerName: item.providerName,
@@ -115,31 +117,42 @@ const currentEditId = ref<string>('deepseek')
 /** 右侧激活视图：'provider' 厂商配置 / 'preference' 模型偏好 */
 const activeTab = ref<'provider' | 'preference'>('provider')
 
-/** 是否处于"新建自定义供应商"（尚未保存）状态 */
-const isNewProvider = ref(false)
+/** 配置弹窗是否打开（厂商配置填写表单统一在弹窗内完成） */
+const configModalOpen = ref(false)
 
-/** 厂商配置表单草稿（编辑副本，保存成功后提交后端） */
+/** 弹窗模式：'create' 新建自定义供应商 / 'edit' 编辑已有厂商 */
+const modalMode = ref<'create' | 'edit'>('edit')
+
+/** 新建自定义供应商时的临时 id（仅本地占位，保存后由后端生成真实 id） */
+const NEW_PROVIDER_ID = ''
+
+/** 厂商配置表单草稿（弹窗内编辑副本，保存成功后提交后端） */
 const formDraft = ref<APIManufacturer>()
 
 /** SettingForm 子组件实例引用，用于调用 clearValidate() 清除校验红框 */
 const settingFormRef = ref<InstanceType<typeof SettingForm>>()
 
+/** 弹窗内"测试连接"加载态 */
+const isTesting = ref(false)
+
+/** 弹窗保存请求进行中，用于禁用重复提交 */
+const isSaving = ref(false)
+
 /** 润色提示词草稿（偏好表单编辑副本，保存偏好后写回 savedPolishPrompt） */
 const polishPromptDraft = ref<string>(DEFAULT_POLISH_PROMPT)
 
 /**
- * 深拷贝当前编辑厂商配置作为表单草稿
+ * 深拷贝指定厂商配置作为表单草稿
  * 避免编辑过程直接影响已保存数据
+ * @param id - 厂商 id（缺省为当前编辑厂商）
  */
-function cloneDraft(): APIManufacturer {
-  const target = savedStates.value.find(
-    item => item.providerId === currentEditId.value,
-  )
+function cloneDraft(id: string = currentEditId.value): APIManufacturer {
+  const target = savedStates.value.find(item => item.providerId === id)
   const source = target ?? savedStates.value[0]
   // savedStates 尚未从后端加载完成（或列表为空）时，返回空草稿兜底
   if (!source) {
     return {
-      providerId: currentEditId.value,
+      providerId: id,
       providerName: '',
       apiKeyEnc: '',
       modelId: '',
@@ -172,49 +185,47 @@ function pickPersisted(item: APIManufacturer) {
   }
 }
 
-/** 当前厂商表单是否有未保存的修改 */
-const isDirty = computed(() => {
-  // 新建未保存的供应商视为有修改
-  if (isNewProvider.value) return true
-  if (!formDraft.value) return false
+/**
+ * 当前激活视图是否有未保存的修改
+ * 弹窗关闭时厂商导航不带草稿修改，只有偏好视图的编辑会产生未保存状态
+ */
+const isCurrentDirty = computed(
+  () => activeTab.value === 'preference' && isPreferenceDirty.value,
+)
+
+/** 厂商列表视图模型（已合并固定 UI 信息，列表仅展示已保存厂商） */
+const providerListView = computed<APIManufacturer[]>(() =>
+  savedStates.value.map(withUI),
+)
+
+/** 当前厂商的视图模型（概览区展示已保存配置，不展示弹窗草稿） */
+const currentProviderView = computed<APIManufacturer | undefined>(() => {
   const saved = savedStates.value.find(
     item => item.providerId === currentEditId.value,
   )
-  if (!saved) return true
-  // 只比较用户数据字段，避免 UI 字段干扰判断
-  return (
-    JSON.stringify(pickPersisted(formDraft.value)) !==
-    JSON.stringify(pickPersisted(saved))
-  )
+  return saved ? withUI(saved) : undefined
 })
 
-/** 左侧可编辑列表视图模型 = 已保存厂商 + 正在新建（未保存）的厂商，已合并固定 UI 信息 */
-const editingListView = computed<APIManufacturer[]>(() => {
-  const list = [...savedStates.value]
-  if (isNewProvider.value && formDraft.value) list.push(formDraft.value)
-  return list.map(withUI)
+/** 当前厂商是否已配置（填了 API Key 与模型 ID） */
+const currentConfigured = computed(() => {
+  const item = savedStates.value.find(i => i.providerId === currentEditId.value)
+  return Boolean(item?.apiKeyEnc && item?.modelId)
 })
 
-/** 当前编辑厂商的视图模型（已合并固定 UI 信息） */
-const currentEditView = computed<APIManufacturer>(() =>
-  withUI(formDraft.value!),
-)
+/** API Key 是否可见（默认隐藏，切换厂商时自动复位） */
+const apiKeyVisible = ref(false)
+
+/** 概览区 API Key 展示文案：隐藏时只保留末 4 位，避免整段密钥暴露 */
+const apiKeyDisplay = computed(() => {
+  const key = currentProviderView.value?.apiKeyEnc ?? ''
+  if (!key) return '未填写'
+  if (apiKeyVisible.value) return key
+  const tail = key.slice(-4)
+  return `****${tail}`
+})
 
 /** "当前使用的模型"下拉选项（仅已保存的厂商，已合并固定 UI 信息） */
 const savedProviders = computed(() => savedStates.value.map(withUI))
-
-/**
- * 判断自定义供应商草稿是否为空（所有字段均未填写）
- * 空草稿切换时无需弹窗确认
- */
-function isEmptyCustom(item: APIManufacturer): boolean {
-  return (
-    !item.providerName?.trim() &&
-    !item.apiKeyEnc?.trim() &&
-    !item.apiEndpoint?.trim() &&
-    !item.modelId?.trim()
-  )
-}
 
 /** 模型偏好是否有未保存的修改（选中模型或提示词与已保存值不一致） */
 const isPreferenceDirty = computed(
@@ -223,24 +234,162 @@ const isPreferenceDirty = computed(
     polishPromptDraft.value !== savedPolishPrompt.value,
 )
 
-/** 当前激活视图是否有未保存的修改 */
-const isCurrentDirty = computed(() =>
-  activeTab.value === 'preference' ? isPreferenceDirty.value : isDirty.value,
-)
+/**
+ * 打开厂商配置弹窗（仅新增/主动修改配置时调用）
+ * @param id - 目标厂商 id
+ */
+function openEditModal(id: string) {
+  modalMode.value = 'edit'
+  currentEditId.value = id
+  isTesting.value = false
+  formDraft.value = cloneDraft(id)
+  configModalOpen.value = true
+  // 打开弹窗后清除上一次表单的校验红框 / 错误提示
+  settingFormRef.value?.clearValidate()
+}
+
+/** 点击厂商：仅切换当前厂商展示配置概览，不打开弹窗 */
+function handleSelect(id: string) {
+  // 从偏好视图切走时若有未保存修改，先确认并丢弃
+  if (activeTab.value === 'preference' && isPreferenceDirty.value) {
+    confirmLeave(() => {
+      activeTab.value = 'provider'
+      currentEditId.value = id
+      apiKeyVisible.value = false
+    })
+    return
+  }
+  activeTab.value = 'provider'
+  currentEditId.value = id
+  // 切换厂商后 API Key 重新回到隐藏状态
+  apiKeyVisible.value = false
+}
+
+/** 打开模型偏好视图（有未保存修改时弹窗确认，确认后丢弃修改） */
+function handleShowPreference() {
+  confirmLeave(() => {
+    activeTab.value = 'preference'
+  })
+}
 
 /**
- * 丢弃当前视图的未保存修改，恢复为已保存内容
+ * 执行切换编辑厂商并重置草稿
+ * @param id - 目标厂商 id
  */
+function doSelect(id: string) {
+  activeTab.value = 'provider'
+  currentEditId.value = id
+  formDraft.value = cloneDraft(id)
+  // 切换厂商后清除上一份表单的校验红框 / 错误提示
+  settingFormRef.value?.clearValidate()
+}
+
+/** 新增自定义供应商：打开空白弹窗填写，保存后才真正加入列表 */
+function handleAddCustom() {
+  activeTab.value = 'provider'
+  modalMode.value = 'create'
+  // 草稿不带真实 id（空字符串占位），保存后由后端生成并回填
+  currentEditId.value = NEW_PROVIDER_ID
+  isTesting.value = false
+  // 仅初始化用户数据字段，icon/name/hint 等固定 UI 由 getProviderUI 推导
+  formDraft.value = {
+    providerId: NEW_PROVIDER_ID,
+    apiKeyEnc: '',
+    apiEndpoint: '',
+    modelId: '',
+    providerName: '',
+  }
+  configModalOpen.value = true
+  settingFormRef.value?.clearValidate()
+}
+
+/**
+ * 测试连接（页面操作区调用）：后端按已保存配置发起真实请求
+ * 仅已保存的厂商可测试（当前 id 为空时按钮禁用）
+ */
+async function handleTestConnection() {
+  const providerId = currentEditId.value
+  if (!providerId) return
+  isTesting.value = true
+  try {
+    await testConnectionApi(providerId)
+    message.success('连接测试成功')
+  } catch (e) {
+    // 失败提示由 request 层统一弹出，这里仅记录日志
+    console.error('连接测试失败:', e)
+  } finally {
+    isTesting.value = false
+  }
+}
+
+/** 保存弹窗表单草稿到后端，成功后关闭弹窗并同步本地状态 */
+async function handleSave() {
+  const draft = formDraft.value
+  if (!draft) return
+
+  // 新建自定义供应商不传 providerId（由后端生成）；其余按已有 id upsert
+  const payload: AiConfigInput =
+    modalMode.value === 'create'
+      ? {
+          providerName: draft.providerName,
+          apiKeyEnc: draft.apiKeyEnc,
+          modelId: draft.modelId,
+          apiEndpoint: draft.apiEndpoint,
+        }
+      : {
+          providerId: draft.providerId,
+          providerName: draft.providerName,
+          apiKeyEnc: draft.apiKeyEnc,
+          modelId: draft.modelId,
+          apiEndpoint: draft.apiEndpoint,
+        }
+
+  // API Key 未修改（仍与已保存掩码一致）时传空字符串，后端保留原密文
+  // 新建厂商在 savedStates 中无记录，天然跳过该判断，原样传用户输入值
+  const saved = savedStates.value.find(
+    item => item.providerId === draft.providerId,
+  )
+  if (saved && draft.apiKeyEnc === saved.apiKeyEnc) {
+    payload.apiKeyEnc = ''
+  }
+
+  let returnedId: string
+  isSaving.value = true
+  try {
+    returnedId = await addOrUpdateAiConfigApi(payload)
+  } catch (e) {
+    console.error('保存 AI 配置失败:', e)
+    return
+  } finally {
+    isSaving.value = false
+  }
+
+  // 保存成功后重拉列表同步最新掩码（key 传新明文后掩码会变化）
+  try {
+    await refreshSavedStates()
+  } catch (e) {
+    console.error('刷新 AI 配置列表失败:', e)
+  }
+
+  // 新建供应商用后端生成的真实 id 替换本地临时 id，保证后续编辑/删除/偏好判断 id 一致
+  if (modalMode.value === 'create') currentEditId.value = returnedId
+
+  // 草稿重置为已保存内容，掩码回显与后端对齐
+  formDraft.value = cloneDraft(currentEditId.value)
+  // 保存成功，清除表单校验红框并关闭弹窗
+  settingFormRef.value?.clearValidate()
+  configModalOpen.value = false
+  message.success('保存成功')
+}
+
+/** 丢弃当前视图的未保存修改 */
 function discardDraft() {
   if (activeTab.value === 'preference') {
     // 偏好草稿恢复为已保存值
     selectedProviderId.value = savedSelectedProviderId.value
     polishPromptDraft.value = savedPolishPrompt.value
-  } else if (isNewProvider.value) {
-    // 新建草稿放弃，编辑状态回退到当前使用的模型
-    doSelect(selectedProviderId.value || 'deepseek')
   } else {
-    // 已有厂商的草稿重置为已保存内容
+    // 厂商草稿重置为当前厂商的已保存内容
     formDraft.value = cloneDraft()
   }
 }
@@ -250,10 +399,7 @@ function discardDraft() {
  * @param leave - 确认离开后执行的动作
  */
 function confirmLeave(leave: () => void) {
-  // 全空的新建草稿直接丢弃，不打扰用户
-  const skipConfirm = isNewProvider.value && isEmptyCustom(formDraft.value!)
-
-  if (isCurrentDirty.value && !skipConfirm) {
+  if (isCurrentDirty.value) {
     Modal.confirm({
       title: '有未保存的修改',
       content: '离开后将丢弃当前未保存的修改，是否继续？',
@@ -269,151 +415,31 @@ function confirmLeave(leave: () => void) {
   }
 }
 
-/**
- * 切换编辑厂商（有未保存修改时弹窗确认）
- * @param id - 目标厂商 id
- */
-function handleSelect(id: string) {
-  // 厂商视图下点击当前正在编辑的厂商：无操作
-  if (activeTab.value === 'provider' && id === currentEditId.value) return
-
-  const isCurrent = id === currentEditId.value
-  // 离开当前视图前统一确认未保存修改（含偏好视图改了下拉未保存的情况）
-  confirmLeave(() => {
-    if (isCurrent) {
-      // 偏好视图点回当前正在编辑的厂商：仅切回视图
-      activeTab.value = 'provider'
-    } else {
-      doSelect(id)
-    }
-  })
-}
-
-/** 打开模型偏好视图（有未保存修改时弹窗确认，确认后丢弃修改） */
-function handleShowPreference() {
-  confirmLeave(() => {
-    activeTab.value = 'preference'
-  })
-}
+/** 弹窗内厂商信息（由草稿推导，新建时也可展示名称与图标） */
+const modalProviderView = computed<APIManufacturer | undefined>(() =>
+  formDraft.value ? withUI(formDraft.value) : undefined,
+)
 
 /**
- * 执行切换编辑厂商并重置草稿
- * @param id - 目标厂商 id
+ * 弹窗取消 / 关闭：直接关闭并丢弃未保存草稿，不做二次确认
+ * 新建草稿被放弃后不会出现在列表中，编辑草稿重置为已保存内容
  */
-function doSelect(id: string) {
-  isNewProvider.value = false
-  activeTab.value = 'provider'
-  currentEditId.value = id
+function handleModalClose() {
+  configModalOpen.value = false
+  // 新建未保存：恢复为当前使用厂商的已保存内容，避免草稿残留空 id
+  if (modalMode.value === 'create') {
+    currentEditId.value = selectedProviderId.value || 'deepseek'
+  }
+  modalMode.value = 'edit'
   formDraft.value = cloneDraft()
-  // 切换厂商后清除上一份表单的校验红框 / 错误提示
-  settingFormRef.value?.clearValidate()
-}
-
-/** 新增自定义供应商：进入新建编辑状态，保存后才真正加入列表 */
-function handleAddCustom() {
-  activeTab.value = 'provider'
-  isNewProvider.value = true
-  // 草稿不带真实 id（空字符串占位），保存后由后端生成并回填
-  currentEditId.value = ''
-  // 仅初始化用户数据字段，icon/name/hint 等固定 UI 由 getProviderUI 推导
-  formDraft.value = {
-    providerId: '',
-    apiKeyEnc: '',
-    apiEndpoint: '',
-    modelId: '',
-    providerName: '',
-  }
-  // 进入新建状态，清除之前的校验红框
-  settingFormRef.value?.clearValidate()
-}
-
-/** 保存当前表单草稿到后端，成功后同步本地状态 */
-async function handleSave() {
-  const draft = formDraft.value
-  if (!draft) return
-
-  // 新建自定义供应商不传 providerId（由后端生成）；其余按已有 id upsert
-  const payload: AiConfigInput = isNewProvider.value
-    ? {
-        providerName: draft.providerName,
-        apiKeyEnc: draft.apiKeyEnc,
-        modelId: draft.modelId,
-        apiEndpoint: draft.apiEndpoint,
-      }
-    : draft
-
-  // API Key 未修改（仍与已保存掩码一致）时传空字符串，后端保留原密文
-  // 新建厂商在 savedStates 中无记录，天然跳过该判断，原样传用户输入值
-  const saved = savedStates.value.find(
-    item => item.providerId === draft.providerId,
-  )
-  if (saved && draft.apiKeyEnc === saved.apiKeyEnc) {
-    payload.apiKeyEnc = ''
-  }
-
-  let returnedId: string
-  try {
-    returnedId = await addOrUpdateAiConfigApi(payload)
-  } catch (e) {
-    console.error('保存 AI 配置失败:', e)
-    return
-  }
-
-  // 保存成功后重拉列表同步最新掩码（key 传新明文后掩码会变化）
-  try {
-    await refreshSavedStates()
-  } catch (e) {
-    console.error('刷新 AI 配置列表失败:', e)
-  }
-
-  if (isNewProvider.value) {
-    // 用后端生成的真实 id 替换本地临时 id，保证后续编辑/删除/偏好判断 id 一致
-    currentEditId.value = returnedId
-    isNewProvider.value = false
-  }
-  // 草稿重置为已保存内容，掩码回显与后端对齐
-  formDraft.value = cloneDraft()
-  // 保存成功，清除表单校验红框
-  settingFormRef.value?.clearValidate()
-  message.success('保存成功')
-}
-
-/** 取消编辑：丢弃厂商草稿修改，恢复为已保存内容 */
-function handleCancel() {
-  if (isNewProvider.value) {
-    // 新建中的供应商直接放弃，切回当前使用的模型（doSelect 内部已 clearValidate）
-    doSelect(selectedProviderId.value || 'deepseek')
-    return
-  }
-  formDraft.value = cloneDraft()
-  // 取消编辑，恢复已保存内容后清除校验红框
   settingFormRef.value?.clearValidate()
 }
 
 /**
  * 删除自定义供应商（内置厂商不可删除）
- * 未保存的新建草稿直接本地丢弃（后端无此记录，调删除接口会报错）
  * @param id - 要删除的厂商 id
  */
 function handleDeleteCustom(id: string) {
-  // 未保存的新建草稿：本地直接放弃，不走后端删除
-  if (!savedStates.value.some(item => item.providerId === id)) {
-    // 全空草稿直接放弃，不打扰用户
-    if (isEmptyCustom(formDraft.value!)) {
-      doSelect(selectedProviderId.value || 'deepseek')
-      return
-    }
-    Modal.confirm({
-      title: '放弃新建供应商',
-      content: '该供应商尚未保存，确定放弃已填写的内容吗？',
-      okText: '放弃',
-      okType: 'danger',
-      cancelText: '取消',
-      onOk: () => doSelect(selectedProviderId.value || 'deepseek'),
-    })
-    return
-  }
-
   Modal.confirm({
     title: '删除供应商',
     content: '删除后不可恢复，确定删除该自定义供应商吗？',
@@ -472,9 +498,8 @@ async function handleSavePreference() {
  * 确认离开后先丢弃修改再重新导航，确保守卫二次放行
  */
 onBeforeRouteLeave(to => {
-  // 全空的新建草稿视为无修改
-  const skipConfirm = isNewProvider.value && isEmptyCustom(formDraft.value!)
-  if (!isCurrentDirty.value || skipConfirm) return true
+  // 仅偏好视图的未保存修改需要拦截（弹窗内草稿随取消/关闭直接丢弃）
+  if (!isCurrentDirty.value) return true
 
   Modal.confirm({
     title: '有未保存的修改',
@@ -497,7 +522,7 @@ onBeforeRouteLeave(to => {
     <!-- 左侧厂商列表 -->
     <div class="model-list">
       <div
-        v-for="model in editingListView"
+        v-for="model in providerListView"
         :key="model.providerId"
         :class="[
           'model-item',
@@ -530,29 +555,77 @@ onBeforeRouteLeave(to => {
         <span class="model-name">模型偏好</span>
       </div>
     </div>
+
     <!-- 右侧设置内容 -->
     <div class="model-settings">
       <!-- 厂商配置视图 -->
       <template v-if="activeTab === 'provider'">
-        <!-- 模型信息 -->
+        <!-- 厂商概览 -->
         <div class="model-info">
-          <span class="model-info-icon">{{ currentEditView.icon }}</span>
+          <span class="model-info-icon">{{ currentProviderView?.icon }}</span>
           <div class="model-info-content">
             <div class="model-info-name">
-              {{ currentEditView.providerName }}
+              {{ currentProviderView?.providerName }}
             </div>
-            <div class="model-info-hint">{{ currentEditView.hint }}</div>
+            <div class="model-info-hint">{{ currentProviderView?.hint }}</div>
           </div>
-          <a-tag v-if="isNewProvider" color="orange">未保存</a-tag>
+          <a-tag :color="currentConfigured ? 'green' : 'orange'">
+            {{ currentConfigured ? '已配置' : '未配置' }}
+          </a-tag>
         </div>
 
-        <!-- 厂商配置表单 -->
-        <SettingForm
-          ref="settingFormRef"
-          v-model:form="formDraft!"
-          @save="handleSave"
-          @cancel="handleCancel"
-        />
+        <!-- 配置摘要 -->
+        <div class="config-summary">
+          <div class="summary-row">
+            <span class="summary-label">模型 ID</span>
+            <span class="summary-value">
+              {{ currentProviderView?.modelId || '未填写' }}
+            </span>
+          </div>
+          <div class="row-divider"></div>
+          <div class="summary-row">
+            <span class="summary-label">API Key</span>
+            <div class="summary-key">
+              <span class="summary-value">
+                {{ apiKeyDisplay }}
+              </span>
+              <a-tooltip
+                v-if="currentProviderView?.apiKeyEnc"
+                :title="apiKeyVisible ? '隐藏' : '显示'"
+              >
+                <component
+                  :is="apiKeyVisible ? EyeOutlined : EyeInvisibleOutlined"
+                  class="summary-key-toggle"
+                  @click="apiKeyVisible = !apiKeyVisible"
+                />
+              </a-tooltip>
+            </div>
+          </div>
+          <div class="row-divider"></div>
+          <div class="summary-row">
+            <span class="summary-label">API 端点</span>
+            <span class="summary-value">
+              {{ currentProviderView?.apiEndpoint || '未填写' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- 操作按钮：测试连接在页面上，配置填写统一在弹窗内完成 -->
+        <div class="config-actions">
+          <a-tooltip v-if="!currentEditId" title="请先保存配置后再测试连接">
+            <a-button disabled>测试连接</a-button>
+          </a-tooltip>
+          <a-button v-else :loading="isTesting" @click="handleTestConnection">
+            测试连接
+          </a-button>
+          <a-button
+            type="primary"
+            :icon="h(ApiOutlined)"
+            @click="openEditModal(currentEditId)"
+          >
+            {{ currentConfigured ? '修改配置' : '填写 API Key' }}
+          </a-button>
+        </div>
       </template>
 
       <!-- 模型偏好视图（当前使用的模型 + 润色提示词，独立保存） -->
@@ -564,6 +637,38 @@ onBeforeRouteLeave(to => {
         @save="handleSavePreference"
       />
     </div>
+
+    <!-- 厂商配置弹窗（点取消直接关闭，未保存内容丢弃） -->
+    <a-modal
+      v-model:open="configModalOpen"
+      :title="modalMode === 'create' ? '新增自定义供应商' : '填写 API Key 配置'"
+      :width="480"
+      :mask-closable="false"
+      :destroy-on-close="false"
+      centered
+      :footer="null"
+      @cancel="handleModalClose"
+    >
+      <!-- 弹窗内厂商信息（由草稿推导，新建时也可展示） -->
+      <div v-if="modalProviderView" class="modal-provider">
+        <span class="modal-provider-icon">{{ modalProviderView.icon }}</span>
+        <div class="modal-provider-content">
+          <div class="modal-provider-name">
+            {{ modalProviderView.providerName }}
+          </div>
+          <div class="modal-provider-hint">{{ modalProviderView.hint }}</div>
+        </div>
+      </div>
+
+      <!-- 厂商配置表单 -->
+      <SettingForm
+        ref="settingFormRef"
+        v-model:form="formDraft!"
+        :saving="isSaving"
+        @save="handleSave"
+        @cancel="handleModalClose"
+      />
+    </a-modal>
   </div>
 </template>
 
@@ -648,7 +753,7 @@ onBeforeRouteLeave(to => {
   background: var(--color-bg-subtle);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 
   .model-info-icon {
     font-size: 32px;
@@ -668,6 +773,111 @@ onBeforeRouteLeave(to => {
       font-size: 13px;
       color: var(--color-text-secondary);
     }
+  }
+}
+
+.config-summary {
+  margin-bottom: 20px;
+
+  .summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: 12px 0;
+
+    &:first-of-type {
+      padding-top: 0;
+    }
+
+    &:last-of-type {
+      padding-bottom: 0;
+    }
+
+    .summary-label {
+      flex-shrink: 0;
+      font-size: var(--text-sm);
+      color: var(--color-text-secondary);
+    }
+
+    .summary-value {
+      font-family: var(--font-mono, monospace), serif;
+      font-size: var(--text-sm);
+      color: var(--color-text);
+      word-break: break-all;
+      text-align: right;
+    }
+
+    /* API Key 值 + 小眼睛切换按钮 */
+    .summary-key {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: var(--space-2);
+      min-width: 0;
+
+      .summary-key-toggle {
+        flex-shrink: 0;
+        cursor: pointer;
+        font-size: 15px;
+        color: var(--color-text-tertiary);
+        transition: color 0.2s ease;
+
+        &:hover {
+          color: var(--color-primary);
+        }
+      }
+    }
+  }
+
+  .row-divider {
+    height: 1px;
+    background: var(--color-border);
+  }
+}
+
+.config-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+
+  .ant-btn {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+.modal-provider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-5);
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+
+  .modal-provider-icon {
+    font-size: 28px;
+    line-height: 1;
+  }
+
+  .modal-provider-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .modal-provider-name {
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    color: var(--color-text);
+  }
+
+  .modal-provider-hint {
+    font-size: var(--text-xs);
+    color: var(--color-text-tertiary);
   }
 }
 </style>

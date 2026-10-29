@@ -91,7 +91,7 @@ const handleApplySuggestion = (item: SuggestionItem) => {
   }
 
   // 优先在对应模块内查找
-  const targetModule = (resume as Record<string, unknown>)[module]
+  const targetModule = (resume as unknown as Record<string, unknown>)[module]
   if (targetModule !== undefined) {
     if (traverseAndReplace(targetModule)) {
       message.success('已应用到简历')

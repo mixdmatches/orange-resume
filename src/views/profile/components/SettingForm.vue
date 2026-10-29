@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import type { APIManufacturer } from '@/types/ai-config'
-import { message, type FormInstance } from 'ant-design-vue'
+import { type FormInstance } from 'ant-design-vue'
+import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons-vue'
 import { computed, ref } from 'vue'
-import { testConnectionApi } from '@/api'
 import { BUILTIN_PROVIDER_IDS } from '@/constants/ai'
 
-// 厂商配置表单草稿：由父组件持有，点击保存后才提交后端
+// 厂商配置表单草稿：由父组件持有，弹窗内填写，点击保存后才提交后端
 const form = defineModel<APIManufacturer>('form', {
   required: true,
 })
+
+defineProps<{
+  saving?: boolean
+}>()
 
 const emit = defineEmits<{
   save: []
@@ -18,10 +22,11 @@ const emit = defineEmits<{
 /** Ant Design Vue 表单实例引用，用于手动触发 validate */
 const formRef = ref<FormInstance>()
 
-const isTesting = ref(false)
-
 /** 是否为尚未保存的新建草稿：无真实 providerId，后端无法按 id 查到配置 */
 const isUnsaved = computed(() => !form.value.providerId)
+
+/** API Key 输入框是否以明文展示（默认按密码隐藏） */
+const apiKeyVisible = ref(false)
 
 /** 是否为内置固定厂商：API 端点不可编辑、无提供商名称输入 */
 const isBuiltin = computed(() =>
@@ -29,12 +34,7 @@ const isBuiltin = computed(() =>
 )
 
 /* ----------------------- 表单校验规则 ----------------------- */
-
-/**
- * apiKeyEnc 校验器：
- * - 新建未保存厂商：必填 + 不能包含掩码 ****
- * - 已保存厂商：允许保持后端回传的掩码不变（父组件 handleSave 会将未修改的 key 转为空串）
- */
+/** apiKeyEnc 校验器 */
 const apiKeyEncRules = computed(() => {
   if (!isUnsaved.value) return []
   return [
@@ -54,11 +54,7 @@ const modelIdRules = [
   { required: true, message: '请输入模型 ID', trigger: 'blur' },
 ]
 
-/**
- * apiEndpoint 校验规则：
- * - 自定义厂商：必填
- * - 内置厂商：不校验（端点由后端固定，表单 disabled）
- */
+/** apiEndpoint 校验规则 */
 const apiEndpointRules = computed(() => {
   if (isBuiltin.value) return []
   return [{ required: true, message: '请输入 API 端点', trigger: 'blur' }]
@@ -73,23 +69,6 @@ const providerNameRules = computed(() => {
 /* ----------------------- 事件处理 ----------------------- */
 
 /**
- * 测试连接：后端按 providerId 查已保存配置发起真实请求
- * 因此仅已保存的厂商可测试，未保存草稿禁用
- */
-const handleTestConnection = async () => {
-  const { providerId } = form.value
-  // 未保存草稿（含掩码回显场景）后端无法发起真实请求
-  if (!providerId) return
-  isTesting.value = true
-  try {
-    await testConnectionApi(providerId)
-    message.success('连接测试成功')
-  } finally {
-    isTesting.value = false
-  }
-}
-
-/**
  * 点击保存按钮：先执行表单校验，校验通过后通知父组件提交到后端
  * 校验失败时错误提示会自动显示在对应字段下方
  */
@@ -102,9 +81,10 @@ const handleSaveClick = async () => {
   }
 }
 
-/** 清除表单校验状态：用于在切换厂商时重置校验 */
+/** 清除表单校验状态并把 API Key 复位为隐藏：用于在切换厂商时重置 */
 const clearValidate = () => {
   formRef.value?.clearValidate()
+  apiKeyVisible.value = false
 }
 
 defineExpose({
@@ -154,11 +134,29 @@ const apiLink = computed(() => {
           >获取 API Key</a
         >
       </template>
-      <a-input-password
+      <a-input
+        v-if="!isUnsaved"
         v-model:value="form.apiKeyEnc"
-        style="width: 400px"
+        :type="apiKeyVisible ? 'text' : 'password'"
         placeholder="API Key"
-        class="setting-input"
+        class="setting-input setting-input--key"
+      >
+        <template #suffix>
+          <a-tooltip :title="apiKeyVisible ? '隐藏' : '显示'">
+            <component
+              :is="apiKeyVisible ? EyeOutlined : EyeInvisibleOutlined"
+              class="setting-key-toggle"
+              @click="apiKeyVisible = !apiKeyVisible"
+            />
+          </a-tooltip>
+        </template>
+      </a-input>
+      <!-- 新建厂商 -->
+      <a-input-password
+        v-else
+        v-model:value="form.apiKeyEnc"
+        placeholder="API Key"
+        class="setting-input setting-input--key"
       />
     </a-form-item>
 
@@ -188,25 +186,12 @@ const apiLink = computed(() => {
       />
     </a-form-item>
 
-    <!-- 连接测试（未保存草稿无真实 id，后端无法按 id 查配置发起请求，禁用） -->
-    <div class="setting-item">
-      <a-tooltip v-if="isUnsaved" title="请先保存配置后再测试连接">
-        <a-button type="primary" disabled>测试连接</a-button>
-      </a-tooltip>
-      <a-button
-        v-else
-        type="primary"
-        :loading="isTesting"
-        @click="handleTestConnection"
-      >
-        测试连接
-      </a-button>
-    </div>
-
-    <!-- 操作按钮 -->
-    <div class="setting-item form-actions">
+    <!-- 弹窗底部操作区 -->
+    <div class="form-actions">
       <a-button @click="emit('cancel')">取消</a-button>
-      <a-button type="primary" @click="handleSaveClick">保存</a-button>
+      <a-button type="primary" :loading="saving" @click="handleSaveClick">
+        保存
+      </a-button>
     </div>
   </a-form>
 </template>
@@ -246,11 +231,26 @@ const apiLink = computed(() => {
     width: 100%;
     max-width: 400px;
   }
+
+  /* API Key 输入框右下角的小眼睛切换按钮 */
+  .setting-key-toggle {
+    cursor: pointer;
+    color: var(--color-text-tertiary);
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: var(--color-primary);
+    }
+  }
 }
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: 12px;
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
 }
 </style>
