@@ -344,15 +344,6 @@ async function handleSave() {
           apiEndpoint: draft.apiEndpoint,
         }
 
-  // API Key 未修改（仍与已保存掩码一致）时传空字符串，后端保留原密文
-  // 新建厂商在 savedStates 中无记录，天然跳过该判断，原样传用户输入值
-  const saved = savedStates.value.find(
-    item => item.providerId === draft.providerId,
-  )
-  if (saved && draft.apiKeyEnc === saved.apiKeyEnc) {
-    payload.apiKeyEnc = ''
-  }
-
   let returnedId: string
   isSaving.value = true
   try {
