@@ -28,7 +28,7 @@ const TOOL_NAME_MAP: Record<string, string> = {
  */
 export function useAiChat(
   resume: Resume,
-  resumeText: Ref<string | undefined>,
+  resumeText: Ref<string>,
   scrollToBottom: () => void,
 ) {
   const messages = ref<ChatMessage[]>([])
