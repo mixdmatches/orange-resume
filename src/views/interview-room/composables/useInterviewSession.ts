@@ -6,9 +6,10 @@ import type {
 } from '@/types/interview'
 import {
   createInterviewApi,
-  interviewAnswerApi,
+  interviewAskApi,
   interviewFinishApi,
   interviewStartApi,
+  submitAnswerApi,
 } from '@/api'
 import { DEFAULT_QUESTION_COUNT } from '@/stores/interview'
 import { ensureAiProviderReady } from '@/utils/ai-ready'
@@ -142,7 +143,7 @@ export const useInterviewSession = (options: {
    */
   const consumeStream = async (
     stream: AsyncGenerator<InterviewSseEvent, void, unknown>,
-  ) => {
+  ): Promise<void> => {
     let interviewerMsg: RoomMessage | null = null
     let evalMsg: RoomMessage | null = null
     let summaryMsg: RoomMessage | null = null
@@ -225,8 +226,9 @@ export const useInterviewSession = (options: {
         }
       }
     } catch (error) {
-      // 用户主动停止生成：不算错误，走下方兜底修复半成品消息；其余错误继续抛出
-      if ((error as Error).name === 'AbortError') {
+      // 仅当用户主动中止流（结束面试 / 组件卸载触发的 abort）时，才标记为"已手动停止"；
+      // 超时、网络断开等非用户中止的错误应继续抛出，由上层展示错误提示，避免误导用户。
+      if (streamController?.signal.aborted) {
         stopped = true
       } else {
         throw error
@@ -333,40 +335,67 @@ export const useInterviewSession = (options: {
 
   /**
    * 提交候选人的回答
-   * 统一 SSE 流 + content → 后端路由到"答题评价"路径：
-   * evaluation_start → evaluation_done → 下一题流式出题 / 总结 → done
+   * 仅调用 answer 接口提交答案，返回是否最后一题；
+   * 获取下一题需调用方显式调用 askNextQuestion，结束面试调用 finish。
    * @param raw - 用户输入的回答原文
+   * @returns 是否需要结束面试（答完最后一题时返回 true）
    */
-  const submitAnswer = async (raw: string) => {
+  const submitAnswer = async (
+    raw: string,
+  ): Promise<{ needFinish: boolean }> => {
     const text = raw.trim()
-    if (!text || thinking.value || phase.value !== 'interviewing') return
+    if (!text || thinking.value || phase.value !== 'interviewing')
+      return { needFinish: false }
     if (!interviewId.value) {
       throw new Error('面试会话未初始化，请重新开始面试')
     }
 
-    if (!(await ensureAiProviderReady())) return
+    if (!(await ensureAiProviderReady())) return { needFinish: false }
 
     pushMessage('candidate', text)
     thinking.value = true
+
+    try {
+      // 提交答案（普通 JSON）
+      const { isLastRound } = await submitAnswerApi(interviewId.value, {
+        content: text,
+      })
+
+      // 最后一题：由调用方触发 finish 生成总结
+      if (isLastRound) {
+        return { needFinish: true }
+      }
+
+      // 还有下一题：交由调用方调用 askNextQuestion 流式获取
+      return { needFinish: false }
+    } catch (error) {
+      // 提交失败：复位 thinking，避免 UI 卡死在"思考中"
+      thinking.value = false
+      throw error
+    }
+    // 成功路径不复位 thinking，由后续的 askNextQuestion / finish 接管
+  }
+
+  /**
+   * 流式获取下一题
+   * 调用 ask 接口，由后端根据当前轮次自动出题；
+   * 需在 submitAnswer 返回 needFinish=false 后由调用方触发。
+   */
+  const askNextQuestion = async () => {
+    if (phase.value !== 'interviewing' || !interviewId.value) return
 
     try {
       streamController = new AbortController()
       const handleRetry = (info: SseRetryInfo) => {
         retryInfo.value = info
       }
-      const stream = interviewAnswerApi(
+      const stream = interviewAskApi(
         interviewId.value,
-        { content: text },
         streamController.signal,
         handleRetry,
       )
       activeRun = consumeStream(stream)
       await activeRun
-
-      // 答题评价流结束后，如果已经是最后一题（没有下一题），自动结束面试生成总结
-      if (phase.value === 'interviewing' && interviewId.value) {
-        await finish()
-      }
     } finally {
       activeRun = null
       streamController = null
@@ -407,14 +436,11 @@ export const useInterviewSession = (options: {
       phase.value = 'finished'
 
       streamController = new AbortController()
-      const handleRetry = (info: SseRetryInfo) => {
-        retryInfo.value = info
-      }
+      // 结束面试为后台静默生成总结，不展示网络波动重试提示
       const stream = interviewFinishApi(
         interviewId.value,
         {},
         streamController.signal,
-        handleRetry,
       )
       activeRun = consumeStream(stream)
       await activeRun
@@ -456,6 +482,7 @@ export const useInterviewSession = (options: {
     elapsedText,
     start,
     submitAnswer,
+    askNextQuestion,
     finish,
     reset,
   }

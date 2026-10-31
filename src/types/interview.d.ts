@@ -96,6 +96,14 @@ export class InterviewStreamDto {
   finishOnly?: boolean
 }
 
+/** 提交答案接口返回结果 */
+export interface SubmitAnswerResult {
+  /** 当前答题轮次 */
+  answerRound: number
+  /** 是否为最后一题（答完后无下一题，需调用 finish 生成总结） */
+  isLastRound: boolean
+}
+
 export interface InterviewListParams {
   /** 页码，默认 1 */
   page?: number

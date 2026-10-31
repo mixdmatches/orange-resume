@@ -43,6 +43,7 @@ const {
   elapsedText,
   start,
   submitAnswer,
+  askNextQuestion,
   finish,
 } = useInterviewSession({
   resumeText: resumeText.value,
@@ -98,8 +99,15 @@ const handleSend = async () => {
   const text = answerInput.value.trim()
   if (!text) return
   try {
-    await submitAnswer(text)
     answerInput.value = ''
+    const { needFinish } = await submitAnswer(text)
+    // 答完最后一题时自动结束面试，后台静默生成总结
+    if (needFinish) {
+      await finish()
+    } else {
+      // 还有下一题：流式获取下一题
+      await askNextQuestion()
+    }
   } catch (error) {
     message.error((error as Error).message || '发送失败，请稍后重试')
   }

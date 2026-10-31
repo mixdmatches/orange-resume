@@ -7,6 +7,7 @@ import type {
   InterviewSession,
   InterviewSseEvent,
   InterviewStreamDto,
+  SubmitAnswerResult,
 } from '@/types/interview'
 import { AI_TIMEOUT, del, get, post } from '@/utils/request'
 
@@ -58,22 +59,38 @@ export async function* interviewStartApi(
 }
 
 /**
- * 提交用户回答
+ * 提交用户回答（普通 JSON 返回）
  * @param interviewId
- * @param data
+ * @param data - 包含 content
+ * @returns 是否为最后一题
+ */
+export function submitAnswerApi(
+  interviewId: string,
+  data: { content: string },
+) {
+  return post<SubmitAnswerResult>(
+    `/interviews/${interviewId}/answer`,
+    data,
+    INTERVIEW_API_CONFIG,
+  )
+}
+
+/**
+ * 获取下一题或总结（SSE 流式）
+ * 由后端根据当前轮次自动判断：还有题则出题，答完则生成总结
+ * @param interviewId
  * @param signal
  * @param onRetry
  */
-export async function* interviewAnswerApi(
+export async function* interviewAskApi(
   interviewId: string,
-  data: InterviewStreamDto = {},
   signal?: AbortSignal,
   onRetry?: (_info: SseRetryInfo) => void,
 ): AsyncGenerator<InterviewSseEvent, void, unknown> {
   for await (const event of fetchSseEvents(
-    `/interviews/${interviewId}/answer`,
-    data,
-    { errorPrefix: '提交用户回答失败', signal, onRetry },
+    `/interviews/${interviewId}/ask`,
+    {},
+    { errorPrefix: '获取下一题失败', signal, onRetry },
   )) {
     yield event as InterviewSseEvent
   }
@@ -135,6 +152,7 @@ export default {
   getInterviewDetailApi,
   deleteInterviewApi,
   interviewStartApi,
-  interviewAnswerApi,
+  submitAnswerApi,
+  interviewAskApi,
   interviewFinishApi,
 }

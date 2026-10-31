@@ -346,21 +346,25 @@ export async function* fetchSseEvents(
       // 成功完成
       return
     } catch (error) {
+      // 超时导致的内部 abort 需要转换为普通错误，否则 isRetryableError 会因 AbortError 直接判定不可重试
+      let retryableError: unknown = error
+
       // 用户主动取消，不再重试
       if (error instanceof Error && error.name === 'AbortError') {
         // 区分是用户主动取消还是超时导致的 abort
         if (opts?.signal?.aborted) {
           throw new Error('用户取消请求')
         }
-        // 超时导致的 abort，当作可重试错误
+        // 超时导致的 abort，转换为普通超时错误以进入重试流程
+        retryableError = new Error(`${errorPrefix}（请求超时，请检查网络）`)
         if (retryCount >= MAX_RETRIES) {
-          throw new Error(`${errorPrefix}（请求超时，请检查网络）`)
+          throw retryableError
         }
       }
 
       // 判断是否可重试
-      if (!isRetryableError(error)) {
-        throw error
+      if (!isRetryableError(retryableError)) {
+        throw retryableError
       }
 
       retryCount++
@@ -368,7 +372,9 @@ export async function* fetchSseEvents(
       // 超过最大重试次数，抛出最后一次错误
       if (retryCount > MAX_RETRIES) {
         const lastError =
-          error instanceof Error ? error : new Error(String(error))
+          retryableError instanceof Error
+            ? retryableError
+            : new Error(String(retryableError))
         throw new Error(
           `${errorPrefix}（已重试 ${MAX_RETRIES} 次仍失败：${lastError.message}）`,
         )
@@ -382,7 +388,10 @@ export async function* fetchSseEvents(
         opts.onRetry({
           retryCount,
           nextDelayMs: delayMs,
-          reason: error instanceof Error ? error.message : String(error),
+          reason:
+            retryableError instanceof Error
+              ? retryableError.message
+              : String(retryableError),
         })
       }
 
