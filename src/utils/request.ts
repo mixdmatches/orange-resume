@@ -1,8 +1,3 @@
-/**
- * Axios 实例与拦截器封装
- * 用于前后端联调，统一处理 baseURL、双 Token（accessToken + refreshToken）注入、
- * 401 静默刷新与请求重放、后端统一响应格式解析、错误提示与鉴权失效跳转。
- */
 import axios, {
   type AxiosInstance,
   type AxiosRequestConfig,
@@ -15,20 +10,20 @@ import { ErrorCode } from '@/types/code'
 import type { LoginResult } from '@/types/user'
 import router from '@/router'
 
-/** accessToken 在本地存储中的键名（业务接口鉴权用） */
 export const ACCESS_TOKEN_KEY = 'accessToken'
-
-/** refreshToken 在本地存储中的键名（静默续期用） */
 export const REFRESH_TOKEN_KEY = 'refreshToken'
 
-/** 后端统一响应体格式（与 NestJS 后端约定一致） */
 export interface ApiResult<T = unknown> {
-  /** 业务状态码：200/0 表示成功，其他为失败 */
   code: number
-  /** 提示信息 */
   message: string
-  /** 业务数据 */
   data: T
+}
+
+/**
+ * 统一错误提示：相同内容共用同一个 key，并发请求失败时只弹一条
+ */
+function showError(tip: string) {
+  message.error({ content: tip, key: tip })
 }
 
 /**
@@ -44,9 +39,6 @@ export function redirectToLogin() {
 
 /**
  * 强制登出清理
- * 双 Token 彻底失效（refreshToken 缺失/过期/被作废）时调用：
- * 清空本地令牌对并跳转登录页。store 内的响应式状态与离线同步队列
- * 由登录页的 clearAuth() 统一清理，此处只负责 storage 层。
  */
 function forceLogout() {
   storage.remove(ACCESS_TOKEN_KEY)
@@ -54,17 +46,9 @@ function forceLogout() {
   redirectToLogin()
 }
 
-/** 普通业务接口默认超时时间（毫秒） */
 export const DEFAULT_TIMEOUT = 15000
-
-/** AI 类接口超时时间（毫秒）*/
 export const AI_TIMEOUT = 120000
 
-/**
- * 创建 axios 实例
- * - baseURL 读取环境变量 VITE_API_BASE_URL，未配置时回退到 /api（配合 vite 代理）
- * - timeout 使用默认 15s 兜底；AI 等长耗时接口可在调用处单独覆盖
- */
 const service: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
   timeout: DEFAULT_TIMEOUT,
@@ -75,8 +59,6 @@ const service: AxiosInstance = axios.create({
 
 /**
  * 请求拦截器
- * 自动从本地存储读取 accessToken，并以 Bearer 形式注入到请求头。
- * 注意：refreshToken 绝不注入业务请求头（后端 jwt.strategy 会拒绝 refresh 类型令牌）。
  */
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -91,15 +73,11 @@ service.interceptors.request.use(
 
 /**
  * 进行中的刷新 Promise（单飞/合并并发标记）
- * 并发 401 时多个请求共享同一个刷新 Promise，避免 refreshToken 轮换导致
- * 多次并发刷新互相作废：第一个 401 触发刷新，其余请求等待其结果后直接重放。
  */
 let refreshingPromise: Promise<boolean> | null = null
 
 /**
  * 使用 refreshToken 静默换取新令牌对
- * 调用 POST /auth/refresh（独立裸 axios，不走本模块拦截器，避免循环刷新）。
- * 后端为轮换策略：成功后返回全新令牌对，需整体覆盖保存。
  * @returns 刷新是否成功；成功后新令牌已写入 storage
  */
 function refreshTokens(): Promise<boolean> {
@@ -151,7 +129,7 @@ async function handleUnauthorized(
   // 已重放过一次仍 401，或刷新接口自身 401：不再刷新，直接强制登出，
   // 避免持续 401 的接口触发「刷新→重放→再 401」的无限循环
   if ((config as any)._retry || config.url?.includes('/auth/refresh')) {
-    message.error('登录已过期，请重新登录')
+    showError('登录已过期，请重新登录')
     forceLogout()
     throw new Error('登录已过期，请重新登录')
   }
@@ -160,7 +138,7 @@ async function handleUnauthorized(
 
   const ok = await refreshTokens()
   if (!ok) {
-    message.error('登录已过期，请重新登录')
+    showError('登录已过期，请重新登录')
     forceLogout()
     throw new Error('登录已过期，请重新登录')
   }
@@ -171,9 +149,7 @@ async function handleUnauthorized(
 }
 
 /**
- * 响应拦截器 —— 成功分支
- * 解析后端统一响应体，业务成功时直接返回 data 部分；
- * 业务失败时弹出错误提示并 reject；40101 时静默刷新并重放原请求。
+ * 响应拦截器
  */
 service.interceptors.response.use(
   (response: AxiosResponse<ApiResult>) => {
@@ -188,7 +164,7 @@ service.interceptors.response.use(
     const res = response.data
     // 业务成功：code 为 200 或 0 均视为成功
     if (res.code === ErrorCode.SUCCESS) {
-      return res
+      return res as unknown as AxiosResponse
     }
 
     // 401：accessToken 失效，静默刷新令牌对并重放原请求（不弹错误提示）
@@ -197,20 +173,13 @@ service.interceptors.response.use(
     }
 
     // 其他业务失败：统一提示
-    message.error(res.message || '请求失败')
+    showError(res.message || '请求失败')
     return Promise.reject(new Error(res.message || 'Error'))
   },
-  /**
-   * 响应拦截器 —— 失败分支
-   * 处理 HTTP 层错误（超时、断网、4xx/5xx 等），统一提示；
-   * HTTP 401 时静默刷新令牌对并重放原请求。
-   */
   async error => {
     const status = error?.response?.status
 
-    // HTTP 401：accessToken 失效，静默刷新并重放（不弹错误提示）。
-    // 注意后端异常过滤器通常返回 HTTP 200 + body.code=40101，此分支主要防御
-    // 网关/代理层返回的真实 HTTP 401，故使用数字 401 而非业务码比较
+    // HTTP 401：accessToken 失效，静默刷新并重放。
     if (status === 401 && error?.config) {
       return handleUnauthorized(error.config)
     }
@@ -231,7 +200,7 @@ service.interceptors.response.use(
       tip = error.response.data.message
     }
 
-    message.error(tip)
+    showError(tip)
     return Promise.reject(error)
   },
 )
